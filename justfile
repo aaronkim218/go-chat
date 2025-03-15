@@ -5,5 +5,5 @@ dev:
     cd ..
     cp -r frontend/dist/* backend/internal/static/
     cd backend
-    go build -o server cmd/server/main.go
-    ./server
+    go build -o bin/server cmd/server/main.go
+    ./bin/server
