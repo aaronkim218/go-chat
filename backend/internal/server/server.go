@@ -23,7 +23,9 @@ func New(cfg *Config) *fiber.App {
 	setupHealthcheck(app)
 
 	service := handlers.NewService(&handlers.ServiceConfig{
-		Storage: postgres.New(&postgres.Config{}),
+		Storage: postgres.New(&postgres.Config{
+			DbUrl: cfg.Settings.Storage.DbUrl,
+		}),
 	})
 	service.RegisterRoutes(app)
 
