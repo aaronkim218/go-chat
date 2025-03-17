@@ -47,7 +47,7 @@ func setupMiddleware(app *fiber.App) {
 }
 
 func setupHealthcheck(app *fiber.App) {
-	app.Get("/healthcheck", func(c *fiber.Ctx) error {
+	app.Get("/api/healthcheck", func(c *fiber.Ctx) error {
 		return c.SendStatus(http.StatusOK)
 	})
 }

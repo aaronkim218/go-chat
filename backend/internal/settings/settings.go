@@ -3,8 +3,8 @@ package settings
 import "github.com/caarlos0/env/v11"
 
 type Settings struct {
-	Storage Storage
-	Server  Server
+	Storage Storage `envPrefix:"STORAGE_"`
+	Server  Server  `envPrefix:"SERVER_"`
 }
 
 func Load() (Settings, error) {

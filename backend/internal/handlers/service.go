@@ -11,5 +11,7 @@ type ServiceConfig struct {
 }
 
 func NewService(cfg *ServiceConfig) *Service {
-	return &Service{}
+	return &Service{
+		storage: cfg.Storage,
+	}
 }

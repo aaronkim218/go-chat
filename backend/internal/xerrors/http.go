@@ -29,6 +29,14 @@ func InternalServerError() HTTPError {
 	return NewHTTPError(http.StatusInternalServerError, errors.New("internal server error"))
 }
 
+func BadRequestError(err error) HTTPError {
+	return NewHTTPError(http.StatusBadRequest, err)
+}
+
+func InvalidJSON() HTTPError {
+	return NewHTTPError(http.StatusBadRequest, errors.New("invalid JSON request data"))
+}
+
 func ErrorHandler(c *fiber.Ctx, err error) error {
 	var httpErr HTTPError
 	if castedErr, ok := err.(HTTPError); ok {

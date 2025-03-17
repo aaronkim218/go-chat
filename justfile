@@ -7,3 +7,8 @@ dev:
     cd backend
     go build -o bin/server cmd/server/main.go
     ./bin/server
+
+backend-dev:
+    #!/usr/bin/env bash
+    cd backend
+    go run cmd/server/main.go
