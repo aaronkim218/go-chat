@@ -29,8 +29,8 @@ func InternalServerError() HTTPError {
 	return NewHTTPError(http.StatusInternalServerError, errors.New("internal server error"))
 }
 
-func BadRequestError(err error) HTTPError {
-	return NewHTTPError(http.StatusBadRequest, err)
+func BadRequestError(message string) HTTPError {
+	return NewHTTPError(http.StatusBadRequest, errors.New(message))
 }
 
 func InvalidJSON() HTTPError {

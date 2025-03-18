@@ -33,3 +33,22 @@ func (s *Service) CreateRoom(c *fiber.Ctx) error {
 
 	return c.Status(http.StatusOK).JSON(room)
 }
+
+func (s *Service) GetMessages(c *fiber.Ctx) error {
+	roomId := c.Params("roomId")
+	if roomId == "" {
+		return xerrors.BadRequestError("room id is required")
+	}
+
+	uuidRoomId, err := uuid.Parse(roomId)
+	if err != nil {
+		return xerrors.BadRequestError(fmt.Sprintf("invalid room id: %s", roomId))
+	}
+
+	messages, err := s.storage.GetMessagesByRoomId(c.Context(), uuidRoomId)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(http.StatusOK).JSON(messages)
+}
