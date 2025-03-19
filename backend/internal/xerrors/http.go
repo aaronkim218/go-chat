@@ -33,6 +33,10 @@ func BadRequestError(message string) HTTPError {
 	return NewHTTPError(http.StatusBadRequest, errors.New(message))
 }
 
+func NotFoundError(entity string, key string, value string) HTTPError {
+	return NewHTTPError(http.StatusNotFound, fmt.Errorf("%s with %s=%s not found", entity, key, value))
+}
+
 func InvalidJSON() HTTPError {
 	return NewHTTPError(http.StatusBadRequest, errors.New("invalid JSON request data"))
 }

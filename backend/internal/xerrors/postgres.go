@@ -1,0 +1,14 @@
+package xerrors
+
+import (
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
+)
+
+func IsForeignKeyViolation(err error, constraintName string) bool {
+	if pgErr, ok := err.(*pgconn.PgError); ok {
+		return pgErr.Code == pgerrcode.ForeignKeyViolation && pgErr.ConstraintName == constraintName
+	}
+
+	return false
+}
