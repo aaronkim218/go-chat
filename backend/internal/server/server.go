@@ -2,8 +2,8 @@ package server
 
 import (
 	"go-chat/internal/handlers"
-	"go-chat/internal/settings"
-	"go-chat/internal/storage/postgres"
+	"go-chat/internal/hub"
+	"go-chat/internal/storage"
 	"go-chat/internal/xerrors"
 	"net/http"
 
@@ -14,7 +14,8 @@ import (
 )
 
 type Config struct {
-	Settings *settings.Settings
+	Storage storage.Storage
+	Hub     *hub.Hub
 }
 
 func New(cfg *Config) *fiber.App {
@@ -23,9 +24,8 @@ func New(cfg *Config) *fiber.App {
 	setupHealthcheck(app)
 
 	service := handlers.NewService(&handlers.ServiceConfig{
-		Storage: postgres.New(&postgres.Config{
-			DbUrl: cfg.Settings.Storage.DbUrl,
-		}),
+		Storage: cfg.Storage,
+		Hub:     cfg.Hub,
 	})
 	service.RegisterRoutes(app)
 

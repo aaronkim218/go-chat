@@ -1,8 +1,10 @@
 package main
 
 import (
+	"go-chat/internal/hub"
 	"go-chat/internal/server"
 	"go-chat/internal/settings"
+	"go-chat/internal/storage/postgres"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -23,8 +25,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	postgres := postgres.New(&postgres.Config{
+		DbUrl: settings.Storage.DbUrl,
+	})
+
+	hub := hub.New(&hub.Config{
+		Storage: postgres,
+	})
+
 	app := server.New(&server.Config{
-		Settings: &settings,
+		Storage: postgres,
+		Hub:     hub,
 	})
 
 	go func() {
