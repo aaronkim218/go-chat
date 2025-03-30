@@ -1,9 +1,13 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
+	"go-chat/internal/hub"
 	"go-chat/internal/models"
+	"go-chat/internal/types"
 	"go-chat/internal/xerrors"
+	"log/slog"
 	"net/http"
 
 	"github.com/gofiber/contrib/websocket"
@@ -81,5 +85,26 @@ func (s *Service) AddUsersToRoom(c *fiber.Ctx) error {
 }
 
 func (s *Service) JoinRoom(conn *websocket.Conn) {
+	roomId, err := uuid.Parse(conn.Params("roomId"))
+	if err != nil {
+		conn.Close()
+		return
+	}
 
+	ctx, cancel := context.WithCancel(context.TODO())
+	s.hub.AddClient(hub.AddClientRequest{
+		RoomId: roomId,
+		Client: &types.Client{
+			Conn:   conn,
+			Ctx:    ctx,
+			Cancel: cancel,
+		},
+	})
+
+	<-ctx.Done()
+	slog.Info(
+		"client disconnected",
+		slog.String("ip", conn.IP()),
+		slog.String("room_id", roomId.String()),
+	)
 }

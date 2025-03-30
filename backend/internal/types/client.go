@@ -1,11 +1,13 @@
 package types
 
 import (
+	"context"
+
 	"github.com/gofiber/contrib/websocket"
-	"github.com/google/uuid"
 )
 
 type Client struct {
-	Id   uuid.UUID
-	Conn *websocket.Conn
+	Conn   *websocket.Conn
+	Ctx    context.Context
+	Cancel context.CancelFunc
 }

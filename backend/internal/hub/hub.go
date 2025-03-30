@@ -1,10 +1,9 @@
 package hub
 
 import (
+	"context"
 	"go-chat/internal/storage"
 	"go-chat/internal/types"
-	"log/slog"
-	"sync"
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/google/uuid"
@@ -13,12 +12,13 @@ import (
 type Hub struct {
 	activeRooms map[uuid.UUID]*activeRoom
 	storage     storage.Storage
-	mu          sync.Mutex
+	addClient   chan AddClientRequest
+	deleteRoom  chan uuid.UUID
 }
 
 type AddClientRequest struct {
 	RoomId uuid.UUID
-	Client types.Client
+	Client *types.Client
 }
 
 type Config struct {
@@ -29,47 +29,83 @@ func New(cfg *Config) *Hub {
 	hub := &Hub{
 		activeRooms: make(map[uuid.UUID]*activeRoom),
 		storage:     cfg.Storage,
+		addClient:   make(chan AddClientRequest),
+		deleteRoom:  make(chan uuid.UUID),
 	}
+
+	go hub.run()
 
 	return hub
 }
 
 func (h *Hub) AddClient(req AddClientRequest) {
-	h.mu.Lock()
-	ar, ok := h.activeRooms[req.RoomId]
-	if !ok {
-		ar = &activeRoom{
-			clients:   make(map[types.Client]struct{}),
-			broadcast: make(chan []byte),
-		}
-		h.activeRooms[req.RoomId] = ar
-		go h.handleActiveRoom(req.RoomId, ar)
-	}
-	h.mu.Unlock()
-
-	ar.mu.Lock()
-	ar.clients[req.Client] = struct{}{}
-	ar.mu.Unlock()
-	go ar.handleClient(req.Client)
+	h.addClient <- req
 }
 
-func (h *Hub) handleActiveRoom(roomId uuid.UUID, ar *activeRoom) {
-	for message := range ar.broadcast {
-		for client := range ar.clients {
-			if err := client.Conn.WriteMessage(websocket.TextMessage, message); err != nil {
-				slog.Info(
-					"error writing message to client",
-					slog.String("client_id", client.Id.String()),
-					slog.String("error", err.Error()),
-				)
+func (h *Hub) run() {
+	for {
+		select {
+		case req := <-h.addClient:
+			ar, ok := h.activeRooms[req.RoomId]
+			if !ok {
+				ctx, cancel := context.WithCancel(context.TODO())
+				ar = &activeRoom{
+					clients:   make(map[*types.Client]struct{}),
+					broadcast: make(chan []byte),
+					join:      make(chan *types.Client),
+					leave:     make(chan *types.Client),
+					ctx:       ctx,
+					cancel:    cancel,
+				}
+				h.activeRooms[req.RoomId] = ar
+				go h.handleActiveRoom(req.RoomId, ar)
+			}
 
-				ar.deleteClient(client)
+			ar.join <- req.Client
+		case roomId := <-h.deleteRoom:
+			if len(h.activeRooms[roomId].clients) == 0 {
+				h.activeRooms[roomId].cancel()
+				delete(h.activeRooms, roomId)
+				// slog.Info(
+				// 	"deleted active room",
+				// 	slog.String("room_id", roomId.String()),
+				// )
 			}
 		}
 	}
+}
 
-	// at this point broadcast channel must be closed, signaling that room is empty and ready to be deleted
-	h.mu.Lock()
-	delete(h.activeRooms, roomId)
-	h.mu.Unlock()
+func (h *Hub) handleActiveRoom(roomId uuid.UUID, ar *activeRoom) {
+	for {
+		select {
+		case <-ar.ctx.Done():
+			return
+		case message := <-ar.broadcast:
+			for client := range ar.clients {
+				if err := client.Conn.WriteMessage(websocket.TextMessage, message); err != nil {
+					client.Conn.Close()
+
+					// slog.Info(
+					// 	"error writing message to client. closed connection",
+					// 	slog.String("ip", client.Conn.IP()),
+					// 	slog.String("error", err.Error()),
+					// )
+				}
+			}
+		case client := <-ar.join:
+			ar.clients[client] = struct{}{}
+			go ar.handleClient(client)
+		case client := <-ar.leave:
+			client.Cancel()
+			delete(ar.clients, client)
+			// slog.Info(
+			// 	"deleted client from active room",
+			// 	slog.String("ip", client.Conn.IP()),
+			// 	slog.String("room_id", roomId.String()),
+			// )
+			if len(ar.clients) == 0 {
+				h.deleteRoom <- roomId
+			}
+		}
+	}
 }
