@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"go-chat/internal/models"
 	"go-chat/internal/xerrors"
 	"net/http"
@@ -36,4 +37,19 @@ func (s *Service) CreateMessage(c *fiber.Ctx) error {
 	}
 
 	return c.Status(http.StatusOK).JSON(message)
+}
+
+func (s *Service) DeleteMessageById(c *fiber.Ctx) error {
+	messageId := c.Params("messageId")
+
+	uuidMessageId, err := uuid.Parse(messageId)
+	if err != nil {
+		return xerrors.BadRequestError(fmt.Sprintf("invalid user id: %s", messageId))
+	}
+
+	if err := s.storage.DeleteMessageById(c.Context(), uuidMessageId); err != nil {
+		return err
+	}
+
+	return c.SendStatus(http.StatusNoContent)
 }

@@ -31,6 +31,14 @@ export const deleteRoom = async (roomId: string): Promise<void> => {
   }
 };
 
+export const deleteMessageById = async (messageId: string): Promise<void> => {
+  const res = await axios.delete(`${BASE_URL}/messages/${messageId}`);
+
+  if (res.status !== 204) {
+    throw new Error(`failed to delete message with id='${messageId}'`);
+  }
+};
+
 export const getMessagesByRoomId = async (
   roomId: string
 ): Promise<Message[]> => {

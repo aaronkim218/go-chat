@@ -18,6 +18,7 @@ func (s *Service) RegisterRoutes(app *fiber.App) {
 
 		api.Route("/messages", func(messages fiber.Router) {
 			messages.Post("/", s.CreateMessage)
+			messages.Delete("/:messageId", s.DeleteMessageById)
 		})
 	})
 }

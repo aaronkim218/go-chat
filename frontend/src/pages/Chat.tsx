@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Message } from "../types";
-import { getMessagesByRoomId } from "../api";
+import { deleteMessageById, getMessagesByRoomId } from "../api";
+import useSessionContext from "../hooks/useSessionContext";
 
 const Chat = () => {
   const { roomId } = useParams();
@@ -9,6 +10,7 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const ws = useRef<WebSocket | null>(null);
+  const session = useSessionContext();
 
   useEffect(() => {
     if (!roomId) {
@@ -47,9 +49,23 @@ const Chat = () => {
   }, []);
 
   const handleSendMessage = () => {
+    if (!newMessage) {
+      console.error("cannot send an empty message");
+      return;
+    }
+
     if (ws.current?.readyState === WebSocket.OPEN) {
       ws.current.send(newMessage);
       setNewMessage("");
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      await deleteMessageById(messageId);
+      setMessages((prev) => prev.filter((message) => message.id !== messageId));
+    } catch (error) {
+      console.error("error deleting message:", error);
     }
   };
 
@@ -62,6 +78,14 @@ const Chat = () => {
             <p>
               {message.author}: {message.content}
             </p>
+            <button onClick={() => handleDeleteMessage(message.id)}>
+              Delete
+            </button>
+            {/* {message.author === session.user.id && (
+              <button onClick={() => handleDeleteMessage(message.id)}>
+                Delete
+              </button>
+            )} */}
           </div>
         ))}
       </div>

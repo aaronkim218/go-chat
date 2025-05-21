@@ -40,3 +40,12 @@ func (p *Postgres) GetMessagesByRoomId(ctx context.Context, roomId uuid.UUID) ([
 
 	return messages, nil
 }
+
+func (p *Postgres) DeleteMessageById(ctx context.Context, messageId uuid.UUID) error {
+	const query string = `DELETE FROM messages WHERE id = $1`
+	if _, err := p.pool.Exec(ctx, query, messageId); err != nil {
+		return err
+	}
+
+	return nil
+}

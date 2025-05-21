@@ -25,7 +25,7 @@ const Rooms = () => {
   const handleCreateRoom = async () => {
     try {
       const newRoom = await createRoom(session.user.id);
-      setRooms((prevRooms) => [newRoom, ...prevRooms]);
+      setRooms((prev) => [newRoom, ...prev]);
     } catch (error) {
       console.error("error creating room:", error);
     }
@@ -34,7 +34,7 @@ const Rooms = () => {
   const handleDeleteRoom = async (roomId: string) => {
     try {
       await deleteRoom(roomId);
-      setRooms((prevRooms) => prevRooms.filter((room) => room.id !== roomId));
+      setRooms((prev) => prev.filter((room) => room.id !== roomId));
     } catch (error) {
       console.error("error deleting room:", error);
     }
