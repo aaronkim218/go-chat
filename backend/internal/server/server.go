@@ -10,6 +10,8 @@ import (
 	go_json "github.com/goccy/go-json"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
@@ -20,16 +22,15 @@ type Config struct {
 
 func New(cfg *Config) *fiber.App {
 	app := createFiberApp()
-	setupMiddleware(app)
-	setupHealthcheck(app)
+	setupStatic(app)
 
 	service := handlers.NewService(&handlers.ServiceConfig{
 		Storage: cfg.Storage,
 		Hub:     cfg.Hub,
 	})
+	setupMiddleware(app)
+	setupHealthcheck(app)
 	service.RegisterRoutes(app)
-
-	setupStatic(app)
 
 	return app
 }
@@ -43,7 +44,10 @@ func createFiberApp() *fiber.App {
 }
 
 func setupMiddleware(app *fiber.App) {
+	app.Use(logger.New())
 	app.Use(recover.New())
+	app.Use(redirectMiddleware())
+	app.Use(cors.New())
 }
 
 func setupHealthcheck(app *fiber.App) {
@@ -54,4 +58,20 @@ func setupHealthcheck(app *fiber.App) {
 
 func setupStatic(app *fiber.App) {
 	app.Static("/", "internal/static")
+}
+
+func redirectMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		path := c.Path()
+
+		if path != "/" && !isApiPath(path) {
+			return c.Redirect("/", http.StatusFound)
+		}
+
+		return c.Next()
+	}
+}
+
+func isApiPath(path string) bool {
+	return len(path) >= 4 && path[:4] == "/api"
 }

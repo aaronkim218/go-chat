@@ -9,12 +9,11 @@ import (
 )
 
 func (p *Postgres) CreateMessage(ctx context.Context, message models.Message) error {
-	const query string = `INSERT INTO messages (id, room_id, created_at, author, content) VALUES ($1, $2, $3, $4, $5)`
+	const query string = `INSERT INTO messages (id, room_id, created_at, author, content) VALUES ($1, $2, $3, auth.uid(), $4)`
 	if _, err := p.pool.Exec(ctx, query,
 		message.Id,
 		message.RoomId,
 		message.CreatedAt,
-		message.Author,
 		message.Content,
 	); err != nil {
 		return err

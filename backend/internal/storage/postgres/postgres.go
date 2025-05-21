@@ -40,6 +40,7 @@ func New(cfg *Config) *Postgres {
 			"failed to ping database",
 			slog.String("err", err.Error()),
 		)
+		os.Exit(1)
 	}
 
 	return &Postgres{

@@ -1,4 +1,4 @@
-dev:
+prod:
     #!/usr/bin/env bash
     cd frontend
     npm run build
@@ -7,6 +7,11 @@ dev:
     cd backend
     go build -o bin/server cmd/server/main.go
     ./bin/server
+
+frontend-dev:
+    #!/usr/bin/env bash
+    cd frontend
+    npm run dev
 
 backend-dev:
     #!/usr/bin/env bash

@@ -2,8 +2,11 @@ package hub
 
 import (
 	"context"
+	"go-chat/internal/models"
 	"go-chat/internal/storage"
 	"go-chat/internal/types"
+	"log/slog"
+	"time"
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/google/uuid"
@@ -90,6 +93,25 @@ func (h *Hub) handleActiveRoom(roomId uuid.UUID, ar *activeRoom) {
 					// 	slog.String("ip", client.Conn.IP()),
 					// 	slog.String("error", err.Error()),
 					// )
+				}
+
+				messageId, err := uuid.NewRandom()
+				if err != nil {
+					slog.Error(
+						"error generating message id",
+						slog.String("error", err.Error()),
+					)
+
+					continue
+				}
+
+				if err := h.storage.CreateMessage(context.TODO(), models.Message{
+					Id:        messageId,
+					RoomId:    roomId,
+					CreatedAt: time.Now(),
+					Content:   string(message),
+				}); err != nil {
+
 				}
 			}
 		case client := <-ar.join:

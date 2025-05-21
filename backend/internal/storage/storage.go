@@ -10,6 +10,8 @@ import (
 type Storage interface {
 	// rooms
 	CreateRoom(ctx context.Context, room models.Room, members []uuid.UUID) error
+	GetRoomsByUserId(ctx context.Context, userId uuid.UUID) ([]models.Room, error)
+	DeleteRoomById(ctx context.Context, roomId uuid.UUID) error
 
 	// messages
 	CreateMessage(ctx context.Context, message models.Message) error

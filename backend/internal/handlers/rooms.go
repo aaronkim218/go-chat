@@ -26,8 +26,13 @@ func (s *Service) CreateRoom(c *fiber.Ctx) error {
 		return xerrors.InvalidJSON()
 	}
 
+	roomId, err := uuid.NewRandom()
+	if err != nil {
+		return xerrors.InternalServerError()
+	}
+
 	var room models.Room = models.Room{
-		Id:   uuid.New(),
+		Id:   roomId,
 		Host: req.Host,
 	}
 
@@ -35,7 +40,7 @@ func (s *Service) CreateRoom(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.Status(http.StatusOK).JSON(room)
+	return c.Status(http.StatusCreated).JSON(room)
 }
 
 func (s *Service) GetMessagesByRoom(c *fiber.Ctx) error {
@@ -82,6 +87,37 @@ func (s *Service) AddUsersToRoom(c *fiber.Ctx) error {
 	}
 
 	return c.SendStatus(http.StatusCreated)
+}
+
+func (s *Service) GetRoomsByUserId(c *fiber.Ctx) error {
+	userId := c.Query("userId")
+
+	uuidUserId, err := uuid.Parse(userId)
+	if err != nil {
+		return xerrors.BadRequestError(fmt.Sprintf("invalid user id: %s", userId))
+	}
+
+	rooms, err := s.storage.GetRoomsByUserId(c.Context(), uuidUserId)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(http.StatusOK).JSON(rooms)
+}
+
+func (s *Service) DeleteRoom(c *fiber.Ctx) error {
+	roomId := c.Params("roomId")
+
+	uuidRoomId, err := uuid.Parse(roomId)
+	if err != nil {
+		return xerrors.BadRequestError(fmt.Sprintf("invalid user id: %s", roomId))
+	}
+
+	if err := s.storage.DeleteRoomById(c.Context(), uuidRoomId); err != nil {
+		return err
+	}
+
+	return c.SendStatus(http.StatusNoContent)
 }
 
 func (s *Service) JoinRoom(conn *websocket.Conn) {

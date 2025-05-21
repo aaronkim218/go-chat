@@ -10,7 +10,7 @@ import (
 )
 
 type HTTPError struct {
-	StatusCode int `json:"statusCode"`
+	StatusCode int `json:"status_code"`
 	Message    any `json:"message"`
 }
 
@@ -43,9 +43,13 @@ func InvalidJSON() HTTPError {
 
 func ErrorHandler(c *fiber.Ctx, err error) error {
 	var httpErr HTTPError
-	if castedErr, ok := err.(HTTPError); ok {
-		httpErr = castedErr
-	} else {
+
+	switch e := err.(type) {
+	case HTTPError:
+		httpErr = e
+	case *fiber.Error:
+		httpErr = NewHTTPError(e.Code, errors.New(e.Message))
+	default:
 		httpErr = InternalServerError()
 	}
 

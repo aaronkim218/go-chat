@@ -8,7 +8,9 @@ import (
 func (s *Service) RegisterRoutes(app *fiber.App) {
 	app.Route("/api", func(api fiber.Router) {
 		api.Route("/rooms", func(rooms fiber.Router) {
+			rooms.Get("/", s.GetRoomsByUserId)
 			rooms.Post("/", s.CreateRoom)
+			rooms.Delete("/:roomId", s.DeleteRoom)
 			rooms.Get("/:roomId/messages", s.GetMessagesByRoom)
 			rooms.Post("/:roomId/users", s.AddUsersToRoom)
 			rooms.Get("/:roomId/ws", websocket.New(s.JoinRoom))
