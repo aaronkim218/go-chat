@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/gofiber/contrib/websocket"
 	"github.com/google/uuid"
 )
 
@@ -69,10 +68,10 @@ func (h *Hub) run() {
 			if len(h.activeRooms[roomId].clients) == 0 {
 				h.activeRooms[roomId].cancel()
 				delete(h.activeRooms, roomId)
-				// slog.Info(
-				// 	"deleted active room",
-				// 	slog.String("room_id", roomId.String()),
-				// )
+				slog.Info(
+					"deleted active room",
+					slog.String("room_id", roomId.String()),
+				)
 			}
 		}
 	}
@@ -84,34 +83,41 @@ func (h *Hub) handleActiveRoom(roomId uuid.UUID, ar *activeRoom) {
 		case <-ar.ctx.Done():
 			return
 		case message := <-ar.broadcast:
+			messageId, err := uuid.NewRandom()
+			if err != nil {
+				slog.Error(
+					"error generating message id",
+					slog.String("error", err.Error()),
+				)
+
+				continue
+			}
+
+			newMessage := models.Message{
+				Id:        messageId,
+				RoomId:    roomId,
+				CreatedAt: time.Now(),
+				Content:   string(message),
+			}
+
+			if err := h.storage.CreateMessage(context.TODO(), newMessage); err != nil {
+				slog.Error(
+					"error creating message in storage",
+					slog.String("error", err.Error()),
+				)
+
+				continue
+			}
+
 			for client := range ar.clients {
-				if err := client.Conn.WriteMessage(websocket.TextMessage, message); err != nil {
+				if err := client.Conn.WriteJSON(newMessage); err != nil {
 					client.Conn.Close()
 
-					// slog.Info(
-					// 	"error writing message to client. closed connection",
-					// 	slog.String("ip", client.Conn.IP()),
-					// 	slog.String("error", err.Error()),
-					// )
-				}
-
-				messageId, err := uuid.NewRandom()
-				if err != nil {
-					slog.Error(
-						"error generating message id",
+					slog.Info(
+						"error writing message to client. closed connection",
+						slog.String("ip", client.Conn.IP()),
 						slog.String("error", err.Error()),
 					)
-
-					continue
-				}
-
-				if err := h.storage.CreateMessage(context.TODO(), models.Message{
-					Id:        messageId,
-					RoomId:    roomId,
-					CreatedAt: time.Now(),
-					Content:   string(message),
-				}); err != nil {
-
 				}
 			}
 		case client := <-ar.join:
@@ -120,11 +126,11 @@ func (h *Hub) handleActiveRoom(roomId uuid.UUID, ar *activeRoom) {
 		case client := <-ar.leave:
 			client.Cancel()
 			delete(ar.clients, client)
-			// slog.Info(
-			// 	"deleted client from active room",
-			// 	slog.String("ip", client.Conn.IP()),
-			// 	slog.String("room_id", roomId.String()),
-			// )
+			slog.Info(
+				"deleted client from active room",
+				slog.String("ip", client.Conn.IP()),
+				slog.String("room_id", roomId.String()),
+			)
 			if len(ar.clients) == 0 {
 				h.deleteRoom <- roomId
 			}

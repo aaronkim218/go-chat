@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Message } from "../types";
+import { getMessagesByRoomId } from "../api";
 
 const Chat = () => {
   const { roomId } = useParams();
@@ -19,18 +20,35 @@ const Chat = () => {
       `${import.meta.env.VITE_WEBSOCKET_URL}/rooms/${roomId}/ws`
     );
 
-    ws.current.onmessage = (event) => {
-      console.log("Message received:", event.data);
+    ws.current.onopen = () => {
+      console.log("connected to websocket");
     };
 
-    const fetchMessages = () => {};
+    ws.current.onmessage = (event) => {
+      const message = JSON.parse(event.data) as Message;
+      console.log("Message received:", message);
+      setMessages((prev) => [...prev, message]);
+    };
+
+    const fetchMessages = async () => {
+      try {
+        const msgs = await getMessagesByRoomId(roomId);
+        setMessages(msgs);
+      } catch (error) {
+        console.error("error getting messages for room:", error);
+      }
+    };
 
     fetchMessages();
+
+    return () => {
+      ws.current?.close();
+    };
   }, []);
 
   const handleSendMessage = () => {
     if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({ content: newMessage }));
+      ws.current.send(newMessage);
       setNewMessage("");
     }
   };

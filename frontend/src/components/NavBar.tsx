@@ -24,6 +24,7 @@ const NavBar = () => {
   return session?.user.email ? (
     <div>
       <p>Welcome, {session.user.email}</p>
+      <button onClick={() => navigate("/rooms")}>Rooms</button>
       <button onClick={() => handleLogout()}>Logout</button>
       <p>{authErr && <p>Error: {authErr.message}</p>}</p>
     </div>
