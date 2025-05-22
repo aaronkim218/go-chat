@@ -10,6 +10,7 @@ import (
 
 func (p *Postgres) CreateMessage(ctx context.Context, message models.Message) error {
 	const query string = `INSERT INTO messages (id, room_id, created_at, author, content) VALUES ($1, $2, $3, auth.uid(), $4)`
+	// TODO: remove all usage of auth.uid() - its for RLS. i will be manually handling authorization with the user id i get from the jwt
 	if _, err := p.pool.Exec(ctx, query,
 		message.Id,
 		message.RoomId,

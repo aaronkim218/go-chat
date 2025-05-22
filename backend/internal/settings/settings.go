@@ -5,6 +5,7 @@ import "github.com/caarlos0/env/v11"
 type Settings struct {
 	Storage Storage `envPrefix:"STORAGE_"`
 	Server  Server  `envPrefix:"SERVER_"`
+	Jwt     Jwt     `envPrefix:"JWT_"`
 }
 
 func Load() (Settings, error) {

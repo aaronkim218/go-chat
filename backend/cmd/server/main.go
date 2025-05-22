@@ -34,8 +34,9 @@ func main() {
 	})
 
 	app := server.New(&server.Config{
-		Storage: postgres,
-		Hub:     hub,
+		Storage:   postgres,
+		Hub:       hub,
+		JwtSecret: settings.Jwt.Secret,
 	})
 
 	go func() {

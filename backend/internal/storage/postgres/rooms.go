@@ -84,6 +84,7 @@ func (p *Postgres) GetRoomsByUserId(ctx context.Context, userId uuid.UUID) ([]mo
 func (p *Postgres) DeleteRoomById(ctx context.Context, roomId uuid.UUID) error {
 	const query string = `DELETE FROM rooms WHERE id = $1`
 	// const query string = `DELETE FROM rooms WHERE id = ? AND host = auth.UID()`
+	// TODO: remove all usage of auth.uid() - its for RLS. i will be manually handling authorization with the user id i get from the jwt
 	if _, err := p.pool.Exec(ctx, query, roomId); err != nil {
 		return err
 	}

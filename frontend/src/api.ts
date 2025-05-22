@@ -3,6 +3,17 @@ import { Message, Room } from "./types";
 
 const BASE_URL = import.meta.env.VITE_SERVER_URL;
 
+axios.interceptors.request.use((config) => {
+  const token = localStorage.getItem(
+    import.meta.env.VITE_JWT_LOCAL_STORAGE_KEY
+  );
+  if (token) {
+    const tokenJson = JSON.parse(token);
+    config.headers.Authorization = `Bearer ${tokenJson.access_token}`;
+  }
+  return config;
+});
+
 export const getRoomsByUserId = async (userId: string): Promise<Room[]> => {
   const res = await axios.get(`${BASE_URL}/rooms?userId=${userId}`);
 

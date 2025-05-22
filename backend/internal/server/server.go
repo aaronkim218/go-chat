@@ -5,6 +5,7 @@ import (
 	"go-chat/internal/hub"
 	"go-chat/internal/storage"
 	"go-chat/internal/xerrors"
+	"log/slog"
 	"net/http"
 
 	go_json "github.com/goccy/go-json"
@@ -16,8 +17,9 @@ import (
 )
 
 type Config struct {
-	Storage storage.Storage
-	Hub     *hub.Hub
+	Storage   storage.Storage
+	Hub       *hub.Hub
+	JwtSecret string
 }
 
 func New(cfg *Config) *fiber.App {
@@ -25,8 +27,9 @@ func New(cfg *Config) *fiber.App {
 	setupStatic(app)
 
 	service := handlers.NewService(&handlers.ServiceConfig{
-		Storage: cfg.Storage,
-		Hub:     cfg.Hub,
+		Storage:   cfg.Storage,
+		Hub:       cfg.Hub,
+		JwtSecret: cfg.JwtSecret,
 	})
 	setupMiddleware(app)
 	setupHealthcheck(app)
@@ -64,7 +67,10 @@ func redirectMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		path := c.Path()
 
-		if path != "/" && !isApiPath(path) {
+		if path != "/" && !isApiOrWsPath(path) {
+			slog.Info("redirecting to /",
+				slog.String("original path", path),
+			)
 			return c.Redirect("/", http.StatusFound)
 		}
 
@@ -72,6 +78,6 @@ func redirectMiddleware() fiber.Handler {
 	}
 }
 
-func isApiPath(path string) bool {
-	return len(path) >= 4 && path[:4] == "/api"
+func isApiOrWsPath(path string) bool {
+	return (len(path) >= 4 && path[:4] == "/api") || (len(path) >= 3 && path[:3] == "/ws")
 }

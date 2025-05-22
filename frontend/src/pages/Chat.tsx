@@ -19,7 +19,7 @@ const Chat = () => {
     }
 
     ws.current = new WebSocket(
-      `${import.meta.env.VITE_WEBSOCKET_URL}/rooms/${roomId}/ws`
+      `${import.meta.env.VITE_WEBSOCKET_URL}/rooms/${roomId}`
     );
 
     ws.current.onopen = () => {

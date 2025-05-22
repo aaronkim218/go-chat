@@ -6,18 +6,21 @@ import (
 )
 
 type Service struct {
-	storage storage.Storage
-	hub     *hub.Hub
+	storage   storage.Storage
+	hub       *hub.Hub
+	jwtSecret string
 }
 
 type ServiceConfig struct {
-	Storage storage.Storage
-	Hub     *hub.Hub
+	Storage   storage.Storage
+	Hub       *hub.Hub
+	JwtSecret string
 }
 
 func NewService(cfg *ServiceConfig) *Service {
 	return &Service{
-		storage: cfg.Storage,
-		hub:     cfg.Hub,
+		storage:   cfg.Storage,
+		hub:       cfg.Hub,
+		jwtSecret: cfg.JwtSecret,
 	}
 }

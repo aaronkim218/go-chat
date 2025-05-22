@@ -17,3 +17,12 @@ backend-dev:
     #!/usr/bin/env bash
     cd backend
     go run cmd/server/main.go
+
+db-start:
+    supabase start
+
+db-stop:
+    supabase stop
+
+db-reset:
+    supabase db reset
