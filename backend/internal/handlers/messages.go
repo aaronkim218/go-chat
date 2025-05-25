@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"go-chat/internal/middleware"
 	"go-chat/internal/xerrors"
 	"net/http"
 
@@ -10,6 +11,11 @@ import (
 )
 
 func (s *Service) DeleteMessageById(c *fiber.Ctx) error {
+	userId, err := middleware.GetUserId(c)
+	if err != nil {
+		return err
+	}
+
 	messageId := c.Params("messageId")
 
 	uuidMessageId, err := uuid.Parse(messageId)
@@ -17,7 +23,7 @@ func (s *Service) DeleteMessageById(c *fiber.Ctx) error {
 		return xerrors.BadRequestError(fmt.Sprintf("invalid user id: %s", messageId))
 	}
 
-	if err := s.storage.DeleteMessageById(c.Context(), uuidMessageId); err != nil {
+	if err := s.storage.DeleteMessageById(c.Context(), uuidMessageId, userId); err != nil {
 		return err
 	}
 

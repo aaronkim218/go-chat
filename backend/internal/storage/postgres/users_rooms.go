@@ -46,3 +46,18 @@ func (p *Postgres) AddUsersToRoom(ctx context.Context, userIds []uuid.UUID, room
 
 	return nil
 }
+
+func (p *Postgres) CheckUserInRoom(ctx context.Context, roomId uuid.UUID, userId uuid.UUID) (bool, error) {
+	const query string = `SELECT 1 FROM users_rooms WHERE user_id = $1 AND room_id = $2`
+
+	var exists int
+	if err := p.pool.QueryRow(ctx, query, userId, roomId).Scan(&exists); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return true, nil
+}

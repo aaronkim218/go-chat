@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"go-chat/internal/middleware"
+
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
@@ -14,6 +16,7 @@ func (s *Service) RegisterRoutes(app *fiber.App) {
 				Key:    []byte(s.jwtSecret),
 			},
 		}))
+		api.Use(middleware.SetUserId())
 
 		api.Route("/rooms", func(rooms fiber.Router) {
 			rooms.Get("/", s.GetRoomsByUserId)

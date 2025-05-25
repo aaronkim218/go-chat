@@ -4,11 +4,18 @@ import (
 	"context"
 	"go-chat/internal/types"
 	"log/slog"
+
+	"github.com/google/uuid"
 )
+
+type broadcastMessage struct {
+	UserId  uuid.UUID
+	Message []byte
+}
 
 type activeRoom struct {
 	clients   map[*types.Client]struct{}
-	broadcast chan []byte
+	broadcast chan broadcastMessage
 	join      chan *types.Client
 	leave     chan *types.Client
 	ctx       context.Context
@@ -34,7 +41,10 @@ func (ar *activeRoom) handleClient(client *types.Client) {
 		select {
 		case <-ar.ctx.Done():
 			return
-		case ar.broadcast <- msg:
+		case ar.broadcast <- broadcastMessage{
+			UserId:  client.UserId,
+			Message: msg,
+		}:
 		}
 	}
 }

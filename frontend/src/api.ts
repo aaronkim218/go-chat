@@ -1,21 +1,19 @@
 import axios from "axios";
 import { Message, Room } from "./types";
+import { getJwt } from "./utils/jwt";
 
 const BASE_URL = import.meta.env.VITE_SERVER_URL;
 
 axios.interceptors.request.use((config) => {
-  const token = localStorage.getItem(
-    import.meta.env.VITE_JWT_LOCAL_STORAGE_KEY
-  );
-  if (token) {
-    const tokenJson = JSON.parse(token);
-    config.headers.Authorization = `Bearer ${tokenJson.access_token}`;
+  const jwt = getJwt();
+  if (jwt) {
+    config.headers.Authorization = `Bearer ${jwt}`;
   }
   return config;
 });
 
-export const getRoomsByUserId = async (userId: string): Promise<Room[]> => {
-  const res = await axios.get(`${BASE_URL}/rooms?userId=${userId}`);
+export const getRoomsByUserId = async (): Promise<Room[]> => {
+  const res = await axios.get(`${BASE_URL}/rooms`);
 
   if (res.status !== 200) {
     throw new Error("failed to fetch rooms");

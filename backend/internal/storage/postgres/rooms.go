@@ -35,7 +35,9 @@ func (p *Postgres) CreateRoom(ctx context.Context, room models.Room, members []u
 	for range batch.Len() {
 		if _, err := results.Exec(); err != nil {
 			if xerrors.IsForeignKeyViolation(err, constants.RoomsHostFKeyConstraint) {
-				return xerrors.NotFoundError("user", "id", room.Host.String())
+				return xerrors.NotFoundError("user", map[string]string{
+					"id": room.Host.String(),
+				})
 			}
 
 			joinedErr = errors.Join(joinedErr, err)
@@ -81,12 +83,18 @@ func (p *Postgres) GetRoomsByUserId(ctx context.Context, userId uuid.UUID) ([]mo
 	return rooms, nil
 }
 
-func (p *Postgres) DeleteRoomById(ctx context.Context, roomId uuid.UUID) error {
-	const query string = `DELETE FROM rooms WHERE id = $1`
-	// const query string = `DELETE FROM rooms WHERE id = ? AND host = auth.UID()`
-	// TODO: remove all usage of auth.uid() - its for RLS. i will be manually handling authorization with the user id i get from the jwt
-	if _, err := p.pool.Exec(ctx, query, roomId); err != nil {
+func (p *Postgres) DeleteRoomById(ctx context.Context, roomId uuid.UUID, userId uuid.UUID) error {
+	const query string = `DELETE FROM rooms WHERE id = $1 AND host = $2`
+	ct, err := p.pool.Exec(ctx, query, roomId, userId)
+	if err != nil {
 		return err
+	}
+
+	if ct.RowsAffected() == 0 {
+		return xerrors.NotFoundError("room", map[string]string{
+			"id":   roomId.String(),
+			"host": userId.String(),
+		})
 	}
 
 	return nil

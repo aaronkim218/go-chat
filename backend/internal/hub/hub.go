@@ -53,7 +53,7 @@ func (h *Hub) run() {
 				ctx, cancel := context.WithCancel(context.TODO())
 				ar = &activeRoom{
 					clients:   make(map[*types.Client]struct{}),
-					broadcast: make(chan []byte),
+					broadcast: make(chan broadcastMessage),
 					join:      make(chan *types.Client),
 					leave:     make(chan *types.Client),
 					ctx:       ctx,
@@ -82,7 +82,7 @@ func (h *Hub) handleActiveRoom(roomId uuid.UUID, ar *activeRoom) {
 		select {
 		case <-ar.ctx.Done():
 			return
-		case message := <-ar.broadcast:
+		case broadcastMessage := <-ar.broadcast:
 			messageId, err := uuid.NewRandom()
 			if err != nil {
 				slog.Error(
@@ -93,14 +93,15 @@ func (h *Hub) handleActiveRoom(roomId uuid.UUID, ar *activeRoom) {
 				continue
 			}
 
-			newMessage := models.Message{
+			message := models.Message{
 				Id:        messageId,
 				RoomId:    roomId,
 				CreatedAt: time.Now(),
-				Content:   string(message),
+				Author:    broadcastMessage.UserId,
+				Content:   string(broadcastMessage.Message),
 			}
 
-			if err := h.storage.CreateMessage(context.TODO(), newMessage); err != nil {
+			if err := h.storage.CreateMessage(context.TODO(), message); err != nil {
 				slog.Error(
 					"error creating message in storage",
 					slog.String("error", err.Error()),
@@ -110,7 +111,7 @@ func (h *Hub) handleActiveRoom(roomId uuid.UUID, ar *activeRoom) {
 			}
 
 			for client := range ar.clients {
-				if err := client.Conn.WriteJSON(newMessage); err != nil {
+				if err := client.Conn.WriteJSON(message); err != nil {
 					client.Conn.Close()
 
 					slog.Info(

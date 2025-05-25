@@ -12,7 +12,7 @@ const Rooms = () => {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const response = await getRoomsByUserId(session.user.id);
+        const response = await getRoomsByUserId();
         setRooms(response);
       } catch (error) {
         console.error("error getting rooms by user id:", error);

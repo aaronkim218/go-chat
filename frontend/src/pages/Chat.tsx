@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Message } from "../types";
 import { deleteMessageById, getMessagesByRoomId } from "../api";
 import useSessionContext from "../hooks/useSessionContext";
+import { getJwt } from "../utils/jwt";
 
 const Chat = () => {
   const { roomId } = useParams();
@@ -11,6 +12,7 @@ const Chat = () => {
   const [newMessage, setNewMessage] = useState("");
   const ws = useRef<WebSocket | null>(null);
   const session = useSessionContext();
+  const [retries, setRetries] = useState(0);
 
   useEffect(() => {
     if (!roomId) {
@@ -24,6 +26,14 @@ const Chat = () => {
 
     ws.current.onopen = () => {
       console.log("connected to websocket");
+      const jwt = getJwt();
+      if (!jwt) {
+        navigate("/");
+        return;
+      }
+      if (ws.current?.readyState === WebSocket.OPEN) {
+        ws.current.send(jwt);
+      }
     };
 
     ws.current.onmessage = (event) => {

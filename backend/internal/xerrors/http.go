@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -33,12 +34,16 @@ func BadRequestError(message string) HTTPError {
 	return NewHTTPError(http.StatusBadRequest, errors.New(message))
 }
 
-func UnauthorizedError() HTTPError {
-	return NewHTTPError(http.StatusUnauthorized, errors.New("unauthorized"))
+func ForbiddenError() HTTPError {
+	return NewHTTPError(http.StatusForbidden, errors.New("forbidden"))
 }
 
-func NotFoundError(entity string, key string, value string) HTTPError {
-	return NewHTTPError(http.StatusNotFound, fmt.Errorf("%s with %s=%s not found", entity, key, value))
+func NotFoundError(entity string, args map[string]string) HTTPError {
+	var parts []string
+	for k, v := range args {
+		parts = append(parts, fmt.Sprintf("%s=%s", k, v))
+	}
+	return NewHTTPError(http.StatusNotFound, fmt.Errorf("%s with %s not found", entity, strings.Join(parts, ", ")))
 }
 
 func InvalidJSON() HTTPError {
