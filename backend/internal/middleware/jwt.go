@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"go-chat/internal/constants"
 	"go-chat/internal/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -13,7 +14,7 @@ type userIdKey struct{}
 
 func SetUserId() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		token, ok := c.Locals("user").(*jwt.Token)
+		token, ok := c.Locals(constants.TokenKey).(*jwt.Token)
 		if !ok {
 			return fmt.Errorf("failed to retrieve token from fiber context locals")
 		}

@@ -1,5 +1,5 @@
 package constants
 
 const (
-	RoomsHostFKeyConstraint = "rooms_host_fkey"
+	RoomsHostFKeyConstraint string = "rooms_host_fkey"
 )
