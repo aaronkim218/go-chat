@@ -34,10 +34,6 @@ func BadRequestError(message string) HTTPError {
 	return NewHTTPError(http.StatusBadRequest, errors.New(message))
 }
 
-func ForbiddenError() HTTPError {
-	return NewHTTPError(http.StatusForbidden, errors.New("forbidden"))
-}
-
 func NotFoundError(entity string, args map[string]string) HTTPError {
 	var parts []string
 	for k, v := range args {

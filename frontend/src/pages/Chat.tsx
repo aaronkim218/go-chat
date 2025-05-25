@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Message } from "../types";
-import { deleteMessageById, getMessagesByRoomId } from "../api";
+import { addUsersToRoom, deleteMessageById, getMessagesByRoomId } from "../api";
 import useSessionContext from "../hooks/useSessionContext";
 import { getJwt } from "../utils/jwt";
 
@@ -13,6 +13,8 @@ const Chat = () => {
   const ws = useRef<WebSocket | null>(null);
   const session = useSessionContext();
   const [retries, setRetries] = useState(0);
+  const [newUsers, setNewUsers] = useState<string[]>([]);
+  const [newUser, setNewUser] = useState<string>("");
 
   useEffect(() => {
     if (!roomId) {
@@ -58,57 +60,104 @@ const Chat = () => {
     };
   }, []);
 
-  const handleSendMessage = () => {
-    if (!newMessage) {
-      console.error("cannot send an empty message");
-      return;
-    }
+  if (roomId) {
+    const handleSendMessage = () => {
+      if (!newMessage) {
+        console.error("cannot send an empty message");
+        return;
+      }
 
-    if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(newMessage);
-      setNewMessage("");
-    }
-  };
+      if (ws.current?.readyState === WebSocket.OPEN) {
+        ws.current.send(newMessage);
+        setNewMessage("");
+      }
+    };
 
-  const handleDeleteMessage = async (messageId: string) => {
-    try {
-      await deleteMessageById(messageId);
-      setMessages((prev) => prev.filter((message) => message.id !== messageId));
-    } catch (error) {
-      console.error("error deleting message:", error);
-    }
-  };
+    const handleDeleteMessage = async (messageId: string) => {
+      try {
+        await deleteMessageById(messageId);
+        setMessages((prev) =>
+          prev.filter((message) => message.id !== messageId)
+        );
+      } catch (error) {
+        console.error("error deleting message:", error);
+      }
+    };
 
-  return (
-    <div>
-      <h1>Chat</h1>
+    const handleAddUsersToRoom = async () => {
+      try {
+        await addUsersToRoom(roomId, newUsers);
+      } catch (error) {
+        console.error("error adding users to room:", error);
+      }
+    };
+
+    return (
       <div>
-        {messages.map((message) => (
-          <div key={message.id}>
-            <p>
-              {message.author}: {message.content}
-            </p>
-            <button onClick={() => handleDeleteMessage(message.id)}>
-              Delete
-            </button>
-            {/* {message.author === session.user.id && (
-              <button onClick={() => handleDeleteMessage(message.id)}>
-                Delete
-              </button>
-            )} */}
-          </div>
-        ))}
+        <h1>Chat</h1>
+        <div>
+          <h2>Add new users</h2>
+          <input
+            type="text"
+            placeholder="Type a message..."
+            onChange={(e) => setNewUser(e.target.value)}
+          />
+          <button
+            onClick={() => {
+              setNewUsers((prev) => [...prev, newUser]);
+              setNewUser("");
+            }}
+          >
+            Add user to list
+          </button>
+          <button onClick={() => handleAddUsersToRoom()}>Submit users</button>
+          <ul>
+            {newUsers.map((user, index) => (
+              <li key={index}>
+                {user}
+                <button
+                  onClick={() =>
+                    setNewUsers((prev) => prev.filter((u) => u !== user))
+                  }
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          {messages.map((message) => (
+            <div key={message.id}>
+              <p>
+                {message.author}: {message.content}
+              </p>
+              {message.author === session.user.id && (
+                <button onClick={() => handleDeleteMessage(message.id)}>
+                  Delete
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        <div>
+          <input
+            type="text"
+            placeholder="Type a message..."
+            onChange={(e) => setNewMessage(e.target.value)}
+          />
+          <button onClick={() => handleSendMessage()}>Send</button>
+        </div>
       </div>
+    );
+  } else {
+    return (
       <div>
-        <input
-          type="text"
-          placeholder="Type a message..."
-          onChange={(e) => setNewMessage(e.target.value)}
-        />
-        <button onClick={() => handleSendMessage()}>Send</button>
+        <h1>Chat</h1>
+        <p>No room selected</p>
       </div>
-    </div>
-  );
+    );
+  }
 };
 
 export default Chat;

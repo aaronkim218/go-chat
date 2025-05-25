@@ -59,3 +59,16 @@ export const getMessagesByRoomId = async (
 
   return res.data;
 };
+
+export const addUsersToRoom = async (
+  roomId: string,
+  userIds: string[]
+): Promise<void> => {
+  const res = await axios.post(`${BASE_URL}/rooms/${roomId}/users`, {
+    user_ids: userIds,
+  });
+
+  if (res.status !== 201) {
+    throw new Error(`failed to add users to room`);
+  }
+};
