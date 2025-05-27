@@ -24,7 +24,10 @@ func (s *Service) RegisterRoutes(app *fiber.App) {
 			rooms.Delete("/:roomId", s.DeleteRoom)
 			rooms.Get("/:roomId/messages", s.GetMessagesByRoom)
 			rooms.Post("/:roomId/users", s.AddUsersToRoom)
-			// rooms.Get("/:roomId/ws", websocket.New(s.JoinRoom))
+		})
+
+		api.Route("/profiles", func(profiles fiber.Router) {
+			profiles.Get("/", s.GetProfileByUserId)
 		})
 
 		api.Route("/messages", func(messages fiber.Router) {

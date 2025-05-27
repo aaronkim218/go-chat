@@ -10,3 +10,7 @@ export interface Message {
   author: string;
   content: string;
 }
+
+export interface Profile {
+  userId: string;
+}

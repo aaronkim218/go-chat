@@ -1,51 +1,26 @@
-import { AuthError, Session } from "@supabase/supabase-js";
-import { useEffect, useState } from "react";
+import { AuthError } from "@supabase/supabase-js";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import supabase from "../utils/supabase";
+import { useAuthContext } from "../contexts/auth";
 
-const Auth: React.FC<{
-  onSessionChange: (session: Session | null) => void;
-}> = ({ onSessionChange }) => {
+const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<AuthError | null>(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      onSessionChange(session);
-
-      if (session) {
-        navigate("/rooms");
-        return;
-      } else {
-        navigate("/");
-        return;
-      }
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      onSessionChange(session);
-
-      if (session) {
-        navigate("/rooms");
-        return;
-      } else {
-        navigate("/");
-        return;
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const { loading } = useAuthContext();
 
   const handleSignUp = async () => {
     const { error } = await supabase.auth.signUp({
       email: email,
       password: password,
     });
+
+    if (!error) {
+      navigate("/home");
+      return;
+    }
 
     setError(error);
   };
@@ -56,10 +31,17 @@ const Auth: React.FC<{
       password: password,
     });
 
+    if (!error) {
+      navigate("/home");
+      return;
+    }
+
     setError(error);
   };
 
-  return (
+  return loading ? (
+    <div>Loading...</div>
+  ) : (
     <div>
       <input placeholder="email" onChange={(e) => setEmail(e.target.value)} />
       <input
@@ -73,4 +55,4 @@ const Auth: React.FC<{
   );
 };
 
-export default Auth;
+export default AuthPage;

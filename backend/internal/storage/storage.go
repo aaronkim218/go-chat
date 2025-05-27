@@ -21,4 +21,7 @@ type Storage interface {
 	// users_rooms
 	AddUsersToRoom(ctx context.Context, userIds []uuid.UUID, roomId uuid.UUID) error
 	CheckUserInRoom(ctx context.Context, roomId uuid.UUID, userId uuid.UUID) (bool, error)
+
+	// profiles
+	GetProfileByUserId(ctx context.Context, userId uuid.UUID) (models.Profile, error)
 }

@@ -2,16 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Message } from "../types";
 import { addUsersToRoom, deleteMessageById, getMessagesByRoomId } from "../api";
-import useSessionContext from "../hooks/useSessionContext";
 import { getJwt } from "../utils/jwt";
+import { useRequireAuth } from "../hooks/useRequireAuth";
 
-const Chat = () => {
+const ChatPage = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const ws = useRef<WebSocket | null>(null);
-  const session = useSessionContext();
+  const { session } = useRequireAuth();
   const [retries, setRetries] = useState(0);
   const [newUsers, setNewUsers] = useState<string[]>([]);
   const [newUser, setNewUser] = useState<string>("");
@@ -40,7 +40,6 @@ const Chat = () => {
 
     ws.current.onmessage = (event) => {
       const message = JSON.parse(event.data) as Message;
-      console.log("Message received:", message);
       setMessages((prev) => [...prev, message]);
     };
 
@@ -160,4 +159,4 @@ const Chat = () => {
   }
 };
 
-export default Chat;
+export default ChatPage;

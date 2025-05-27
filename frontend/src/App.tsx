@@ -1,48 +1,36 @@
 import "./App.css";
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-  Outlet,
-} from "react-router-dom";
-import Chat from "./pages/Chat";
-import NotFound from "./pages/NotFound";
-import Auth from "./pages/Auth";
-import { Session } from "@supabase/supabase-js";
-import SessionContext from "./contexts/session";
-import { useState } from "react";
-import NavBar from "./components/NavBar";
-import Rooms from "./pages/Rooms";
-
-const ProtectedRoute = ({ session }: { session: Session | null }) => {
-  if (!session) {
-    return <Navigate to="/" />;
-  }
-
-  return (
-    <SessionContext.Provider value={session}>
-      <NavBar />
-      <Outlet />
-    </SessionContext.Provider>
-  );
-};
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ChatPage from "./pages/ChatPage";
+import NotFoundPage from "./pages/NotFoundPage";
+import AuthPage from "./pages/AuthPage";
+import RoomsPage from "./pages/RoomsPage";
+import ProfilePage from "./pages/ProfilePage";
+import HomePage from "./pages/HomePage";
+import RequireAuth from "./guards/RequireAuth";
+import { SessionProvider } from "./contexts/auth";
+import AuthLayout from "./layouts/AuthLayout";
+import LandingPage from "./pages/LandingPage";
 
 const App = () => {
-  const [session, setSession] = useState<Session | null>(null);
-
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Auth onSessionChange={setSession} />} />
+      <SessionProvider>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<AuthPage />} />
 
-        <Route element={<ProtectedRoute session={session} />}>
-          <Route path="/chat/:roomId" element={<Chat />} />
-          <Route path="/rooms" element={<Rooms />} />
-        </Route>
+          <Route element={<RequireAuth />}>
+            <Route element={<AuthLayout />}>
+              <Route path="/home" element={<HomePage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/chat/:roomId" element={<ChatPage />} />
+              <Route path="/rooms" element={<RoomsPage />} />
+            </Route>
+          </Route>
 
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </SessionProvider>
     </BrowserRouter>
   );
 };

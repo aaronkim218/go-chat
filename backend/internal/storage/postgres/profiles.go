@@ -1,0 +1,32 @@
+package postgres
+
+import (
+	"context"
+	"errors"
+	"go-chat/internal/models"
+	"go-chat/internal/xerrors"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+)
+
+func (p *Postgres) GetProfileByUserId(ctx context.Context, userId uuid.UUID) (models.Profile, error) {
+	const query string = `SELECT user_id FROM profiles WHERE user_id = $1`
+	rows, err := p.pool.Query(ctx, query, userId)
+	if err != nil {
+		return models.Profile{}, err
+	}
+
+	profile, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.Profile])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return models.Profile{}, xerrors.NotFoundError("profile", map[string]string{
+				"user_id": userId.String(),
+			})
+		}
+
+		return models.Profile{}, err
+	}
+
+	return profile, nil
+}

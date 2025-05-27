@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Room } from "../types";
 import { createRoom, deleteRoom, getRoomsByUserId } from "../api";
-import useSessionContext from "../hooks/useSessionContext";
 import { useNavigate } from "react-router-dom";
+import { useRequireAuth } from "../hooks/useRequireAuth";
 
-const Rooms = () => {
+const RoomsPage = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
-  const session = useSessionContext();
+  const { session } = useRequireAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,7 +24,7 @@ const Rooms = () => {
 
   const handleCreateRoom = async () => {
     try {
-      const newRoom = await createRoom(session.user.id);
+      const newRoom = await createRoom([]);
       setRooms((prev) => [newRoom, ...prev]);
     } catch (error) {
       console.error("error creating room:", error);
@@ -64,4 +64,4 @@ const Rooms = () => {
   );
 };
 
-export default Rooms;
+export default RoomsPage;

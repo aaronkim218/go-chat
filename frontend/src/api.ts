@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Message, Room } from "./types";
+import { Message, Profile, Room } from "./types";
 import { getJwt } from "./utils/jwt";
 
 const BASE_URL = import.meta.env.VITE_SERVER_URL;
@@ -22,11 +22,11 @@ export const getRoomsByUserId = async (): Promise<Room[]> => {
   return res.data;
 };
 
-export const createRoom = async (host: string): Promise<Room> => {
-  const res = await axios.post(`${BASE_URL}/rooms`, { host: host });
+export const createRoom = async (members: string[]): Promise<Room> => {
+  const res = await axios.post(`${BASE_URL}/rooms`, { members: members });
 
   if (res.status !== 201) {
-    throw new Error(`failed to create room with host='${host}'`);
+    throw new Error(`failed to create room'`);
   }
 
   return res.data;
@@ -71,4 +71,14 @@ export const addUsersToRoom = async (
   if (res.status !== 201) {
     throw new Error(`failed to add users to room`);
   }
+};
+
+export const getProfileByUserId = async (): Promise<Profile> => {
+  const res = await axios.get(`${BASE_URL}/profiles`);
+
+  if (res.status !== 200) {
+    throw new Error(`failed to fetch profile for user`);
+  }
+
+  return res.data;
 };
