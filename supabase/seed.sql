@@ -1,11 +1,12 @@
 CREATE TABLE profiles (
     user_id UUID PRIMARY KEY,
+    username VARCHAR(16),
     FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE rooms (
     id UUID PRIMARY KEY,
-    host UUID,
+    host UUID NOT NULL,
     FOREIGN KEY (host) REFERENCES auth.users(id) ON DELETE SET NULL
 );
 
@@ -13,7 +14,7 @@ CREATE TABLE messages (
     id UUID PRIMARY KEY,
     room_id UUID NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
-    author UUID,
+    author UUID NOT NULL,
     content TEXT NOT NULL,
     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
     FOREIGN KEY (author) REFERENCES auth.users(id) ON DELETE SET NULL
@@ -30,7 +31,7 @@ CREATE TABLE users_rooms (
 CREATE FUNCTION handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.profiles (user_id) VALUES (NEW.id);
+  INSERT INTO public.profiles (user_id, username) VALUES (NEW.id, 'default');
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

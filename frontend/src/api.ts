@@ -1,10 +1,13 @@
 import axios from "axios";
 import { Message, Profile, Room } from "./types";
 import { getJwt } from "./utils/jwt";
+import applyCaseMiddleware from "axios-case-converter";
 
 const BASE_URL = import.meta.env.VITE_SERVER_URL;
 
-axios.interceptors.request.use((config) => {
+const baseAxios = axios.create();
+
+baseAxios.interceptors.request.use((config) => {
   const jwt = getJwt();
   if (jwt) {
     config.headers.Authorization = `Bearer ${jwt}`;
@@ -12,8 +15,10 @@ axios.interceptors.request.use((config) => {
   return config;
 });
 
+const client = applyCaseMiddleware(baseAxios);
+
 export const getRoomsByUserId = async (): Promise<Room[]> => {
-  const res = await axios.get(`${BASE_URL}/rooms`);
+  const res = await client.get(`${BASE_URL}/rooms`);
 
   if (res.status !== 200) {
     throw new Error("failed to fetch rooms");
@@ -23,7 +28,7 @@ export const getRoomsByUserId = async (): Promise<Room[]> => {
 };
 
 export const createRoom = async (members: string[]): Promise<Room> => {
-  const res = await axios.post(`${BASE_URL}/rooms`, { members: members });
+  const res = await client.post(`${BASE_URL}/rooms`, { members: members });
 
   if (res.status !== 201) {
     throw new Error(`failed to create room'`);
@@ -33,7 +38,7 @@ export const createRoom = async (members: string[]): Promise<Room> => {
 };
 
 export const deleteRoom = async (roomId: string): Promise<void> => {
-  const res = await axios.delete(`${BASE_URL}/rooms/${roomId}`);
+  const res = await client.delete(`${BASE_URL}/rooms/${roomId}`);
 
   if (res.status !== 204) {
     throw new Error(`failed to delete room with id='${roomId}'`);
@@ -41,7 +46,7 @@ export const deleteRoom = async (roomId: string): Promise<void> => {
 };
 
 export const deleteMessageById = async (messageId: string): Promise<void> => {
-  const res = await axios.delete(`${BASE_URL}/messages/${messageId}`);
+  const res = await client.delete(`${BASE_URL}/messages/${messageId}`);
 
   if (res.status !== 204) {
     throw new Error(`failed to delete message with id='${messageId}'`);
@@ -51,7 +56,7 @@ export const deleteMessageById = async (messageId: string): Promise<void> => {
 export const getMessagesByRoomId = async (
   roomId: string
 ): Promise<Message[]> => {
-  const res = await axios.get(`${BASE_URL}/rooms/${roomId}/messages`);
+  const res = await client.get(`${BASE_URL}/rooms/${roomId}/messages`);
 
   if (res.status !== 200) {
     throw new Error(`failed to fetch messages for room with id='${roomId}'`);
@@ -64,7 +69,7 @@ export const addUsersToRoom = async (
   roomId: string,
   userIds: string[]
 ): Promise<void> => {
-  const res = await axios.post(`${BASE_URL}/rooms/${roomId}/users`, {
+  const res = await client.post(`${BASE_URL}/rooms/${roomId}/users`, {
     user_ids: userIds,
   });
 
@@ -74,11 +79,21 @@ export const addUsersToRoom = async (
 };
 
 export const getProfileByUserId = async (): Promise<Profile> => {
-  const res = await axios.get(`${BASE_URL}/profiles`);
+  const res = await client.get(`${BASE_URL}/profiles`);
 
   if (res.status !== 200) {
     throw new Error(`failed to fetch profile for user`);
   }
 
   return res.data;
+};
+
+export const patchProfileByUserId = async (
+  partialProfile: Partial<Profile>
+): Promise<void> => {
+  const res = await client.patch(`${BASE_URL}/profiles`, partialProfile);
+
+  if (res.status !== 204) {
+    throw new Error(`failed to update profile for user`);
+  }
 };

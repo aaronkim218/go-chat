@@ -28,6 +28,7 @@ func (s *Service) RegisterRoutes(app *fiber.App) {
 
 		api.Route("/profiles", func(profiles fiber.Router) {
 			profiles.Get("/", s.GetProfileByUserId)
+			profiles.Patch("/", s.PatchProfileByUserId)
 		})
 
 		api.Route("/messages", func(messages fiber.Router) {
@@ -35,8 +36,8 @@ func (s *Service) RegisterRoutes(app *fiber.App) {
 		})
 	})
 
-	app.Route("/ws", func(api fiber.Router) {
-		api.Route("/rooms", func(rooms fiber.Router) {
+	app.Route("/ws", func(ws fiber.Router) {
+		ws.Route("/rooms", func(rooms fiber.Router) {
 			rooms.Get("/:roomId", websocket.New(s.JoinRoom))
 		})
 	})

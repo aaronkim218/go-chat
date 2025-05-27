@@ -46,6 +46,13 @@ func InvalidJSON() HTTPError {
 	return NewHTTPError(http.StatusBadRequest, errors.New("invalid JSON request data"))
 }
 
+func UnprocessableEntityError(errors map[string]string) HTTPError {
+	return HTTPError{
+		StatusCode: http.StatusUnprocessableEntity,
+		Message:    errors,
+	}
+}
+
 func ErrorHandler(c *fiber.Ctx, err error) error {
 	var httpErr HTTPError
 
