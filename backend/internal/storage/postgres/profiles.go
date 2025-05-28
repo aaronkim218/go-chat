@@ -3,9 +3,11 @@ package postgres
 import (
 	"context"
 	"errors"
+	"fmt"
 	"go-chat/internal/models"
 	"go-chat/internal/xerrors"
 
+	"github.com/aaronkim218/dynasql"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -32,13 +34,9 @@ func (p *Postgres) GetProfileByUserId(ctx context.Context, userId uuid.UUID) (mo
 }
 
 func (p *Postgres) PatchProfileByUserId(ctx context.Context, profile models.Profile, userId uuid.UUID) error {
-	const query string = `
-	UPDATE profiles
-	SET
-	username = $1
-	WHERE user_id = $2
-	`
-	ct, err := p.pool.Exec(ctx, query, profile.Username, userId)
+	setClause, args := dynasql.GenSetClauseFromFlatStruct(profile)
+	query := fmt.Sprintf("UPDATE profiles %s WHERE user_id = $%d", setClause, len(args)+1)
+	ct, err := p.pool.Exec(ctx, query, append(args, userId)...)
 	if err != nil {
 		return err
 	}

@@ -3,6 +3,7 @@ module go-chat
 go 1.24.1
 
 require (
+	github.com/aaronkim218/dynasql v0.1.1
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/goccy/go-json v0.10.5
 	github.com/gofiber/contrib/jwt v1.1.2
