@@ -1,27 +1,21 @@
 import { useState } from "react";
 import { useRequireAuth } from "../hooks/useRequireAuth";
 import { patchProfileByUserId } from "../api";
-import { Profile } from "../types";
 import { useAuthContext } from "../contexts/auth";
+import { getProfileDiff } from "../utils/profile";
 
 const ProfilePage = () => {
   const { setProfile } = useAuthContext();
   const { profile } = useRequireAuth();
-  const [username, setUsername] = useState(profile.username);
+  const [updatedProfile, setUpdatedProfile] = useState(profile);
 
   const handlePatchProfile = async () => {
     try {
-      const partialProfile: Partial<Profile> = {
-        username: username,
-      };
+      const partialProfile = getProfileDiff(profile, updatedProfile);
       await patchProfileByUserId(partialProfile);
-      const updatedProfile: Profile = {
-        ...profile,
-        username: username,
-      };
       setProfile(updatedProfile);
     } catch (error) {
-      console.error("Failed to update profile:", error);
+      console.error("Failed to patch profile:", error);
     }
   };
 
@@ -31,8 +25,11 @@ const ProfilePage = () => {
       <p>User id: {profile.userId}</p>
       <input
         type="text"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
+        value={updatedProfile.username}
+        onChange={(e) =>
+          setUpdatedProfile({ ...updatedProfile, username: e.target.value })
+        }
+        placeholder="username"
       />
       <button onClick={() => handlePatchProfile()}>Save profile</button>
     </div>
