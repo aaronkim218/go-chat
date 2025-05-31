@@ -12,7 +12,7 @@ const ChatPage = () => {
   const [newMessage, setNewMessage] = useState("");
   const ws = useRef<WebSocket | null>(null);
   const { session } = useRequireAuth();
-  const [retries, setRetries] = useState(0);
+  // const [retries, setRetries] = useState(0);
   const [newUsers, setNewUsers] = useState<string[]>([]);
   const [newUser, setNewUser] = useState<string>("");
 

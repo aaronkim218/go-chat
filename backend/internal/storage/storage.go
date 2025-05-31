@@ -25,4 +25,5 @@ type Storage interface {
 	// profiles
 	GetProfileByUserId(ctx context.Context, userId uuid.UUID) (models.Profile, error)
 	PatchProfileByUserId(ctx context.Context, profile models.Profile, userId uuid.UUID) error
+	CreateProfile(ctx context.Context, profile models.Profile) error
 }

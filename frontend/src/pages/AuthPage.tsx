@@ -1,6 +1,5 @@
 import { AuthError } from "@supabase/supabase-js";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import supabase from "../utils/supabase";
 import { useAuthContext } from "../contexts/auth";
 
@@ -8,19 +7,13 @@ const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<AuthError | null>(null);
-  const navigate = useNavigate();
-  const { loading } = useAuthContext();
+  const { firstLoad } = useAuthContext();
 
   const handleSignUp = async () => {
     const { error } = await supabase.auth.signUp({
       email: email,
       password: password,
     });
-
-    if (!error) {
-      navigate("/home");
-      return;
-    }
 
     setError(error);
   };
@@ -31,15 +24,10 @@ const AuthPage = () => {
       password: password,
     });
 
-    if (!error) {
-      navigate("/home");
-      return;
-    }
-
     setError(error);
   };
 
-  return loading ? (
+  return firstLoad ? (
     <div>Loading...</div>
   ) : (
     <div>

@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go-chat/internal/constants"
 	"go-chat/internal/models"
 	"go-chat/internal/xerrors"
 
-	"github.com/aaronkim218/dynasql"
+	"github.com/aaronkim218/patchsql"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -34,8 +35,12 @@ func (p *Postgres) GetProfileByUserId(ctx context.Context, userId uuid.UUID) (mo
 }
 
 func (p *Postgres) PatchProfileByUserId(ctx context.Context, profile models.Profile, userId uuid.UUID) error {
-	setClause, args := dynasql.GenSetClauseFromFlatStruct(profile)
-	query := fmt.Sprintf("UPDATE profiles %s WHERE user_id = $%d", setClause, len(args)+1)
+	setClause, args, err := patchsql.BuildSetClause(profile)
+	if err != nil {
+		return err
+	}
+
+	query := fmt.Sprintf("UPDATE profiles SET %s WHERE user_id = $%d", setClause, len(args)+1)
 	ct, err := p.pool.Exec(ctx, query, append(args, userId)...)
 	if err != nil {
 		return err
@@ -45,6 +50,20 @@ func (p *Postgres) PatchProfileByUserId(ctx context.Context, profile models.Prof
 		return xerrors.NotFoundError("profile", map[string]string{
 			"user_id": userId.String(),
 		})
+	}
+
+	return nil
+}
+
+func (p *Postgres) CreateProfile(ctx context.Context, profile models.Profile) error {
+	const query string = `INSERT INTO profiles (user_id, username) VALUES ($1, $2)`
+	if _, err := p.pool.Exec(ctx, query, profile.UserId, profile.Username); err != nil {
+		// TODO: this error check is not applicable for this query. but i need to go through different possible errors and check for them
+		if xerrors.IsForeignKeyViolation(err, constants.RoomsHostFKeyConstraint) {
+			return xerrors.NotFoundError("user", map[string]string{
+				"id": profile.UserId.String(),
+			})
+		}
 	}
 
 	return nil

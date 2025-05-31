@@ -6,6 +6,7 @@ import applyCaseMiddleware from "axios-case-converter";
 const BASE_URL = import.meta.env.VITE_SERVER_URL;
 
 const baseAxios = axios.create();
+baseAxios.defaults.validateStatus = () => true;
 
 baseAxios.interceptors.request.use((config) => {
   const jwt = getJwt();
@@ -78,14 +79,16 @@ export const addUsersToRoom = async (
   }
 };
 
-export const getProfileByUserId = async (): Promise<Profile> => {
+export const getProfileByUserId = async (): Promise<Profile | null> => {
   const res = await client.get(`${BASE_URL}/profiles`);
 
-  if (res.status !== 200) {
-    throw new Error(`failed to fetch profile for user`);
+  if (res.status === 200) {
+    return res.data;
+  } else if (res.status === 404) {
+    return null;
   }
 
-  return res.data;
+  throw new Error(`failed to fetch profile for user`);
 };
 
 export const patchProfileByUserId = async (
@@ -95,5 +98,19 @@ export const patchProfileByUserId = async (
 
   if (res.status !== 204) {
     throw new Error(`failed to update profile for user`);
+  }
+};
+
+export interface CreateProfileRequest {
+  username: string;
+}
+
+export const createProfile = async (
+  req: CreateProfileRequest
+): Promise<void> => {
+  const res = await client.post(`${BASE_URL}/profiles`, req);
+
+  if (res.status !== 201) {
+    throw new Error(`failed to create profile for user`);
   }
 };

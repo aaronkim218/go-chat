@@ -7,17 +7,19 @@ import RoomsPage from "./pages/RoomsPage";
 import ProfilePage from "./pages/ProfilePage";
 import HomePage from "./pages/HomePage";
 import RequireAuth from "./guards/RequireAuth";
-import { SessionProvider } from "./contexts/auth";
+import { AuthProvider } from "./contexts/auth";
 import AuthLayout from "./layouts/AuthLayout";
 import LandingPage from "./pages/LandingPage";
+import SetupPage from "./pages/Setup";
 
 const App = () => {
   return (
     <BrowserRouter>
-      <SessionProvider>
+      <AuthProvider>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<AuthPage />} />
+          <Route path="/setup" element={<SetupPage />} />
 
           <Route element={<RequireAuth />}>
             <Route element={<AuthLayout />}>
@@ -30,7 +32,7 @@ const App = () => {
 
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
-      </SessionProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 };

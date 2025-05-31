@@ -2,9 +2,9 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAuthContext } from "../contexts/auth";
 
 const RequireAuth = () => {
-  const { session, profile, loading } = useAuthContext();
+  const { session, profile, firstLoad } = useAuthContext();
 
-  if (loading) {
+  if (firstLoad) {
     return <div>Loading...</div>;
   }
 

@@ -27,6 +27,52 @@ func (s *Service) GetProfileByUserId(c *fiber.Ctx) error {
 
 func (s *Service) PatchProfileByUserId(c *fiber.Ctx) error {
 	type request struct {
+		Username *string `json:"username"`
+	}
+
+	validate := func(req request) map[string]string {
+		var errMap = make(map[string]string)
+
+		if req.Username != nil && (len(*req.Username) < constants.MinUsernameLength || len(*req.Username) > constants.MaxUsernameLength) {
+			errMap["username"] = fmt.Sprintf(
+				"username length must be between %d and %d",
+				constants.MinUsernameLength,
+				constants.MaxUsernameLength,
+			)
+		}
+
+		return errMap
+	}
+
+	userId, err := middleware.GetUserId(c)
+	if err != nil {
+		return err
+	}
+
+	var req request
+	if err := c.BodyParser(&req); err != nil {
+		return xerrors.InvalidJSON()
+	}
+
+	if errMap := validate(req); len(errMap) > 0 {
+		return xerrors.UnprocessableEntityError(errMap)
+	}
+
+	if err := s.storage.PatchProfileByUserId(
+		c.Context(),
+		models.Profile{
+			Username: *req.Username,
+		},
+		userId,
+	); err != nil {
+		return err
+	}
+
+	return c.SendStatus(http.StatusNoContent)
+}
+
+func (s *Service) CreateProfile(c *fiber.Ctx) error {
+	type request struct {
 		Username string `json:"username"`
 	}
 
@@ -58,15 +104,15 @@ func (s *Service) PatchProfileByUserId(c *fiber.Ctx) error {
 		return xerrors.UnprocessableEntityError(errMap)
 	}
 
-	if err := s.storage.PatchProfileByUserId(
+	if err := s.storage.CreateProfile(
 		c.Context(),
 		models.Profile{
+			UserId:   userId,
 			Username: req.Username,
 		},
-		userId,
 	); err != nil {
 		return err
 	}
 
-	return c.SendStatus(http.StatusNoContent)
+	return c.SendStatus(http.StatusCreated)
 }

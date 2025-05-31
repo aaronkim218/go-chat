@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useRequireAuth } from "../hooks/useRequireAuth";
 import { patchProfileByUserId } from "../api";
 import { Profile } from "../types";
+import { useAuthContext } from "../contexts/auth";
 
 const ProfilePage = () => {
+  const { setProfile } = useAuthContext();
   const { profile } = useRequireAuth();
   const [username, setUsername] = useState(profile.username);
 
@@ -13,6 +15,11 @@ const ProfilePage = () => {
         username: username,
       };
       await patchProfileByUserId(partialProfile);
+      const updatedProfile: Profile = {
+        ...profile,
+        username: username,
+      };
+      setProfile(updatedProfile);
     } catch (error) {
       console.error("Failed to update profile:", error);
     }

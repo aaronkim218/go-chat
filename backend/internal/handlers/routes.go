@@ -29,6 +29,7 @@ func (s *Service) RegisterRoutes(app *fiber.App) {
 		api.Route("/profiles", func(profiles fiber.Router) {
 			profiles.Get("/", s.GetProfileByUserId)
 			profiles.Patch("/", s.PatchProfileByUserId)
+			profiles.Post("/", s.CreateProfile)
 		})
 
 		api.Route("/messages", func(messages fiber.Router) {
