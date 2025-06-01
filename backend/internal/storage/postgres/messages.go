@@ -24,9 +24,18 @@ func (p *Postgres) CreateMessage(ctx context.Context, message models.Message) er
 	return nil
 }
 
-func (p *Postgres) GetMessagesByRoomId(ctx context.Context, roomId uuid.UUID) ([]models.Message, error) {
-	const query string = `SELECT id, room_id, created_at, author, content FROM messages WHERE room_id = $1`
-	rows, err := p.pool.Query(ctx, query, roomId)
+func (p *Postgres) GetMessagesByRoomId(ctx context.Context, roomId uuid.UUID, userId uuid.UUID) ([]models.Message, error) {
+	const query string = `
+	SELECT id, room_id, created_at, author, content
+	FROM messages
+	WHERE room_id = $1
+	  AND EXISTS (
+	    SELECT 1
+	    FROM users_rooms
+	    WHERE room_id = $1 AND user_id = $2
+	  );
+	`
+	rows, err := p.pool.Query(ctx, query, roomId, userId)
 	if err != nil {
 		return nil, err
 	}
