@@ -15,7 +15,7 @@ type Storage interface {
 
 	// messages
 	CreateMessage(ctx context.Context, message models.Message) error
-	GetMessagesByRoomId(ctx context.Context, roomId uuid.UUID) ([]models.Message, error)
+	GetMessagesByRoomId(ctx context.Context, roomId uuid.UUID, userId uuid.UUID) ([]models.Message, error)
 	DeleteMessageById(ctx context.Context, messageId uuid.UUID, userId uuid.UUID) error
 
 	// users_rooms

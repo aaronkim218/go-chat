@@ -51,6 +51,11 @@ func (s *Service) CreateRoom(c *fiber.Ctx) error {
 }
 
 func (s *Service) GetMessagesByRoom(c *fiber.Ctx) error {
+	userId, err := middleware.GetUserId(c)
+	if err != nil {
+		return err
+	}
+
 	roomId := c.Params("roomId")
 	if roomId == "" {
 		return xerrors.BadRequestError("room id is required")
@@ -61,7 +66,7 @@ func (s *Service) GetMessagesByRoom(c *fiber.Ctx) error {
 		return xerrors.BadRequestError(fmt.Sprintf("invalid room id: %s", roomId))
 	}
 
-	messages, err := s.storage.GetMessagesByRoomId(c.Context(), uuidRoomId)
+	messages, err := s.storage.GetMessagesByRoomId(c.Context(), uuidRoomId, userId)
 	if err != nil {
 		return err
 	}
