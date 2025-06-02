@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"fmt"
-	"go-chat/internal/middleware"
+	"go-chat/internal/xcontext"
 	"go-chat/internal/xerrors"
 	"net/http"
 
@@ -11,7 +11,7 @@ import (
 )
 
 func (s *Service) DeleteMessageById(c *fiber.Ctx) error {
-	userId, err := middleware.GetUserId(c)
+	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
 	}

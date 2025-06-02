@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"go-chat/internal/hub"
-	"go-chat/internal/middleware"
 	"go-chat/internal/models"
 	"go-chat/internal/types"
 	"go-chat/internal/utils"
+	"go-chat/internal/xcontext"
 	"go-chat/internal/xerrors"
 	"log/slog"
 	"net/http"
@@ -19,7 +19,7 @@ import (
 )
 
 func (s *Service) CreateRoom(c *fiber.Ctx) error {
-	userId, err := middleware.GetUserId(c)
+	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func (s *Service) CreateRoom(c *fiber.Ctx) error {
 }
 
 func (s *Service) GetMessagesByRoom(c *fiber.Ctx) error {
-	userId, err := middleware.GetUserId(c)
+	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func (s *Service) AddUsersToRoom(c *fiber.Ctx) error {
 }
 
 func (s *Service) GetRoomsByUserId(c *fiber.Ctx) error {
-	userId, err := middleware.GetUserId(c)
+	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (s *Service) GetRoomsByUserId(c *fiber.Ctx) error {
 }
 
 func (s *Service) DeleteRoom(c *fiber.Ctx) error {
-	userId, err := middleware.GetUserId(c)
+	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
 	}
