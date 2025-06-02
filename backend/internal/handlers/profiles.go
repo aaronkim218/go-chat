@@ -3,8 +3,8 @@ package handlers
 import (
 	"fmt"
 	"go-chat/internal/constants"
-	"go-chat/internal/middleware"
 	"go-chat/internal/models"
+	"go-chat/internal/xcontext"
 	"go-chat/internal/xerrors"
 	"net/http"
 
@@ -12,7 +12,7 @@ import (
 )
 
 func (s *Service) GetProfileByUserId(c *fiber.Ctx) error {
-	userId, err := middleware.GetUserId(c)
+	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func (s *Service) PatchProfileByUserId(c *fiber.Ctx) error {
 		return errMap
 	}
 
-	userId, err := middleware.GetUserId(c)
+	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (s *Service) CreateProfile(c *fiber.Ctx) error {
 		return errMap
 	}
 
-	userId, err := middleware.GetUserId(c)
+	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
 	}
