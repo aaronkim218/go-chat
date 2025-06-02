@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -15,7 +16,13 @@ func (p *Postgres) AddUsersToRoom(ctx context.Context, userIds []uuid.UUID, room
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			slog.Error("error rolling back transaction",
+				slog.String("error", err.Error()),
+			)
+		}
+	}()
 
 	batch := &pgx.Batch{}
 	for _, userId := range userIds {

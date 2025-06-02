@@ -6,6 +6,7 @@ import (
 	"go-chat/internal/constants"
 	"go-chat/internal/models"
 	"go-chat/internal/xerrors"
+	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -19,7 +20,13 @@ func (p *Postgres) CreateRoom(ctx context.Context, room models.Room, members []u
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			slog.Error("error rolling back transaction",
+				slog.String("error", err.Error()),
+			)
+		}
+	}()
 
 	batch := &pgx.Batch{}
 	batch.Queue(roomsQuery, room.Id, room.Host)
@@ -79,6 +86,9 @@ func (p *Postgres) GetRoomsByUserId(ctx context.Context, userId uuid.UUID) ([]mo
 
 		return room, nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	return rooms, nil
 }

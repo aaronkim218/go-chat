@@ -48,6 +48,9 @@ func (p *Postgres) GetMessagesByRoomId(ctx context.Context, roomId uuid.UUID, us
 
 		return message, nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	return messages, nil
 }

@@ -136,9 +136,13 @@ func (s *Service) DeleteRoom(c *fiber.Ctx) error {
 }
 
 func (s *Service) JoinRoom(conn *websocket.Conn) {
+	defer conn.Close()
+
 	_, msg, err := conn.ReadMessage()
 	if err != nil {
-		conn.Close()
+		slog.Error("expected token but got error reading message",
+			slog.String("error", err.Error()),
+		)
 		return
 	}
 
@@ -149,16 +153,27 @@ func (s *Service) JoinRoom(conn *websocket.Conn) {
 		},
 		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}),
 	)
+	if err != nil {
+		slog.Error("failed to parse token",
+			slog.String("error", err.Error()),
+		)
+		return
+	}
 
 	userId, err := utils.GetUserIdFromToken(token)
 	if err != nil {
-		slog.Error("failed to get user id from token")
+		slog.Error("failed to get user id from token",
+			slog.String("error", err.Error()),
+		)
 		return
 	}
 
 	roomId, err := uuid.Parse(conn.Params("roomId"))
 	if err != nil {
-		conn.Close()
+		slog.Error("invalid room id",
+			slog.String("error", err.Error()),
+			slog.String("roomId", conn.Params("roomId")),
+		)
 		return
 	}
 
