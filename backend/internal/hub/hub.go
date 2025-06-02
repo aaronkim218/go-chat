@@ -2,6 +2,7 @@ package hub
 
 import (
 	"context"
+	"go-chat/internal/constants"
 	"go-chat/internal/models"
 	"go-chat/internal/storage"
 	"go-chat/internal/types"
@@ -45,6 +46,8 @@ func (h *Hub) AddClient(req AddClientRequest) {
 }
 
 func (h *Hub) run() {
+	ticker := time.NewTicker(constants.HubStatsInterval)
+
 	for {
 		select {
 		case req := <-h.addClient:
@@ -73,6 +76,10 @@ func (h *Hub) run() {
 					slog.String("room_id", roomId.String()),
 				)
 			}
+		case <-ticker.C:
+			slog.Info("hub stats",
+				slog.Int("number of active rooms", len(h.activeRooms)),
+			)
 		}
 	}
 }
