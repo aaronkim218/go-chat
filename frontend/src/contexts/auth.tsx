@@ -27,44 +27,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-
-      if (session) {
-        const profile = await fetchProfile();
-        setProfile(profile);
-      } else {
-        setProfile(null);
-      }
-
-      setFirstLoad(false);
-    });
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
 
       if (session) {
-        const profile = await fetchProfile();
-        setProfile(profile);
+        if (profile) {
+          if (session.user.id !== profile.userId) {
+            await fetchProfileAndNavigate();
+          }
+        } else {
+          await fetchProfileAndNavigate();
+        }
       } else {
         setProfile(null);
       }
+
+      if (firstLoad) setFirstLoad(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
-
-  useEffect(() => {
-    if (session && profile) {
-      navigate("/home");
-    } else if (session && !profile) {
-      navigate("/setup");
-    } else {
-      navigate("/login");
-    }
-  }, [session, profile]);
 
   const fetchProfile = async (): Promise<Profile | null> => {
     try {
@@ -72,6 +56,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error("error getting profile by user id:", error);
       return null;
+    }
+  };
+
+  const fetchProfileAndNavigate = async () => {
+    const profile = await fetchProfile();
+    setProfile(profile);
+    if (profile) {
+      navigate("/home");
+    } else {
+      navigate("/setup");
     }
   };
 
