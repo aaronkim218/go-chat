@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useAuthContext } from "../contexts/auth";
 import { createProfile, CreateProfileRequest } from "../api";
 import { Profile } from "../types";
@@ -7,6 +7,7 @@ import { Profile } from "../types";
 const SetupPage = () => {
   const { session, setProfile } = useAuthContext();
   const [username, setUsername] = useState("");
+  const navigate = useNavigate();
 
   if (session) {
     const handleCreateProfile = async () => {
@@ -20,6 +21,7 @@ const SetupPage = () => {
           username: username,
         };
         setProfile(profile);
+        navigate("/home");
       } catch (error) {
         console.error("Error creating profile:", error);
       }
