@@ -43,6 +43,10 @@ func (p *Postgres) PatchProfileByUserId(ctx context.Context, profile models.Prof
 	query := fmt.Sprintf("UPDATE profiles SET %s WHERE user_id = $%d", setClause, len(args)+1)
 	ct, err := p.pool.Exec(ctx, query, append(args, userId)...)
 	if err != nil {
+		if xerrors.IsUniqueViolation(err, constants.ProfilesUsernameUniqueConstraint) {
+			return xerrors.ConflictError("user", "username", profile.Username)
+		}
+
 		return err
 	}
 
@@ -58,12 +62,17 @@ func (p *Postgres) PatchProfileByUserId(ctx context.Context, profile models.Prof
 func (p *Postgres) CreateProfile(ctx context.Context, profile models.Profile) error {
 	const query string = `INSERT INTO profiles (user_id, username) VALUES ($1, $2)`
 	if _, err := p.pool.Exec(ctx, query, profile.UserId, profile.Username); err != nil {
-		// TODO: this error check is not applicable for this query. but i need to go through different possible errors and check for them
-		if xerrors.IsForeignKeyViolation(err, constants.RoomsHostFKeyConstraint) {
+		if xerrors.IsUniqueViolation(err, constants.ProfilesPKeyUniqueConstraint) {
+			return xerrors.ConflictError("profile", "id", profile.UserId.String())
+		} else if xerrors.IsForeignKeyViolation(err, constants.RoomsHostFKeyConstraint) {
 			return xerrors.NotFoundError("user", map[string]string{
 				"id": profile.UserId.String(),
 			})
+		} else if xerrors.IsUniqueViolation(err, constants.ProfilesUsernameUniqueConstraint) {
+			return xerrors.ConflictError("user", "username", profile.Username)
 		}
+
+		return err
 	}
 
 	return nil

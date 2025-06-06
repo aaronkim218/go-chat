@@ -12,3 +12,11 @@ func IsForeignKeyViolation(err error, constraintName string) bool {
 
 	return false
 }
+
+func IsUniqueViolation(err error, constraintName string) bool {
+	if pgErr, ok := err.(*pgconn.PgError); ok {
+		return pgErr.Code == pgerrcode.UniqueViolation && pgErr.ConstraintName == constraintName
+	}
+
+	return false
+}
