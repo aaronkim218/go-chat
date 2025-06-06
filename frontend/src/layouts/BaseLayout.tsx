@@ -1,8 +1,8 @@
 import { Outlet } from "react-router-dom";
-import { useAuthContext } from "../contexts/auth";
+import { useUserContext } from "../contexts/user";
 
 const BaseLayout = () => {
-  const { firstLoad } = useAuthContext();
+  const { firstLoad } = useUserContext();
 
   return firstLoad ? <div>Loading...</div> : <Outlet />;
 };

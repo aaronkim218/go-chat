@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { useAuthContext } from "../contexts/auth";
+import { useUserContext } from "../contexts/user";
 import { createProfile, CreateProfileRequest } from "../api";
 import { Profile } from "../types";
 
 const SetupPage = () => {
-  const { session, setProfile } = useAuthContext();
+  const { session, setProfile } = useUserContext();
   const [username, setUsername] = useState("");
   const navigate = useNavigate();
 

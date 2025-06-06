@@ -1,13 +1,13 @@
 import { AuthError } from "@supabase/supabase-js";
 import { useState } from "react";
 import supabase from "../utils/supabase";
-import { useAuthContext } from "../contexts/auth";
+import { useUserContext } from "../contexts/user";
 
 const AuthPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<AuthError | null>(null);
-  const { firstLoad } = useAuthContext();
+  const { firstLoad } = useUserContext();
 
   const handleSignUp = async () => {
     const { error } = await supabase.auth.signUp({

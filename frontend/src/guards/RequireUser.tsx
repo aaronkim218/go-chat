@@ -1,8 +1,8 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useAuthContext } from "../contexts/auth";
+import { useUserContext } from "../contexts/user";
 
-const RequireAuth = () => {
-  const { session, profile, firstLoad } = useAuthContext();
+const RequireUser = () => {
+  const { session, profile, firstLoad } = useUserContext();
 
   if (firstLoad) {
     return <div>Loading...</div>;
@@ -11,4 +11,4 @@ const RequireAuth = () => {
   return session && profile ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
-export default RequireAuth;
+export default RequireUser;

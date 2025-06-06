@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useRequireAuth } from "../hooks/useRequireAuth";
 import { patchProfileByUserId } from "../api";
-import { useAuthContext } from "../contexts/auth";
+import { useUserContext } from "../contexts/user";
 import { getProfileDiff } from "../utils/profile";
 
 const ProfilePage = () => {
-  const { setProfile } = useAuthContext();
+  const { setProfile } = useUserContext();
   const { profile } = useRequireAuth();
   const [updatedProfile, setUpdatedProfile] = useState(profile);
 
