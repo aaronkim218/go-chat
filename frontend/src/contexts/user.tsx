@@ -11,16 +11,16 @@ import { useNavigate } from "react-router-dom";
 import { Profile } from "../types";
 import { getProfileByUserId } from "../api";
 
-interface AuthContextType {
+interface UserContextType {
   session: Session | null;
   firstLoad: boolean;
   profile: Profile | null;
   setProfile: (profile: Profile | null) => void;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const UserContext = createContext<UserContextType | null>(null);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [firstLoad, setFirstLoad] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -70,14 +70,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ session, firstLoad, profile, setProfile }}>
+    <UserContext.Provider value={{ session, firstLoad, profile, setProfile }}>
       {children}
-    </AuthContext.Provider>
+    </UserContext.Provider>
   );
 };
 
-export const useAuthContext = (): AuthContextType => {
-  const context = useContext(AuthContext);
+export const useUserContext = (): UserContextType => {
+  const context = useContext(UserContext);
 
   if (context === null) {
     throw new Error("useAuthContext must be used within an AuthProvider");
