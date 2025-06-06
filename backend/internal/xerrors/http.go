@@ -46,6 +46,10 @@ func InvalidJSON() HTTPError {
 	return NewHTTPError(http.StatusBadRequest, errors.New("invalid JSON request data"))
 }
 
+func ConflictError(entity, key, value string) HTTPError {
+	return NewHTTPError(http.StatusConflict, fmt.Errorf("%s with %s=%s already exists", entity, key, value))
+}
+
 func UnprocessableEntityError(errors map[string]string) HTTPError {
 	return HTTPError{
 		StatusCode: http.StatusUnprocessableEntity,
