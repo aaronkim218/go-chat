@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Message } from "../types";
-import { addUsersToRoom, deleteMessageById, getMessagesByRoomId } from "../api";
+import { UserMessage } from "../types";
+import {
+  addUsersToRoom,
+  deleteMessageById,
+  getUserMessagesByRoomId,
+} from "../api";
 import { getJwt } from "../utils/jwt";
 import { useRequireAuth } from "../hooks/useRequireAuth";
 
 const ChatPage = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [userMessages, setUserMessages] = useState<UserMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const ws = useRef<WebSocket | null>(null);
   const { session } = useRequireAuth();
@@ -39,14 +43,18 @@ const ChatPage = () => {
     };
 
     ws.current.onmessage = (event) => {
-      const message = JSON.parse(event.data) as Message;
-      setMessages((prev) => [...prev, message]);
+      const userMessage = JSON.parse(event.data) as UserMessage;
+      setUserMessages((prev) => [...prev, userMessage]);
+    };
+
+    ws.current.onclose = (_) => {
+      console.log("websocket closed");
     };
 
     const fetchMessages = async () => {
       try {
-        const msgs = await getMessagesByRoomId(roomId);
-        setMessages(msgs);
+        const msgs = await getUserMessagesByRoomId(roomId);
+        setUserMessages(msgs);
       } catch (error) {
         console.error("error getting messages for room:", error);
       }
@@ -75,7 +83,7 @@ const ChatPage = () => {
     const handleDeleteMessage = async (messageId: string) => {
       try {
         await deleteMessageById(messageId);
-        setMessages((prev) =>
+        setUserMessages((prev) =>
           prev.filter((message) => message.id !== messageId)
         );
       } catch (error) {
@@ -126,10 +134,10 @@ const ChatPage = () => {
           </ul>
         </div>
         <div>
-          {messages.map((message) => (
+          {userMessages.map((message) => (
             <div key={message.id}>
               <p>
-                {message.author}: {message.content}
+                {message.username}: {message.content}
               </p>
               {message.author === session.user.id && (
                 <button onClick={() => handleDeleteMessage(message.id)}>
@@ -143,6 +151,7 @@ const ChatPage = () => {
           <input
             type="text"
             placeholder="Type a message..."
+            value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
           />
           <button onClick={() => handleSendMessage()}>Send</button>

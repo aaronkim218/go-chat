@@ -104,8 +104,8 @@ func (h *Hub) handleActiveRoom(roomId uuid.UUID, ar *activeRoom) {
 				Id:        messageId,
 				RoomId:    roomId,
 				CreatedAt: time.Now(),
-				Author:    broadcastMessage.UserId,
-				Content:   string(broadcastMessage.Message),
+				Author:    broadcastMessage.client.Profile.UserId,
+				Content:   string(broadcastMessage.message),
 			}
 
 			if err := h.storage.CreateMessage(context.TODO(), message); err != nil {
@@ -117,12 +117,19 @@ func (h *Hub) handleActiveRoom(roomId uuid.UUID, ar *activeRoom) {
 				continue
 			}
 
+			userMessage := types.UserMessage{
+				Message:   message,
+				Username:  broadcastMessage.client.Profile.Username,
+				FirstName: broadcastMessage.client.Profile.FirstName,
+				LastName:  broadcastMessage.client.Profile.LastName,
+			}
+
 			for client := range ar.clients {
-				if err := client.Conn.WriteJSON(message); err != nil {
+				if err := client.Conn.WriteJSON(userMessage); err != nil {
 					client.Conn.Close()
 
 					slog.Info(
-						"error writing message to client. closed connection",
+						"error writing user message to client. closed connection",
 						slog.String("ip", client.Conn.IP()),
 						slog.String("error", err.Error()),
 					)

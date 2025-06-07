@@ -66,12 +66,12 @@ func (s *Service) GetMessagesByRoom(c *fiber.Ctx) error {
 		return xerrors.BadRequestError(fmt.Sprintf("invalid room id: %s", roomId))
 	}
 
-	messages, err := s.storage.GetMessagesByRoomId(c.Context(), uuidRoomId, userId)
+	userMessages, err := s.storage.GetUserMessagesByRoomId(c.Context(), uuidRoomId, userId)
 	if err != nil {
 		return err
 	}
 
-	return c.Status(http.StatusOK).JSON(messages)
+	return c.Status(http.StatusOK).JSON(userMessages)
 }
 
 func (s *Service) AddUsersToRoom(c *fiber.Ctx) error {
@@ -149,13 +149,14 @@ func (s *Service) JoinRoom(conn *websocket.Conn) {
 	token, err := jwt.Parse(
 		string(msg),
 		func(t *jwt.Token) (interface{}, error) {
-			return s.jwtSecret, nil
+			return []byte(s.jwtSecret), nil
 		},
 		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}),
 	)
 	if err != nil {
 		slog.Error("failed to parse token",
 			slog.String("error", err.Error()),
+			slog.String("msg", string(msg)),
 		)
 		return
 	}
@@ -177,8 +178,10 @@ func (s *Service) JoinRoom(conn *websocket.Conn) {
 		return
 	}
 
+	// TODO: perform the following db operations concurrently
+
 	if exists, err := s.storage.CheckUserInRoom(context.TODO(), roomId, userId); !exists {
-		slog.Info("user in room not found",
+		slog.Error("user in room not found",
 			slog.String("userId", userId.String()),
 			slog.String("roomId", roomId.String()),
 		)
@@ -190,14 +193,22 @@ func (s *Service) JoinRoom(conn *websocket.Conn) {
 		return
 	}
 
+	profile, err := s.storage.GetProfileByUserId(context.TODO(), userId)
+	if err != nil {
+		slog.Error("profile not found",
+			slog.String("userId", userId.String()),
+		)
+		return
+	}
+
 	ctx, cancel := context.WithCancel(context.TODO())
 	s.hub.AddClient(hub.AddClientRequest{
 		RoomId: roomId,
 		Client: &types.Client{
-			UserId: userId,
-			Conn:   conn,
-			Ctx:    ctx,
-			Cancel: cancel,
+			Profile: profile,
+			Conn:    conn,
+			Ctx:     ctx,
+			Cancel:  cancel,
 		},
 	})
 

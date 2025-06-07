@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 
 	"github.com/google/uuid"
@@ -10,7 +11,14 @@ import (
 )
 
 func (p *Postgres) AddUsersToRoom(ctx context.Context, userIds []uuid.UUID, roomId uuid.UUID) error {
-	const query string = `INSERT INTO users_rooms (user_id, room_id) VALUES ($1, $2)`
+	// consider using a trigger to enforce the existence check
+	const query string = `
+	INSERT INTO users_rooms (user_id, room_id)
+	SELECT $1, $2
+	WHERE EXISTS (
+		SELECT 1 FROM profiles WHERE user_id = $1
+	)
+	`
 
 	tx, err := p.pool.Begin(ctx)
 	if err != nil {
@@ -33,9 +41,11 @@ func (p *Postgres) AddUsersToRoom(ctx context.Context, userIds []uuid.UUID, room
 	defer results.Close()
 
 	var joinedErr error
-	for range userIds {
-		if _, err := results.Exec(); err != nil {
+	for _, userId := range userIds {
+		if ct, err := results.Exec(); err != nil {
 			joinedErr = errors.Join(joinedErr, err)
+		} else if ct.RowsAffected() == 0 {
+			joinedErr = errors.Join(joinedErr, fmt.Errorf("profile with user_id=%s not found", userId.String()))
 		}
 	}
 

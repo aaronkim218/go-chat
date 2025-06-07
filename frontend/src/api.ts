@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Message, Profile, Room } from "./types";
+import { Profile, Room, UserMessage } from "./types";
 import { getJwt } from "./utils/jwt";
 import applyCaseMiddleware from "axios-case-converter";
 
@@ -54,9 +54,9 @@ export const deleteMessageById = async (messageId: string): Promise<void> => {
   }
 };
 
-export const getMessagesByRoomId = async (
+export const getUserMessagesByRoomId = async (
   roomId: string
-): Promise<Message[]> => {
+): Promise<UserMessage[]> => {
   const res = await client.get(`${BASE_URL}/rooms/${roomId}/messages`);
 
   if (res.status !== 200) {

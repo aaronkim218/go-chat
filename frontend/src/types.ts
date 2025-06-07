@@ -14,4 +14,12 @@ export interface Message {
 export interface Profile {
   userId: string;
   username: string;
+  firstName?: string;
+  lastName?: string;
 }
+
+export type UserMessage = Message & {
+  username: string;
+  firstName?: string;
+  lastName?: string;
+};
