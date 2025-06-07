@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"go-chat/internal/models"
+	"go-chat/internal/types"
 	"go-chat/internal/xerrors"
 
 	"github.com/google/uuid"
@@ -24,10 +25,12 @@ func (p *Postgres) CreateMessage(ctx context.Context, message models.Message) er
 	return nil
 }
 
-func (p *Postgres) GetMessagesByRoomId(ctx context.Context, roomId uuid.UUID, userId uuid.UUID) ([]models.Message, error) {
+func (p *Postgres) GetUserMessagesByRoomId(ctx context.Context, roomId uuid.UUID, userId uuid.UUID) ([]types.UserMessage, error) {
+	// TODO: can i use some kind of table constraint to enforce the existence of user_id room_id pair in users_rooms?
 	const query string = `
-	SELECT id, room_id, created_at, author, content
-	FROM messages
+	SELECT m.id, m.room_id, m.created_at, m.author, m.content, p.username, p.first_name, p.last_name
+	FROM messages AS m
+	INNER JOIN profiles AS p ON m.author = p.user_id
 	WHERE room_id = $1
 	  AND EXISTS (
 	    SELECT 1
@@ -40,19 +43,19 @@ func (p *Postgres) GetMessagesByRoomId(ctx context.Context, roomId uuid.UUID, us
 		return nil, err
 	}
 
-	messages, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (models.Message, error) {
-		message, err := pgx.RowToStructByName[models.Message](row)
+	userMessages, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (types.UserMessage, error) {
+		userMessage, err := pgx.RowToStructByName[types.UserMessage](row)
 		if err != nil {
-			return models.Message{}, err
+			return types.UserMessage{}, err
 		}
 
-		return message, nil
+		return userMessage, nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return messages, nil
+	return userMessages, nil
 }
 
 func (p *Postgres) DeleteMessageById(ctx context.Context, messageId uuid.UUID, userId uuid.UUID) error {

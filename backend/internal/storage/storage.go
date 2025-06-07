@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"go-chat/internal/models"
+	"go-chat/internal/types"
 
 	"github.com/google/uuid"
 )
@@ -15,7 +16,7 @@ type Storage interface {
 
 	// messages
 	CreateMessage(ctx context.Context, message models.Message) error
-	GetMessagesByRoomId(ctx context.Context, roomId uuid.UUID, userId uuid.UUID) ([]models.Message, error)
+	GetUserMessagesByRoomId(ctx context.Context, roomId uuid.UUID, userId uuid.UUID) ([]types.UserMessage, error)
 	DeleteMessageById(ctx context.Context, messageId uuid.UUID, userId uuid.UUID) error
 
 	// users_rooms

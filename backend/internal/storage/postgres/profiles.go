@@ -14,7 +14,7 @@ import (
 )
 
 func (p *Postgres) GetProfileByUserId(ctx context.Context, userId uuid.UUID) (models.Profile, error) {
-	const query string = `SELECT user_id, username FROM profiles WHERE user_id = $1`
+	const query string = `SELECT user_id, username, first_name, last_name FROM profiles WHERE user_id = $1`
 	rows, err := p.pool.Query(ctx, query, userId)
 	if err != nil {
 		return models.Profile{}, err
