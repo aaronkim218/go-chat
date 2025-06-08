@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go-chat/internal/constants"
 	"go-chat/internal/models"
+	"go-chat/internal/types"
 	"go-chat/internal/xcontext"
 	"go-chat/internal/xerrors"
 	"net/http"
@@ -115,4 +116,27 @@ func (s *Service) CreateProfile(c *fiber.Ctx) error {
 	}
 
 	return c.SendStatus(http.StatusCreated)
+}
+
+func (s *Service) SearchProfiles(c *fiber.Ctx) error {
+	userId, err := xcontext.GetUserId(c)
+	if err != nil {
+		return err
+	}
+
+	var options types.SearchProfilesOptions
+	if err := c.QueryParser(&options); err != nil {
+		return xerrors.BadRequestError("missing query parameters")
+	}
+
+	if errMap := options.Validate(); len(errMap) > 0 {
+		return xerrors.UnprocessableEntityError(errMap)
+	}
+
+	profiles, err := s.storage.SearchProfiles(c.Context(), options, userId)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(http.StatusOK).JSON(profiles)
 }
