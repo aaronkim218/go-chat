@@ -6,6 +6,11 @@ type SearchProfilesOptions struct {
 	Offset   int    `query:"offset"`
 }
 
+const (
+	defaultLimit  int = 10
+	defaultOffset int = 0
+)
+
 func (spo *SearchProfilesOptions) Validate() map[string]string {
 	errMap := make(map[string]string)
 
@@ -14,11 +19,11 @@ func (spo *SearchProfilesOptions) Validate() map[string]string {
 	}
 
 	if spo.Limit < 1 {
-		spo.Limit = 10
+		spo.Limit = defaultLimit
 	}
 
 	if spo.Offset < 0 {
-		spo.Offset = 0
+		spo.Offset = defaultOffset
 	}
 
 	return errMap
