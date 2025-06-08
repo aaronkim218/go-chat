@@ -64,10 +64,6 @@ func (p *Postgres) CreateProfile(ctx context.Context, profile models.Profile) er
 	if _, err := p.pool.Exec(ctx, query, profile.UserId, profile.Username); err != nil {
 		if xerrors.IsUniqueViolation(err, constants.ProfilesPKeyUniqueConstraint) {
 			return xerrors.ConflictError("profile", "id", profile.UserId.String())
-		} else if xerrors.IsForeignKeyViolation(err, constants.RoomsHostFKeyConstraint) {
-			return xerrors.NotFoundError("user", map[string]string{
-				"id": profile.UserId.String(),
-			})
 		} else if xerrors.IsUniqueViolation(err, constants.ProfilesUsernameUniqueConstraint) {
 			return xerrors.ConflictError("user", "username", profile.Username)
 		}

@@ -93,7 +93,8 @@ const ChatPage = () => {
 
     const handleAddUsersToRoom = async () => {
       try {
-        await addUsersToRoom(roomId, newUsers);
+        const resp = await addUsersToRoom(roomId, newUsers);
+        console.log("TODO: do something with addUsersToRoom response: ", resp);
       } catch (error) {
         console.error("error adding users to room:", error);
       }

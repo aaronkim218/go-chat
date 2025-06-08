@@ -3,14 +3,14 @@ package postgres
 import (
 	"context"
 	"errors"
-	"fmt"
-	"log/slog"
+	"go-chat/internal/types"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
-func (p *Postgres) AddUsersToRoom(ctx context.Context, userIds []uuid.UUID, roomId uuid.UUID) error {
+func (p *Postgres) AddUsersToRoom(ctx context.Context, userIds []uuid.UUID, roomId uuid.UUID) (types.BulkResult[uuid.UUID], error) {
 	// consider using a trigger to enforce the existence check
 	const query string = `
 	INSERT INTO users_rooms (user_id, room_id)
@@ -18,50 +18,32 @@ func (p *Postgres) AddUsersToRoom(ctx context.Context, userIds []uuid.UUID, room
 	WHERE EXISTS (
 		SELECT 1 FROM profiles WHERE user_id = $1
 	)
+	ON CONFLICT DO NOTHING
 	`
 
-	tx, err := p.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := tx.Rollback(ctx); err != nil {
-			slog.Error("error rolling back transaction",
-				slog.String("error", err.Error()),
-			)
-		}
-	}()
-
+	bulkResult := types.BulkResult[uuid.UUID]{}
 	batch := &pgx.Batch{}
 	for _, userId := range userIds {
-		batch.Queue(query, userId, roomId)
+		batch.Queue(query, userId, roomId).Exec(func(ct pgconn.CommandTag) error {
+			if ct.RowsAffected() == 0 {
+				bulkResult.Failures = append(bulkResult.Failures, types.Failure[uuid.UUID]{
+					Item:    userId,
+					Message: "failed to add user to room",
+				})
+			} else {
+				bulkResult.Successes = append(bulkResult.Successes, userId)
+			}
+
+			return nil
+		})
 	}
 
-	results := tx.SendBatch(ctx, batch)
-	defer results.Close()
-
-	var joinedErr error
-	for _, userId := range userIds {
-		if ct, err := results.Exec(); err != nil {
-			joinedErr = errors.Join(joinedErr, err)
-		} else if ct.RowsAffected() == 0 {
-			joinedErr = errors.Join(joinedErr, fmt.Errorf("profile with user_id=%s not found", userId.String()))
-		}
-	}
-
-	if joinedErr != nil {
-		return joinedErr
-	}
-
+	results := p.pool.SendBatch(ctx, batch)
 	if err := results.Close(); err != nil {
-		return err
+		return types.BulkResult[uuid.UUID]{}, err
 	}
 
-	if err := tx.Commit(ctx); err != nil {
-		return err
-	}
-
-	return nil
+	return bulkResult, nil
 }
 
 func (p *Postgres) CheckUserInRoom(ctx context.Context, roomId uuid.UUID, userId uuid.UUID) (bool, error) {

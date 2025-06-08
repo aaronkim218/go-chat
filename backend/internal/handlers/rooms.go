@@ -43,11 +43,20 @@ func (s *Service) CreateRoom(c *fiber.Ctx) error {
 		Host: userId,
 	}
 
-	if err := s.storage.CreateRoom(c.Context(), room, req.Members); err != nil {
+	membersResults, err := s.storage.CreateRoom(c.Context(), room, req.Members)
+	if err != nil {
 		return err
 	}
 
-	return c.Status(http.StatusCreated).JSON(room)
+	type response struct {
+		Room           models.Room                 `json:"room"`
+		MembersResults types.BulkResult[uuid.UUID] `json:"members_results"`
+	}
+
+	return c.Status(http.StatusCreated).JSON(response{
+		Room:           room,
+		MembersResults: membersResults,
+	})
 }
 
 func (s *Service) GetMessagesByRoom(c *fiber.Ctx) error {
@@ -94,11 +103,12 @@ func (s *Service) AddUsersToRoom(c *fiber.Ctx) error {
 		return xerrors.InvalidJSON()
 	}
 
-	if err := s.storage.AddUsersToRoom(c.Context(), req.UserIds, uuidRoomId); err != nil {
+	bulkResult, err := s.storage.AddUsersToRoom(c.Context(), req.UserIds, uuidRoomId)
+	if err != nil {
 		return err
 	}
 
-	return c.SendStatus(http.StatusCreated)
+	return c.Status(http.StatusOK).JSON(bulkResult)
 }
 
 func (s *Service) GetRoomsByUserId(c *fiber.Ctx) error {

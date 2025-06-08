@@ -2,68 +2,51 @@ package postgres
 
 import (
 	"context"
-	"errors"
-	"go-chat/internal/constants"
 	"go-chat/internal/models"
+	"go-chat/internal/types"
 	"go-chat/internal/xerrors"
-	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
-func (p *Postgres) CreateRoom(ctx context.Context, room models.Room, members []uuid.UUID) error {
+func (p *Postgres) CreateRoom(ctx context.Context, room models.Room, members []uuid.UUID) (types.BulkResult[uuid.UUID], error) {
 	const roomsQuery string = `INSERT INTO rooms (id, host) VALUES ($1, $2)`
-	const usersRoomsQuery string = `INSERT INTO users_rooms (user_id, room_id) VALUES ($1, $2)`
+	const usersRoomsHostQuery = `INSERT INTO users_rooms (user_id, room_id) VALUES ($1, $2)`
+	const usersRoomsMemberQuery string = `
+	INSERT INTO users_rooms (user_id, room_id)
+	SELECT $1, $2
+	WHERE EXISTS (
+		SELECT 1 FROM profiles WHERE user_id = $1
+	)
+	`
 
-	tx, err := p.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := tx.Rollback(ctx); err != nil {
-			slog.Error("error rolling back transaction",
-				slog.String("error", err.Error()),
-			)
-		}
-	}()
-
+	bulkResult := types.BulkResult[uuid.UUID]{}
 	batch := &pgx.Batch{}
 	batch.Queue(roomsQuery, room.Id, room.Host)
-	batch.Queue(usersRoomsQuery, room.Host, room.Id)
+	batch.Queue(usersRoomsHostQuery, room.Host, room.Id)
 	for _, userId := range members {
-		batch.Queue(usersRoomsQuery, userId, room.Id)
-	}
-
-	results := tx.SendBatch(ctx, batch)
-	defer results.Close()
-
-	var joinedErr error
-	for range batch.Len() {
-		if _, err := results.Exec(); err != nil {
-			if xerrors.IsForeignKeyViolation(err, constants.RoomsHostFKeyConstraint) {
-				return xerrors.NotFoundError("user", map[string]string{
-					"id": room.Host.String(),
+		batch.Queue(usersRoomsMemberQuery, userId, room.Id).Exec(func(ct pgconn.CommandTag) error {
+			if ct.RowsAffected() == 0 {
+				bulkResult.Failures = append(bulkResult.Failures, types.Failure[uuid.UUID]{
+					Item:    userId,
+					Message: "failed to add user to room",
 				})
+			} else {
+				bulkResult.Successes = append(bulkResult.Successes, userId)
 			}
 
-			joinedErr = errors.Join(joinedErr, err)
-		}
+			return nil
+		})
 	}
 
-	if joinedErr != nil {
-		return joinedErr
-	}
-
+	results := p.pool.SendBatch(ctx, batch)
 	if err := results.Close(); err != nil {
-		return err
+		return types.BulkResult[uuid.UUID]{}, err
 	}
 
-	if err := tx.Commit(ctx); err != nil {
-		return err
-	}
-
-	return nil
+	return bulkResult, nil
 }
 
 func (p *Postgres) GetRoomsByUserId(ctx context.Context, userId uuid.UUID) ([]models.Room, error) {
