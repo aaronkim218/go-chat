@@ -24,8 +24,8 @@ const RoomsPage = () => {
 
   const handleCreateRoom = async () => {
     try {
-      const newRoom = await createRoom([]);
-      setRooms((prev) => [newRoom, ...prev]);
+      const resp = await createRoom([]);
+      setRooms((prev) => [resp.room, ...prev]);
     } catch (error) {
       console.error("error creating room:", error);
     }

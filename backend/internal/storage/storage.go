@@ -10,7 +10,7 @@ import (
 
 type Storage interface {
 	// rooms
-	CreateRoom(ctx context.Context, room models.Room, members []uuid.UUID) error
+	CreateRoom(ctx context.Context, room models.Room, members []uuid.UUID) (types.BulkResult[uuid.UUID], error)
 	GetRoomsByUserId(ctx context.Context, userId uuid.UUID) ([]models.Room, error)
 	DeleteRoomById(ctx context.Context, roomId uuid.UUID, userId uuid.UUID) error
 
@@ -20,7 +20,7 @@ type Storage interface {
 	DeleteMessageById(ctx context.Context, messageId uuid.UUID, userId uuid.UUID) error
 
 	// users_rooms
-	AddUsersToRoom(ctx context.Context, userIds []uuid.UUID, roomId uuid.UUID) error
+	AddUsersToRoom(ctx context.Context, userIds []uuid.UUID, roomId uuid.UUID) (types.BulkResult[uuid.UUID], error)
 	CheckUserInRoom(ctx context.Context, roomId uuid.UUID, userId uuid.UUID) (bool, error)
 
 	// profiles

@@ -23,3 +23,18 @@ export type UserMessage = Message & {
   firstName?: string;
   lastName?: string;
 };
+
+export interface CreateRoomResponse {
+  room: Room;
+  membersResults: BulkResult<string>;
+}
+
+export type Failure<T> = {
+  item: T;
+  error: Error;
+};
+
+export type BulkResult<T> = {
+  successes: T[];
+  failures: Failure<T>[];
+};

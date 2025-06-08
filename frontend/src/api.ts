@@ -1,5 +1,11 @@
 import axios from "axios";
-import { Profile, Room, UserMessage } from "./types";
+import {
+  BulkResult,
+  CreateRoomResponse,
+  Profile,
+  Room,
+  UserMessage,
+} from "./types";
 import { getJwt } from "./utils/jwt";
 import applyCaseMiddleware from "axios-case-converter";
 
@@ -28,7 +34,9 @@ export const getRoomsByUserId = async (): Promise<Room[]> => {
   return res.data;
 };
 
-export const createRoom = async (members: string[]): Promise<Room> => {
+export const createRoom = async (
+  members: string[]
+): Promise<CreateRoomResponse> => {
   const res = await client.post(`${BASE_URL}/rooms`, { members: members });
 
   if (res.status !== 201) {
@@ -69,7 +77,7 @@ export const getUserMessagesByRoomId = async (
 export const addUsersToRoom = async (
   roomId: string,
   userIds: string[]
-): Promise<void> => {
+): Promise<BulkResult<string>> => {
   const res = await client.post(`${BASE_URL}/rooms/${roomId}/users`, {
     user_ids: userIds,
   });
@@ -77,6 +85,8 @@ export const addUsersToRoom = async (
   if (res.status !== 201) {
     throw new Error(`failed to add users to room`);
   }
+
+  return res.data;
 };
 
 export const getProfileByUserId = async (): Promise<Profile | null> => {
