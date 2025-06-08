@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go-chat/internal/constants"
 	"go-chat/internal/models"
+	"go-chat/internal/types"
 	"go-chat/internal/xerrors"
 
 	"github.com/aaronkim218/patchsql"
@@ -72,4 +73,32 @@ func (p *Postgres) CreateProfile(ctx context.Context, profile models.Profile) er
 	}
 
 	return nil
+}
+
+func (p *Postgres) SearchProfiles(ctx context.Context, options types.SearchProfilesOptions, userId uuid.UUID) ([]models.Profile, error) {
+	const query string = `
+	SELECT user_id, username, first_name, last_name
+	FROM profiles
+	WHERE username ILIKE '%' || $1 || '%'
+		AND user_id != $2
+	LIMIT $3 OFFSET $4
+	`
+	rows, err := p.pool.Query(ctx, query, options.Username, userId, options.Limit, options.Offset)
+	if err != nil {
+		return nil, err
+	}
+
+	profiles, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (models.Profile, error) {
+		profile, err := pgx.RowToStructByName[models.Profile](row)
+		if err != nil {
+			return models.Profile{}, err
+		}
+
+		return profile, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return profiles, nil
 }
