@@ -27,7 +27,7 @@ const ChatPage = () => {
     }
 
     ws.current = new WebSocket(
-      `${import.meta.env.VITE_WEBSOCKET_URL}/rooms/${roomId}`
+      `${import.meta.env.VITE_WEBSOCKET_URL}/rooms/${roomId}`,
     );
 
     ws.current.onopen = () => {
@@ -84,7 +84,7 @@ const ChatPage = () => {
       try {
         await deleteMessageById(messageId);
         setUserMessages((prev) =>
-          prev.filter((message) => message.id !== messageId)
+          prev.filter((message) => message.id !== messageId),
         );
       } catch (error) {
         console.error("error deleting message:", error);
