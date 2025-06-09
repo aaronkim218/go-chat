@@ -39,7 +39,7 @@ func (s *Service) CreateRoom(c *fiber.Ctx) error {
 		return xerrors.InternalServerError()
 	}
 
-	var room models.Room = models.Room{
+	room := models.Room{
 		Id:   roomId,
 		Host: userId,
 	}
@@ -147,7 +147,13 @@ func (s *Service) DeleteRoom(c *fiber.Ctx) error {
 }
 
 func (s *Service) JoinRoom(conn *websocket.Conn) {
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			slog.Error("error closing connection",
+				slog.String("error", err.Error()),
+			)
+		}
+	}()
 
 	_, msg, err := conn.ReadMessage()
 	if err != nil {

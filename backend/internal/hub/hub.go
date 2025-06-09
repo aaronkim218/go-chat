@@ -127,7 +127,12 @@ func (h *Hub) handleActiveRoom(roomId uuid.UUID, ar *activeRoom) {
 
 			for client := range ar.clients {
 				if err := client.Conn.WriteJSON(userMessage); err != nil {
-					client.Conn.Close()
+					if err := client.Conn.Close(); err != nil {
+						slog.Error("error closing connection",
+							slog.String("error", err.Error()),
+						)
+						continue
+					}
 
 					slog.Info(
 						"error writing user message to client. closed connection",

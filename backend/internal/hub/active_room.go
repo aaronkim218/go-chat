@@ -31,7 +31,11 @@ func (ar *activeRoom) handleClient(client *types.Client) {
 				slog.String("error", err.Error()),
 			)
 
-			client.Conn.Close()
+			if err := client.Conn.Close(); err != nil {
+				slog.Error("error closing connection",
+					slog.String("error", err.Error()),
+				)
+			}
 			ar.leave <- client
 
 			return
