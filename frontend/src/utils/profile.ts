@@ -2,7 +2,7 @@ import { Profile } from "../types";
 
 export const getProfileDiff = (
   original: Profile,
-  updated: Profile
+  updated: Profile,
 ): Partial<Profile> => {
   const diff: Partial<Profile> = {};
 

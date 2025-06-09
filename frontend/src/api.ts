@@ -35,7 +35,7 @@ export const getRoomsByUserId = async (): Promise<Room[]> => {
 };
 
 export const createRoom = async (
-  members: string[]
+  members: string[],
 ): Promise<CreateRoomResponse> => {
   const res = await client.post(`${BASE_URL}/rooms`, { members: members });
 
@@ -63,7 +63,7 @@ export const deleteMessageById = async (messageId: string): Promise<void> => {
 };
 
 export const getUserMessagesByRoomId = async (
-  roomId: string
+  roomId: string,
 ): Promise<UserMessage[]> => {
   const res = await client.get(`${BASE_URL}/rooms/${roomId}/messages`);
 
@@ -76,7 +76,7 @@ export const getUserMessagesByRoomId = async (
 
 export const addUsersToRoom = async (
   roomId: string,
-  userIds: string[]
+  userIds: string[],
 ): Promise<BulkResult<string>> => {
   const res = await client.post(`${BASE_URL}/rooms/${roomId}/users`, {
     user_ids: userIds,
@@ -102,7 +102,7 @@ export const getProfileByUserId = async (): Promise<Profile | null> => {
 };
 
 export const patchProfileByUserId = async (
-  partialProfile: Partial<Profile>
+  partialProfile: Partial<Profile>,
 ): Promise<void> => {
   const res = await client.patch(`${BASE_URL}/profiles`, partialProfile);
 
@@ -116,7 +116,7 @@ export interface CreateProfileRequest {
 }
 
 export const createProfile = async (
-  req: CreateProfileRequest
+  req: CreateProfileRequest,
 ): Promise<void> => {
   const res = await client.post(`${BASE_URL}/profiles`, req);
 
