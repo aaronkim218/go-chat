@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+
 	"go-chat/internal/types"
 
 	"github.com/google/uuid"

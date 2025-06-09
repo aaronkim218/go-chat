@@ -1,12 +1,13 @@
 package server
 
 import (
+	"log/slog"
+	"net/http"
+
 	"go-chat/internal/handlers"
 	"go-chat/internal/hub"
 	"go-chat/internal/storage"
 	"go-chat/internal/xerrors"
-	"log/slog"
-	"net/http"
 
 	go_json "github.com/goccy/go-json"
 

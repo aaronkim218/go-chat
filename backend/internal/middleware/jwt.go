@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+
 	"go-chat/internal/constants"
 	"go-chat/internal/utils"
 	"go-chat/internal/xcontext"

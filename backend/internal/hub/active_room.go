@@ -2,8 +2,9 @@ package hub
 
 import (
 	"context"
-	"go-chat/internal/types"
 	"log/slog"
+
+	"go-chat/internal/types"
 )
 
 type broadcastMessage struct {
