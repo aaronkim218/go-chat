@@ -47,7 +47,7 @@ const ChatPage = () => {
       setUserMessages((prev) => [...prev, userMessage]);
     };
 
-    ws.current.onclose = (_) => {
+    ws.current.onclose = () => {
       console.log("websocket closed");
     };
 
