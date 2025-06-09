@@ -3,14 +3,15 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"net/http"
+
 	"go-chat/internal/hub"
 	"go-chat/internal/models"
 	"go-chat/internal/types"
 	"go-chat/internal/utils"
 	"go-chat/internal/xcontext"
 	"go-chat/internal/xerrors"
-	"log/slog"
-	"net/http"
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"

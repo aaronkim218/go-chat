@@ -2,12 +2,13 @@ package hub
 
 import (
 	"context"
+	"log/slog"
+	"time"
+
 	"go-chat/internal/constants"
 	"go-chat/internal/models"
 	"go-chat/internal/storage"
 	"go-chat/internal/types"
-	"log/slog"
-	"time"
 
 	"github.com/google/uuid"
 )

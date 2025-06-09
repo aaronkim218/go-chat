@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"fmt"
+	"net/http"
+
 	"go-chat/internal/constants"
 	"go-chat/internal/models"
 	"go-chat/internal/types"
 	"go-chat/internal/xcontext"
 	"go-chat/internal/xerrors"
-	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -32,7 +33,7 @@ func (s *Service) PatchProfileByUserId(c *fiber.Ctx) error {
 	}
 
 	validate := func(req request) map[string]string {
-		var errMap = make(map[string]string)
+		errMap := make(map[string]string)
 
 		if req.Username != nil && (len(*req.Username) < constants.MinUsernameLength || len(*req.Username) > constants.MaxUsernameLength) {
 			errMap["username"] = fmt.Sprintf(
@@ -78,7 +79,7 @@ func (s *Service) CreateProfile(c *fiber.Ctx) error {
 	}
 
 	validate := func(req request) map[string]string {
-		var errMap = make(map[string]string)
+		errMap := make(map[string]string)
 
 		if len(req.Username) < constants.MinUsernameLength || len(req.Username) > constants.MaxUsernameLength {
 			errMap["username"] = fmt.Sprintf(

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+
 	"go-chat/internal/models"
 	"go-chat/internal/types"
 	"go-chat/internal/xerrors"

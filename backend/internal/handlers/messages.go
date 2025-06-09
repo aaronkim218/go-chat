@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"fmt"
+	"net/http"
+
 	"go-chat/internal/xcontext"
 	"go-chat/internal/xerrors"
-	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"

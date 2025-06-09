@@ -1,14 +1,15 @@
 package main
 
 import (
-	"go-chat/internal/hub"
-	"go-chat/internal/server"
-	"go-chat/internal/settings"
-	"go-chat/internal/storage/postgres"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"go-chat/internal/hub"
+	"go-chat/internal/server"
+	"go-chat/internal/settings"
+	"go-chat/internal/storage/postgres"
 
 	"github.com/joho/godotenv"
 )

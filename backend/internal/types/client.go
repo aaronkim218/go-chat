@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+
 	"go-chat/internal/models"
 
 	"github.com/gofiber/contrib/websocket"
