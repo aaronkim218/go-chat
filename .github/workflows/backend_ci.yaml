@@ -48,5 +48,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: backend/go.mod
+      - name: install gofumpt
+        run: go install mvdan.cc/gofumpt@latest
       - name: gofumpt
         run: gofumpt -l .
