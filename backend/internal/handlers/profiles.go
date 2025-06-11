@@ -1,10 +1,8 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 
-	"go-chat/internal/constants"
 	"go-chat/internal/models"
 	"go-chat/internal/types"
 	"go-chat/internal/xcontext"
@@ -28,43 +26,23 @@ func (s *Service) GetProfileByUserId(c *fiber.Ctx) error {
 }
 
 func (s *Service) PatchProfileByUserId(c *fiber.Ctx) error {
-	type request struct {
-		Username *string `json:"username"`
-	}
-
-	validate := func(req request) map[string]string {
-		errMap := make(map[string]string)
-
-		if req.Username != nil && (len(*req.Username) < constants.MinUsernameLength || len(*req.Username) > constants.MaxUsernameLength) {
-			errMap["username"] = fmt.Sprintf(
-				"username length must be between %d and %d",
-				constants.MinUsernameLength,
-				constants.MaxUsernameLength,
-			)
-		}
-
-		return errMap
-	}
-
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
 	}
 
-	var req request
-	if err := c.BodyParser(&req); err != nil {
+	var partialProfile types.PartialProfile
+	if err := c.BodyParser(&partialProfile); err != nil {
 		return xerrors.InvalidJSON()
 	}
 
-	if errMap := validate(req); len(errMap) > 0 {
+	if errMap := partialProfile.Validate(); len(errMap) > 0 {
 		return xerrors.UnprocessableEntityError(errMap)
 	}
 
 	if err := s.storage.PatchProfileByUserId(
 		c.Context(),
-		models.Profile{
-			Username: *req.Username,
-		},
+		partialProfile,
 		userId,
 	); err != nil {
 		return err
@@ -74,44 +52,25 @@ func (s *Service) PatchProfileByUserId(c *fiber.Ctx) error {
 }
 
 func (s *Service) CreateProfile(c *fiber.Ctx) error {
-	type request struct {
-		Username string `json:"username"`
-	}
-
-	validate := func(req request) map[string]string {
-		errMap := make(map[string]string)
-
-		if len(req.Username) < constants.MinUsernameLength || len(req.Username) > constants.MaxUsernameLength {
-			errMap["username"] = fmt.Sprintf(
-				"username length must be between %d and %d",
-				constants.MinUsernameLength,
-				constants.MaxUsernameLength,
-			)
-		}
-
-		return errMap
-	}
-
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
 	}
 
-	var req request
-	if err := c.BodyParser(&req); err != nil {
+	var profile models.Profile
+	if err := c.BodyParser(&profile); err != nil {
 		return xerrors.InvalidJSON()
 	}
 
-	if errMap := validate(req); len(errMap) > 0 {
+	profile.UserId = userId
+
+	if errMap := profile.Validate(); len(errMap) > 0 {
 		return xerrors.UnprocessableEntityError(errMap)
 	}
 
 	if err := s.storage.CreateProfile(
 		c.Context(),
-		models.Profile{
-			UserId:   userId,
-			Username: req.Username,
-		},
+		profile,
 	); err != nil {
 		return err
 	}

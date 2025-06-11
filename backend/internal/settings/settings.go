@@ -6,6 +6,7 @@ type Settings struct {
 	Storage Storage `envPrefix:"STORAGE_"`
 	Server  Server  `envPrefix:"SERVER_"`
 	Jwt     Jwt     `envPrefix:"JWT_"`
+	Log     Log     `envPrefix:"LOG_"`
 }
 
 func Load() (Settings, error) {
