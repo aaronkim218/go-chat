@@ -36,8 +36,8 @@ func (p *Postgres) GetProfileByUserId(ctx context.Context, userId uuid.UUID) (mo
 	return profile, nil
 }
 
-func (p *Postgres) PatchProfileByUserId(ctx context.Context, profile models.Profile, userId uuid.UUID) error {
-	setClause, args, err := patchsql.BuildSetClause(profile)
+func (p *Postgres) PatchProfileByUserId(ctx context.Context, partialProfile types.PartialProfile, userId uuid.UUID) error {
+	setClause, args, err := patchsql.BuildSetClause(partialProfile)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (p *Postgres) PatchProfileByUserId(ctx context.Context, profile models.Prof
 	ct, err := p.pool.Exec(ctx, query, append(args, userId)...)
 	if err != nil {
 		if xerrors.IsUniqueViolation(err, constants.ProfilesUsernameUniqueConstraint) {
-			return xerrors.ConflictError("user", "username", profile.Username)
+			return xerrors.ConflictError("user", "username", *partialProfile.Username)
 		}
 
 		return err
@@ -62,8 +62,8 @@ func (p *Postgres) PatchProfileByUserId(ctx context.Context, profile models.Prof
 }
 
 func (p *Postgres) CreateProfile(ctx context.Context, profile models.Profile) error {
-	const query string = `INSERT INTO profiles (user_id, username) VALUES ($1, $2)`
-	if _, err := p.pool.Exec(ctx, query, profile.UserId, profile.Username); err != nil {
+	const query string = `INSERT INTO profiles (user_id, username, first_name, last_name) VALUES ($1, $2, $3, $4)`
+	if _, err := p.pool.Exec(ctx, query, profile.UserId, profile.Username, profile.FirstName, profile.LastName); err != nil {
 		if xerrors.IsUniqueViolation(err, constants.ProfilesPKeyUniqueConstraint) {
 			return xerrors.ConflictError("profile", "id", profile.UserId.String())
 		} else if xerrors.IsUniqueViolation(err, constants.ProfilesUsernameUniqueConstraint) {

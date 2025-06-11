@@ -1,8 +1,8 @@
 CREATE TABLE profiles (
     user_id UUID PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
-    first_name TEXT,
-    last_name TEXT,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
 );
 

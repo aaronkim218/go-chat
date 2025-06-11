@@ -7,6 +7,8 @@ import { Profile } from "../types";
 const SetupPage = () => {
   const { session, setProfile } = useUserContext();
   const [username, setUsername] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const navigate = useNavigate();
 
   if (session) {
@@ -19,6 +21,8 @@ const SetupPage = () => {
         const profile: Profile = {
           userId: session?.user.id,
           username: username,
+          firstName: firstName,
+          lastName: lastName,
         };
         setProfile(profile);
         navigate("/home");
@@ -33,6 +37,14 @@ const SetupPage = () => {
         <input
           placeholder="username"
           onChange={(e) => setUsername(e.target.value)}
+        />
+        <input
+          placeholder="first name"
+          onChange={(e) => setFirstName(e.target.value)}
+        />
+        <input
+          placeholder="last name"
+          onChange={(e) => setLastName(e.target.value)}
         />
         <button onClick={() => handleCreateProfile()}>Create Profile</button>
       </div>
