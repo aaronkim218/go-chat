@@ -18,6 +18,7 @@ type Hub struct {
 	storage     storage.Storage
 	addClient   chan AddClientRequest
 	deleteRoom  chan uuid.UUID
+	writeJobs   chan writeJob
 }
 
 type AddClientRequest struct {
@@ -27,6 +28,13 @@ type AddClientRequest struct {
 
 type Config struct {
 	Storage storage.Storage
+	Workers int
+	Logger  *slog.Logger
+}
+
+type writeJob struct {
+	client      *types.Client
+	userMessage types.UserMessage
 }
 
 func New(cfg *Config) *Hub {
@@ -35,6 +43,11 @@ func New(cfg *Config) *Hub {
 		storage:     cfg.Storage,
 		addClient:   make(chan AddClientRequest),
 		deleteRoom:  make(chan uuid.UUID),
+		writeJobs:   make(chan writeJob, cfg.Workers),
+	}
+
+	for id := range cfg.Workers {
+		go hub.writeWorker(id)
 	}
 
 	go hub.run()
@@ -126,19 +139,9 @@ func (h *Hub) handleActiveRoom(roomId uuid.UUID, ar *activeRoom) {
 			}
 
 			for client := range ar.clients {
-				if err := client.Conn.WriteJSON(userMessage); err != nil {
-					if err := client.Conn.Close(); err != nil {
-						slog.Error("error closing connection",
-							slog.String("error", err.Error()),
-						)
-						continue
-					}
-
-					slog.Info(
-						"error writing user message to client. closed connection",
-						slog.String("ip", client.Conn.IP()),
-						slog.String("error", err.Error()),
-					)
+				h.writeJobs <- writeJob{
+					client:      client,
+					userMessage: userMessage,
 				}
 			}
 		case client := <-ar.join:
@@ -155,6 +158,26 @@ func (h *Hub) handleActiveRoom(roomId uuid.UUID, ar *activeRoom) {
 			if len(ar.clients) == 0 {
 				h.deleteRoom <- roomId
 			}
+		}
+	}
+}
+
+func (h *Hub) writeWorker(id int) {
+	for job := range h.writeJobs {
+		slog.Info("job picked up by worker", slog.Int("id", id))
+		if err := job.client.Conn.WriteJSON(job.userMessage); err != nil {
+			if err := job.client.Conn.Close(); err != nil {
+				slog.Error("error closing connection",
+					slog.String("error", err.Error()),
+				)
+				continue
+			}
+
+			slog.Info(
+				"error writing user message to client. closed connection",
+				slog.String("ip", job.client.Conn.IP()),
+				slog.String("error", err.Error()),
+			)
 		}
 	}
 }

@@ -1,6 +1,6 @@
 package settings
 
-type Server struct {
-	Port     string `env:"PORT" envDefault:"42069"`
+type Hub struct {
+	Workers  int    `env:"WORKERS" envDefault:"8"`
 	LogLevel string `env:"LOG_LEVEL" envDefault:"INFO"`
 }

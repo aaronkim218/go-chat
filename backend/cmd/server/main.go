@@ -10,6 +10,7 @@ import (
 	"go-chat/internal/server"
 	"go-chat/internal/settings"
 	"go-chat/internal/storage/postgres"
+	"go-chat/internal/utils"
 
 	"github.com/joho/godotenv"
 )
@@ -26,18 +27,35 @@ func main() {
 		os.Exit(1)
 	}
 
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: utils.ParseSlogLevel(settings.Log.Level),
+	}))
+
+	slog.SetDefault(logger)
+
 	postgres := postgres.New(&postgres.Config{
 		DbUrl: settings.Storage.DbUrl,
 	})
 
+	hubLogger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: utils.ParseSlogLevel(settings.Hub.LogLevel),
+	}))
+
 	hub := hub.New(&hub.Config{
 		Storage: postgres,
+		Workers: settings.Hub.Workers,
+		Logger:  hubLogger,
 	})
+
+	serverLogger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: utils.ParseSlogLevel(settings.Server.LogLevel),
+	}))
 
 	app := server.New(&server.Config{
 		Storage:   postgres,
 		Hub:       hub,
 		JwtSecret: settings.Jwt.Secret,
+		Logger:    serverLogger,
 	})
 
 	go func() {
