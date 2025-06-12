@@ -19,20 +19,21 @@ type activeRoom struct {
 	leave     chan *types.Client
 	ctx       context.Context
 	cancel    context.CancelFunc
+	logger    *slog.Logger
 }
 
 func (ar *activeRoom) handleClient(client *types.Client) {
 	for {
 		_, msg, err := client.Conn.ReadMessage()
 		if err != nil {
-			slog.Info(
+			ar.logger.Info(
 				"error reading message from client. closing connection",
 				slog.String("ip", client.Conn.IP()),
 				slog.String("error", err.Error()),
 			)
 
 			if err := client.Conn.Close(); err != nil {
-				slog.Error("error closing connection",
+				ar.logger.Error("error closing connection",
 					slog.String("error", err.Error()),
 				)
 			}

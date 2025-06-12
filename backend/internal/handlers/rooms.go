@@ -149,7 +149,7 @@ func (s *Service) DeleteRoom(c *fiber.Ctx) error {
 func (s *Service) JoinRoom(conn *websocket.Conn) {
 	defer func() {
 		if err := conn.Close(); err != nil {
-			slog.Error("error closing connection",
+			s.logger.Error("error closing connection",
 				slog.String("error", err.Error()),
 			)
 		}
@@ -157,7 +157,7 @@ func (s *Service) JoinRoom(conn *websocket.Conn) {
 
 	_, msg, err := conn.ReadMessage()
 	if err != nil {
-		slog.Error("expected token but got error reading message",
+		s.logger.Error("expected token but got error reading message",
 			slog.String("error", err.Error()),
 		)
 		return
@@ -171,7 +171,7 @@ func (s *Service) JoinRoom(conn *websocket.Conn) {
 		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}),
 	)
 	if err != nil {
-		slog.Error("failed to parse token",
+		s.logger.Error("failed to parse token",
 			slog.String("error", err.Error()),
 			slog.String("msg", string(msg)),
 		)
@@ -180,7 +180,7 @@ func (s *Service) JoinRoom(conn *websocket.Conn) {
 
 	userId, err := utils.GetUserIdFromToken(token)
 	if err != nil {
-		slog.Error("failed to get user id from token",
+		s.logger.Error("failed to get user id from token",
 			slog.String("error", err.Error()),
 		)
 		return
@@ -188,7 +188,7 @@ func (s *Service) JoinRoom(conn *websocket.Conn) {
 
 	roomId, err := uuid.Parse(conn.Params("roomId"))
 	if err != nil {
-		slog.Error("invalid room id",
+		s.logger.Error("invalid room id",
 			slog.String("error", err.Error()),
 			slog.String("roomId", conn.Params("roomId")),
 		)
@@ -198,13 +198,13 @@ func (s *Service) JoinRoom(conn *websocket.Conn) {
 	// TODO: perform the following db operations concurrently
 
 	if exists, err := s.storage.CheckUserInRoom(context.TODO(), roomId, userId); !exists {
-		slog.Error("user in room not found",
+		s.logger.Error("user in room not found",
 			slog.String("userId", userId.String()),
 			slog.String("roomId", roomId.String()),
 		)
 		return
 	} else if err != nil {
-		slog.Error("error checking user in room",
+		s.logger.Error("error checking user in room",
 			slog.String("error", err.Error()),
 		)
 		return
@@ -212,7 +212,7 @@ func (s *Service) JoinRoom(conn *websocket.Conn) {
 
 	profile, err := s.storage.GetProfileByUserId(context.TODO(), userId)
 	if err != nil {
-		slog.Error("profile not found",
+		s.logger.Error("profile not found",
 			slog.String("userId", userId.String()),
 		)
 		return
@@ -230,7 +230,7 @@ func (s *Service) JoinRoom(conn *websocket.Conn) {
 	})
 
 	<-ctx.Done()
-	slog.Info(
+	s.logger.Info(
 		"client disconnected",
 		slog.String("ip", conn.IP()),
 		slog.String("room_id", roomId.String()),
