@@ -32,6 +32,7 @@ func New(cfg *Config) *fiber.App {
 		Storage:   cfg.Storage,
 		Hub:       cfg.Hub,
 		JwtSecret: cfg.JwtSecret,
+		Logger:    cfg.Logger,
 	})
 	setupMiddleware(app)
 	setupHealthcheck(app)

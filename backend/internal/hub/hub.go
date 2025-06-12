@@ -19,6 +19,7 @@ type Hub struct {
 	addClient   chan AddClientRequest
 	deleteRoom  chan uuid.UUID
 	writeJobs   chan writeJob
+	logger      *slog.Logger
 }
 
 type AddClientRequest struct {
@@ -44,6 +45,7 @@ func New(cfg *Config) *Hub {
 		addClient:   make(chan AddClientRequest),
 		deleteRoom:  make(chan uuid.UUID),
 		writeJobs:   make(chan writeJob, cfg.Workers),
+		logger:      cfg.Logger,
 	}
 
 	for id := range cfg.Workers {
@@ -75,6 +77,7 @@ func (h *Hub) run() {
 					leave:     make(chan *types.Client),
 					ctx:       ctx,
 					cancel:    cancel,
+					logger:    h.logger,
 				}
 				h.activeRooms[req.RoomId] = ar
 				go h.handleActiveRoom(req.RoomId, ar)
@@ -85,13 +88,13 @@ func (h *Hub) run() {
 			if len(h.activeRooms[roomId].clients) == 0 {
 				h.activeRooms[roomId].cancel()
 				delete(h.activeRooms, roomId)
-				slog.Info(
+				h.logger.Info(
 					"deleted active room",
 					slog.String("room_id", roomId.String()),
 				)
 			}
 		case <-ticker.C:
-			slog.Info("hub stats",
+			h.logger.Info("hub stats",
 				slog.Int("number of active rooms", len(h.activeRooms)),
 			)
 		}
@@ -106,7 +109,7 @@ func (h *Hub) handleActiveRoom(roomId uuid.UUID, ar *activeRoom) {
 		case broadcastMessage := <-ar.broadcast:
 			messageId, err := uuid.NewRandom()
 			if err != nil {
-				slog.Error(
+				h.logger.Error(
 					"error generating message id",
 					slog.String("error", err.Error()),
 				)
@@ -123,7 +126,7 @@ func (h *Hub) handleActiveRoom(roomId uuid.UUID, ar *activeRoom) {
 			}
 
 			if err := h.storage.CreateMessage(context.TODO(), message); err != nil {
-				slog.Error(
+				h.logger.Error(
 					"error creating message in storage",
 					slog.String("error", err.Error()),
 				)
@@ -150,7 +153,7 @@ func (h *Hub) handleActiveRoom(roomId uuid.UUID, ar *activeRoom) {
 		case client := <-ar.leave:
 			client.Cancel()
 			delete(ar.clients, client)
-			slog.Info(
+			h.logger.Info(
 				"deleted client from active room",
 				slog.String("ip", client.Conn.IP()),
 				slog.String("room_id", roomId.String()),
@@ -164,7 +167,7 @@ func (h *Hub) handleActiveRoom(roomId uuid.UUID, ar *activeRoom) {
 
 func (h *Hub) writeWorker(id int) {
 	for job := range h.writeJobs {
-		slog.Info("job picked up by worker", slog.Int("id", id))
+		h.logger.Info("job picked up by worker", slog.Int("id", id))
 		if err := job.client.Conn.WriteJSON(job.userMessage); err != nil {
 			if err := job.client.Conn.Close(); err != nil {
 				slog.Error("error closing connection",
@@ -173,7 +176,7 @@ func (h *Hub) writeWorker(id int) {
 				continue
 			}
 
-			slog.Info(
+			h.logger.Info(
 				"error writing user message to client. closed connection",
 				slog.String("ip", job.client.Conn.IP()),
 				slog.String("error", err.Error()),
