@@ -21,6 +21,7 @@ type Config struct {
 	Storage   storage.Storage
 	Hub       *hub.Hub
 	JwtSecret string
+	Logger    *slog.Logger
 }
 
 func New(cfg *Config) *fiber.App {
