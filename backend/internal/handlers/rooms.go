@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"sync"
 
 	"go-chat/internal/hub"
 	"go-chat/internal/models"
@@ -195,25 +196,43 @@ func (s *Service) JoinRoom(conn *websocket.Conn) {
 		return
 	}
 
-	// TODO: perform the following db operations concurrently
+	var (
+		exists     bool
+		existsErr  error
+		profile    models.Profile
+		profileErr error
+		wg         sync.WaitGroup
+	)
 
-	if exists, err := s.storage.CheckUserInRoom(context.TODO(), roomId, userId); !exists {
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		exists, existsErr = s.storage.CheckUserInRoom(context.TODO(), roomId, userId)
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		profile, profileErr = s.storage.GetProfileByUserId(context.TODO(), userId)
+	}()
+
+	wg.Wait()
+
+	if existsErr != nil {
+		s.logger.Error("error checking user in room",
+			slog.String("error", existsErr.Error()),
+		)
+		return
+	} else if !exists {
 		s.logger.Error("user in room not found",
 			slog.String("userId", userId.String()),
 			slog.String("roomId", roomId.String()),
 		)
 		return
-	} else if err != nil {
-		s.logger.Error("error checking user in room",
-			slog.String("error", err.Error()),
-		)
-		return
-	}
-
-	profile, err := s.storage.GetProfileByUserId(context.TODO(), userId)
-	if err != nil {
-		s.logger.Error("profile not found",
+	} else if profileErr != nil {
+		s.logger.Error("error getting profile",
 			slog.String("userId", userId.String()),
+			slog.String("error", profileErr.Error()),
 		)
 		return
 	}
