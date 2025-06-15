@@ -27,35 +27,29 @@ func main() {
 		os.Exit(1)
 	}
 
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: utils.ParseSlogLevel(settings.Log.Level),
-	}))
-
-	slog.SetDefault(logger)
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: utils.MustParseSlogLevel(settings.Log.Level),
+	})))
 
 	postgres := postgres.New(&postgres.Config{
 		DbUrl: settings.Storage.DbUrl,
 	})
 
-	hubLogger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: utils.ParseSlogLevel(settings.Hub.LogLevel),
-	}))
-
 	hub := hub.New(&hub.Config{
 		Storage: postgres,
 		Workers: settings.Hub.Workers,
-		Logger:  hubLogger,
+		Logger: slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: utils.MustParseSlogLevel(settings.Hub.LogLevel),
+		})),
 	})
-
-	serverLogger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: utils.ParseSlogLevel(settings.Server.LogLevel),
-	}))
 
 	app := server.New(&server.Config{
 		Storage:   postgres,
 		Hub:       hub,
 		JwtSecret: settings.Jwt.Secret,
-		Logger:    serverLogger,
+		Logger: slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: utils.MustParseSlogLevel(settings.Server.LogLevel),
+		})),
 	})
 
 	go func() {

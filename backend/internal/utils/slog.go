@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-func ParseSlogLevel(level string) slog.Leveler {
+func MustParseSlogLevel(level string) slog.Leveler {
 	switch level {
 	case "DEBUG":
 		return slog.LevelDebug
