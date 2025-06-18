@@ -1,9 +1,12 @@
 package types
 
+import "github.com/google/uuid"
+
 type SearchProfilesOptions struct {
-	Username string `query:"username"`
-	Limit    int    `query:"limit"`
-	Offset   int    `query:"offset"`
+	Username    string     `query:"username"`
+	Limit       int        `query:"limit"`
+	Offset      int        `query:"offset"`
+	ExcludeRoom *uuid.UUID `query:"excludeRoom"`
 }
 
 const (

@@ -86,7 +86,7 @@ func (s *Service) SearchProfiles(c *fiber.Ctx) error {
 
 	var options types.SearchProfilesOptions
 	if err := c.QueryParser(&options); err != nil {
-		return xerrors.BadRequestError("missing query parameters")
+		return xerrors.BadRequestError("failed to parse query parameters")
 	}
 
 	if errMap := options.Validate(); len(errMap) > 0 {
