@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/Masterminds/squirrel"
+
 	"go-chat/internal/constants"
 	"go-chat/internal/models"
 	"go-chat/internal/types"
@@ -77,14 +79,38 @@ func (p *Postgres) CreateProfile(ctx context.Context, profile models.Profile) er
 }
 
 func (p *Postgres) SearchProfiles(ctx context.Context, options types.SearchProfilesOptions, userId uuid.UUID) ([]models.Profile, error) {
-	const query string = `
-	SELECT user_id, username, first_name, last_name
-	FROM profiles
-	WHERE username ILIKE '%' || $1 || '%'
-		AND user_id != $2
-	LIMIT $3 OFFSET $4
-	`
-	rows, err := p.pool.Query(ctx, query, options.Username, userId, options.Limit, options.Offset)
+	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+
+	builder := psql.
+		Select("user_id, username, first_name, last_name").
+		From("profiles").
+		Where("username ILIKE ?", "%"+options.Username+"%").
+		Where("user_id != ?", userId.String())
+
+	if options.ExcludeRoom != nil {
+		builder = builder.
+			Where(
+				squirrel.Expr(
+					`NOT EXISTS (
+						SELECT 1 FROM users_rooms
+						WHERE users_rooms.user_id = profiles.user_id
+							AND users_rooms.room_id = ?
+					)`,
+					options.ExcludeRoom.String(),
+				),
+			)
+	}
+
+	builder = builder.
+		Limit(uint64(options.Limit)).
+		Offset(uint64(options.Offset))
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := p.pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
