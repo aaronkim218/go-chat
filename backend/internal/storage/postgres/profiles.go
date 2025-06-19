@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/Masterminds/squirrel"
 
@@ -12,7 +11,6 @@ import (
 	"go-chat/internal/types"
 	"go-chat/internal/xerrors"
 
-	"github.com/aaronkim218/patchsql"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -39,13 +37,30 @@ func (p *Postgres) GetProfileByUserId(ctx context.Context, userId uuid.UUID) (mo
 }
 
 func (p *Postgres) PatchProfileByUserId(ctx context.Context, partialProfile types.PartialProfile, userId uuid.UUID) error {
-	setClause, args, err := patchsql.BuildSetClause(partialProfile)
+	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
+
+	builder := psql.Update("profiles")
+
+	if partialProfile.FirstName != nil {
+		builder = builder.Set("first_name", *partialProfile.FirstName)
+	}
+
+	if partialProfile.LastName != nil {
+		builder = builder.Set("last_name", *partialProfile.LastName)
+	}
+
+	if partialProfile.Username != nil {
+		builder = builder.Set("username", *partialProfile.Username)
+	}
+
+	builder = builder.Where("user_id = ?", userId.String())
+
+	query, args, err := builder.ToSql()
 	if err != nil {
 		return err
 	}
 
-	query := fmt.Sprintf("UPDATE profiles SET %s WHERE user_id = $%d", setClause, len(args)+1)
-	ct, err := p.pool.Exec(ctx, query, append(args, userId)...)
+	ct, err := p.pool.Exec(ctx, query, args...)
 	if err != nil {
 		if xerrors.IsUniqueViolation(err, constants.ProfilesUsernameUniqueConstraint) {
 			return xerrors.ConflictError("user", "username", *partialProfile.Username)
