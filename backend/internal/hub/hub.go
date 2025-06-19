@@ -170,7 +170,7 @@ func (h *Hub) writeWorker(id int) {
 		h.logger.Info("job picked up by worker", slog.Int("id", id))
 		if err := job.client.Conn.WriteJSON(job.userMessage); err != nil {
 			if err := job.client.Conn.Close(); err != nil {
-				slog.Error("error closing connection",
+				h.logger.Error("error closing connection",
 					slog.String("error", err.Error()),
 				)
 				continue
