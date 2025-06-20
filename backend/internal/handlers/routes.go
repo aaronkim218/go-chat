@@ -4,12 +4,18 @@ import (
 	"go-chat/internal/middleware"
 
 	jwtware "github.com/gofiber/contrib/jwt"
+	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 )
 
 func (s *Service) RegisterRoutes(app *fiber.App) {
 	app.Route("/api", func(api fiber.Router) {
+		api.Use(swagger.New(swagger.Config{
+			BasePath: "/api/",
+			FilePath: "./api/swagger.json",
+			Path:     "docs",
+		}))
 		api.Use(jwtware.New(jwtware.Config{
 			SigningKey: jwtware.SigningKey{
 				JWTAlg: jwtware.HS256,
