@@ -1,0 +1,10 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "test",
+        "title": "go-chat API",
+        "contact": {},
+        "version": "0.1"
+    },
+    "paths": {}
+}

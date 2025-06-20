@@ -1,5 +1,8 @@
 package main
 
+// @title go-chat API
+// @version 0.1
+// @description test
 import (
 	"log/slog"
 	"os"
