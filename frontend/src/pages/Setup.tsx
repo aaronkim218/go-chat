@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useUserContext } from "../contexts/user";
 import { createProfile, CreateProfileRequest } from "../api";
 import { Profile } from "../types";
+import LogoutButton from "../components/LogoutButton";
 
 const SetupPage = () => {
   const { session, setProfile } = useUserContext();
@@ -33,6 +34,7 @@ const SetupPage = () => {
 
     return (
       <div>
+        <LogoutButton />
         <h1>Setup Page</h1>
         <input
           placeholder="username"

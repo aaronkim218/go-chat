@@ -12,6 +12,8 @@ import AuthLayout from "./layouts/AuthLayout";
 import LandingPage from "./pages/LandingPage";
 import SetupPage from "./pages/Setup";
 import BaseLayout from "./layouts/BaseLayout";
+import ForeignProfilePage from "./pages/ForeignProfilePage";
+import SearchPage from "./pages/SearchPage";
 
 const App = () => {
   return (
@@ -27,6 +29,11 @@ const App = () => {
               <Route element={<AuthLayout />}>
                 <Route path="/home" element={<HomePage />} />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route
+                  path="/profile/:profileId"
+                  element={<ForeignProfilePage />}
+                />
+                <Route path="/search" element={<SearchPage />} />
                 <Route path="/chat/:roomId" element={<ChatPage />} />
                 <Route path="/rooms" element={<RoomsPage />} />
               </Route>

@@ -4,6 +4,7 @@ import {
   CreateRoomResponse,
   Profile,
   Room,
+  SearchProfilesOptions,
   UserMessage,
 } from "./types";
 import { getJwt } from "./utils/jwt";
@@ -123,4 +124,18 @@ export const createProfile = async (
   if (res.status !== 201) {
     throw new Error(`failed to create profile for user`);
   }
+};
+
+export const searchProfiles = async (
+  req: SearchProfilesOptions,
+): Promise<Profile[]> => {
+  const res = await client.get(`${BASE_URL}/profiles/search`, {
+    params: req,
+  });
+
+  if (res.status !== 200) {
+    throw new Error(`failed to create profile for user`);
+  }
+
+  return res.data;
 };
