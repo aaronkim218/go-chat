@@ -1,19 +1,10 @@
-import { AuthError } from "@supabase/supabase-js";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import supabase from "../utils/supabase";
 import { useRequireAuth } from "../hooks/useRequireAuth";
+import LogoutButton from "./LogoutButton";
 
 const NavBar = () => {
   const { session } = useRequireAuth();
-  const [authErr, setAuthErr] = useState<AuthError | null>(null);
   const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-
-    setAuthErr(error);
-  };
 
   return session?.user.email ? (
     <div>
@@ -21,8 +12,8 @@ const NavBar = () => {
       <button onClick={() => navigate("/home")}>Home</button>
       <button onClick={() => navigate("/profile")}>Profile</button>
       <button onClick={() => navigate("/rooms")}>Rooms</button>
-      <button onClick={() => handleLogout()}>Logout</button>
-      <p>{authErr && <p>Error: {authErr.message}</p>}</p>
+      <button onClick={() => navigate("/search")}>Search</button>
+      <LogoutButton />
     </div>
   ) : (
     <>

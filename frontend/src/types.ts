@@ -38,3 +38,10 @@ export type BulkResult<T> = {
   successes: T[];
   failures: Failure<T>[];
 };
+
+export interface SearchProfilesOptions {
+  username: string;
+  limit?: number;
+  offset?: number;
+  excludeRoom?: string;
+}
