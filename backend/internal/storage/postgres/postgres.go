@@ -9,7 +9,7 @@ import (
 )
 
 type Postgres struct {
-	pool *pgxpool.Pool
+	Pool *pgxpool.Pool
 }
 
 type Config struct {
@@ -44,6 +44,6 @@ func New(cfg *Config) *Postgres {
 	}
 
 	return &Postgres{
-		pool: pool,
+		Pool: pool,
 	}
 }

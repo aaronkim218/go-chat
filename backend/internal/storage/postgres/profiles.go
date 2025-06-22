@@ -17,7 +17,7 @@ import (
 
 func (p *Postgres) GetProfileByUserId(ctx context.Context, userId uuid.UUID) (models.Profile, error) {
 	const query string = `SELECT user_id, username, first_name, last_name FROM profiles WHERE user_id = $1`
-	rows, err := p.pool.Query(ctx, query, userId)
+	rows, err := p.Pool.Query(ctx, query, userId)
 	if err != nil {
 		return models.Profile{}, err
 	}
@@ -60,7 +60,7 @@ func (p *Postgres) PatchProfileByUserId(ctx context.Context, partialProfile type
 		return err
 	}
 
-	ct, err := p.pool.Exec(ctx, query, args...)
+	ct, err := p.Pool.Exec(ctx, query, args...)
 	if err != nil {
 		if xerrors.IsUniqueViolation(err, constants.ProfilesUsernameUniqueConstraint) {
 			return xerrors.ConflictError("user", "username", *partialProfile.Username)
@@ -80,7 +80,7 @@ func (p *Postgres) PatchProfileByUserId(ctx context.Context, partialProfile type
 
 func (p *Postgres) CreateProfile(ctx context.Context, profile models.Profile) error {
 	const query string = `INSERT INTO profiles (user_id, username, first_name, last_name) VALUES ($1, $2, $3, $4)`
-	if _, err := p.pool.Exec(ctx, query, profile.UserId, profile.Username, profile.FirstName, profile.LastName); err != nil {
+	if _, err := p.Pool.Exec(ctx, query, profile.UserId, profile.Username, profile.FirstName, profile.LastName); err != nil {
 		if xerrors.IsUniqueViolation(err, constants.ProfilesPKeyUniqueConstraint) {
 			return xerrors.ConflictError("profile", "id", profile.UserId.String())
 		} else if xerrors.IsUniqueViolation(err, constants.ProfilesUsernameUniqueConstraint) {
@@ -125,7 +125,7 @@ func (p *Postgres) SearchProfiles(ctx context.Context, options types.SearchProfi
 		return nil, err
 	}
 
-	rows, err := p.pool.Query(ctx, query, args...)
+	rows, err := p.Pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

@@ -39,7 +39,7 @@ func (p *Postgres) AddUsersToRoom(ctx context.Context, userIds []uuid.UUID, room
 		})
 	}
 
-	results := p.pool.SendBatch(ctx, batch)
+	results := p.Pool.SendBatch(ctx, batch)
 	if err := results.Close(); err != nil {
 		return types.BulkResult[uuid.UUID]{}, err
 	}
@@ -51,7 +51,7 @@ func (p *Postgres) CheckUserInRoom(ctx context.Context, roomId uuid.UUID, userId
 	const query string = `SELECT 1 FROM users_rooms WHERE user_id = $1 AND room_id = $2`
 
 	var exists int
-	if err := p.pool.QueryRow(ctx, query, userId, roomId).Scan(&exists); err != nil {
+	if err := p.Pool.QueryRow(ctx, query, userId, roomId).Scan(&exists); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return false, nil
 		}

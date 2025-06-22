@@ -11,6 +11,7 @@ import { getJwt } from "./utils/jwt";
 import applyCaseMiddleware from "axios-case-converter";
 
 const BASE_URL = import.meta.env.VITE_SERVER_URL;
+const IDEMPOTENCY_HEADER = "X-Idempotency-Key";
 
 const baseAxios = axios.create();
 baseAxios.defaults.validateStatus = () => true;
@@ -104,8 +105,13 @@ export const getProfileByUserId = async (): Promise<Profile | null> => {
 
 export const patchProfileByUserId = async (
   partialProfile: Partial<Profile>,
+  idempotencyKey: string,
 ): Promise<void> => {
-  const res = await client.patch(`${BASE_URL}/profiles`, partialProfile);
+  const res = await client.patch(`${BASE_URL}/profiles`, partialProfile, {
+    headers: {
+      [IDEMPOTENCY_HEADER]: idempotencyKey,
+    },
+  });
 
   if (res.status !== 204) {
     throw new Error(`failed to update profile for user`);
@@ -114,12 +120,19 @@ export const patchProfileByUserId = async (
 
 export interface CreateProfileRequest {
   username: string;
+  firstName: string;
+  lastName: string;
 }
 
 export const createProfile = async (
   req: CreateProfileRequest,
+  idempotencyKey: string,
 ): Promise<void> => {
-  const res = await client.post(`${BASE_URL}/profiles`, req);
+  const res = await client.post(`${BASE_URL}/profiles`, req, {
+    headers: {
+      [IDEMPOTENCY_HEADER]: idempotencyKey,
+    },
+  });
 
   if (res.status !== 201) {
     throw new Error(`failed to create profile for user`);
