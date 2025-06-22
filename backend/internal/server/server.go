@@ -18,10 +18,11 @@ import (
 )
 
 type Config struct {
-	Storage   storage.Storage
-	Hub       *hub.Hub
-	JwtSecret string
-	Logger    *slog.Logger
+	Storage      storage.Storage
+	Hub          *hub.Hub
+	JwtSecret    string
+	Logger       *slog.Logger
+	FiberStorage fiber.Storage
 }
 
 func New(cfg *Config) *fiber.App {
@@ -29,10 +30,11 @@ func New(cfg *Config) *fiber.App {
 	setupStatic(app)
 
 	service := handlers.NewService(&handlers.ServiceConfig{
-		Storage:   cfg.Storage,
-		Hub:       cfg.Hub,
-		JwtSecret: cfg.JwtSecret,
-		Logger:    cfg.Logger,
+		Storage:      cfg.Storage,
+		Hub:          cfg.Hub,
+		JwtSecret:    cfg.JwtSecret,
+		Logger:       cfg.Logger,
+		FiberStorage: cfg.FiberStorage,
 	})
 	setupMiddleware(app)
 	setupHealthcheck(app)

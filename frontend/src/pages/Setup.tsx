@@ -4,6 +4,7 @@ import { useUserContext } from "../contexts/user";
 import { createProfile, CreateProfileRequest } from "../api";
 import { Profile } from "../types";
 import LogoutButton from "../components/LogoutButton";
+import { v4 as uuidv4 } from "uuid";
 
 const SetupPage = () => {
   const { session, setProfile } = useUserContext();
@@ -11,14 +12,17 @@ const SetupPage = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const navigate = useNavigate();
+  const [idempotencyKey, setIdempotencyKey] = useState(uuidv4());
 
   if (session) {
     const handleCreateProfile = async () => {
       try {
         const req: CreateProfileRequest = {
           username: username,
+          firstName: firstName,
+          lastName: lastName,
         };
-        await createProfile(req);
+        await createProfile(req, idempotencyKey);
         const profile: Profile = {
           userId: session?.user.id,
           username: username,
@@ -29,6 +33,8 @@ const SetupPage = () => {
         navigate("/home");
       } catch (error) {
         console.error("Error creating profile:", error);
+      } finally {
+        setIdempotencyKey(uuidv4());
       }
     };
 

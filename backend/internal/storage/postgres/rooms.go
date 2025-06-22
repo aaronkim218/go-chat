@@ -42,7 +42,7 @@ func (p *Postgres) CreateRoom(ctx context.Context, room models.Room, members []u
 		})
 	}
 
-	results := p.pool.SendBatch(ctx, batch)
+	results := p.Pool.SendBatch(ctx, batch)
 	if err := results.Close(); err != nil {
 		return types.BulkResult[uuid.UUID]{}, err
 	}
@@ -57,7 +57,7 @@ func (p *Postgres) GetRoomsByUserId(ctx context.Context, userId uuid.UUID) ([]mo
 	LEFT JOIN rooms AS r on ur.room_id = r.id
 	WHERE ur.user_id = $1
 	`
-	rows, err := p.pool.Query(ctx, query, userId)
+	rows, err := p.Pool.Query(ctx, query, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (p *Postgres) GetRoomsByUserId(ctx context.Context, userId uuid.UUID) ([]mo
 
 func (p *Postgres) DeleteRoomById(ctx context.Context, roomId uuid.UUID, userId uuid.UUID) error {
 	const query string = `DELETE FROM rooms WHERE id = $1 AND host = $2`
-	ct, err := p.pool.Exec(ctx, query, roomId, userId)
+	ct, err := p.Pool.Exec(ctx, query, roomId, userId)
 	if err != nil {
 		return err
 	}

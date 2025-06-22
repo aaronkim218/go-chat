@@ -15,6 +15,8 @@ import (
 	"go-chat/internal/storage/postgres"
 	"go-chat/internal/utils"
 
+	fiber_postgres "github.com/gofiber/storage/postgres/v3"
+
 	"github.com/joho/godotenv"
 )
 
@@ -38,6 +40,10 @@ func main() {
 		DbUrl: settings.Storage.DbUrl,
 	})
 
+	fiberPostgres := fiber_postgres.New(fiber_postgres.Config{
+		DB: postgres.Pool,
+	})
+
 	hub := hub.New(&hub.Config{
 		Storage: postgres,
 		Workers: settings.Hub.Workers,
@@ -53,6 +59,7 @@ func main() {
 		Logger: slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			Level: utils.MustParseSlogLevel(settings.Server.LogLevel),
 		})),
+		FiberStorage: fiberPostgres,
 	})
 
 	go func() {

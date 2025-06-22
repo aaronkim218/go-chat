@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/idempotency"
 )
 
 func (s *Service) RegisterRoutes(app *fiber.App) {
@@ -21,6 +22,9 @@ func (s *Service) RegisterRoutes(app *fiber.App) {
 				JWTAlg: jwtware.HS256,
 				Key:    []byte(s.jwtSecret),
 			},
+		}))
+		api.Use(idempotency.New(idempotency.Config{
+			Storage: s.fiberStorage,
 		}))
 		api.Use(middleware.SetUserId())
 

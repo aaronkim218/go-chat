@@ -4,20 +4,24 @@ import { patchProfileByUserId } from "../api";
 import { useUserContext } from "../contexts/user";
 import { getProfileDiff } from "../utils/profile";
 import { isObjectEmpty } from "../utils/object";
+import { v4 as uuidv4 } from "uuid";
 
 const ProfilePage = () => {
   const { setProfile } = useUserContext();
   const { profile } = useRequireAuth();
   const [updatedProfile, setUpdatedProfile] = useState(profile);
+  const [idempotencyKey, setIdempotencyKey] = useState(uuidv4());
 
   const handlePatchProfile = async () => {
     try {
       const partialProfile = getProfileDiff(profile, updatedProfile);
       if (isObjectEmpty(partialProfile)) return;
-      await patchProfileByUserId(partialProfile);
+      await patchProfileByUserId(partialProfile, idempotencyKey);
       setProfile(updatedProfile);
     } catch (error) {
       console.error("Failed to patch profile:", error);
+    } finally {
+      setIdempotencyKey(uuidv4());
     }
   };
 
