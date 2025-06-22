@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"go-chat/internal/constants"
 	"go-chat/internal/middleware"
 
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/contrib/swagger"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 )
 
@@ -25,6 +27,17 @@ func (s *Service) RegisterRoutes(app *fiber.App) {
 		}))
 		api.Use(idempotency.New(idempotency.Config{
 			Storage: s.fiberStorage,
+		}))
+		api.Use(middleware.SetCacheHeaders())
+		api.Use(cache.New(cache.Config{
+			KeyGenerator: middleware.CacheKeyGenerator,
+			Next: func(c *fiber.Ctx) bool {
+				_, ok := constants.CacheableRoutes[c.Path()]
+				return !ok
+			},
+			Storage:      s.fiberStorage,
+			CacheControl: true,
+			Expiration:   constants.CacheExpiration,
 		}))
 		api.Use(middleware.SetUserId())
 

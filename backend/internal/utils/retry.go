@@ -3,9 +3,17 @@ package utils
 import (
 	"context"
 	"errors"
-	"go-chat/internal/types"
+	"fmt"
 	"time"
 )
+
+type NonRetryableError struct {
+	Err error
+}
+
+func (nre *NonRetryableError) Error() string {
+	return fmt.Sprintf("non retryable error: %s", nre.Err.Error())
+}
 
 const (
 	retries       int           = 2
@@ -22,7 +30,7 @@ func Retry[T any](ctx context.Context, fn func(ctx context.Context) (T, error)) 
 			return result, nil
 		}
 
-		if nre, ok := err.(*types.NonRetryableError); ok {
+		if nre, ok := err.(*NonRetryableError); ok {
 			return zero, nre.Err
 		}
 
@@ -39,8 +47,8 @@ func Retry[T any](ctx context.Context, fn func(ctx context.Context) (T, error)) 
 	return zero, joinedErr
 }
 
-func CreateNonRetryableError(err error) *types.NonRetryableError {
-	return &types.NonRetryableError{
+func CreateNonRetryableError(err error) *NonRetryableError {
+	return &NonRetryableError{
 		Err: err,
 	}
 }
