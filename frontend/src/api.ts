@@ -12,6 +12,7 @@ import applyCaseMiddleware from "axios-case-converter";
 
 const BASE_URL = import.meta.env.VITE_SERVER_URL;
 const IDEMPOTENCY_HEADER = "X-Idempotency-Key";
+const CACHE_CONTROL_HEADER = "Cache-Control";
 
 const baseAxios = axios.create();
 baseAxios.defaults.validateStatus = () => true;
@@ -27,7 +28,11 @@ baseAxios.interceptors.request.use((config) => {
 const client = applyCaseMiddleware(baseAxios);
 
 export const getRoomsByUserId = async (): Promise<Room[]> => {
-  const res = await client.get(`${BASE_URL}/rooms`);
+  const res = await client.get(`${BASE_URL}/rooms`, {
+    headers: {
+      [CACHE_CONTROL_HEADER]: "no-store",
+    },
+  });
 
   if (res.status !== 200) {
     throw new Error("failed to fetch rooms");
