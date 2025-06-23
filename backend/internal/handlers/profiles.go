@@ -11,7 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (s *Service) GetProfileByUserId(c *fiber.Ctx) error {
+func (s *HandlerService) GetProfileByUserId(c *fiber.Ctx) error {
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
@@ -25,7 +25,7 @@ func (s *Service) GetProfileByUserId(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(profile)
 }
 
-func (s *Service) PatchProfileByUserId(c *fiber.Ctx) error {
+func (s *HandlerService) PatchProfileByUserId(c *fiber.Ctx) error {
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
@@ -51,7 +51,7 @@ func (s *Service) PatchProfileByUserId(c *fiber.Ctx) error {
 	return c.SendStatus(http.StatusNoContent)
 }
 
-func (s *Service) CreateProfile(c *fiber.Ctx) error {
+func (s *HandlerService) CreateProfile(c *fiber.Ctx) error {
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func (s *Service) CreateProfile(c *fiber.Ctx) error {
 	return c.SendStatus(http.StatusCreated)
 }
 
-func (s *Service) SearchProfiles(c *fiber.Ctx) error {
+func (s *HandlerService) SearchProfiles(c *fiber.Ctx) error {
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err

@@ -12,7 +12,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 )
 
-func (s *Service) RegisterRoutes(app *fiber.App) {
+func (s *HandlerService) RegisterRoutes(app *fiber.App) {
 	app.Route("/api", func(api fiber.Router) {
 		api.Use(swagger.New(swagger.Config{
 			BasePath: "/api/",

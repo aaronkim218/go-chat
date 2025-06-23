@@ -20,7 +20,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) CreateRoom(c *fiber.Ctx) error {
+func (s *HandlerService) CreateRoom(c *fiber.Ctx) error {
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func (s *Service) CreateRoom(c *fiber.Ctx) error {
 	})
 }
 
-func (s *Service) GetMessagesByRoom(c *fiber.Ctx) error {
+func (s *HandlerService) GetMessagesByRoom(c *fiber.Ctx) error {
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
@@ -85,7 +85,7 @@ func (s *Service) GetMessagesByRoom(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(userMessages)
 }
 
-func (s *Service) AddUsersToRoom(c *fiber.Ctx) error {
+func (s *HandlerService) AddUsersToRoom(c *fiber.Ctx) error {
 	type request struct {
 		UserIds []uuid.UUID `json:"user_ids"`
 	}
@@ -113,7 +113,7 @@ func (s *Service) AddUsersToRoom(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(bulkResult)
 }
 
-func (s *Service) GetRoomsByUserId(c *fiber.Ctx) error {
+func (s *HandlerService) GetRoomsByUserId(c *fiber.Ctx) error {
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
@@ -127,7 +127,7 @@ func (s *Service) GetRoomsByUserId(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(rooms)
 }
 
-func (s *Service) DeleteRoom(c *fiber.Ctx) error {
+func (s *HandlerService) DeleteRoom(c *fiber.Ctx) error {
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
@@ -147,7 +147,7 @@ func (s *Service) DeleteRoom(c *fiber.Ctx) error {
 	return c.SendStatus(http.StatusNoContent)
 }
 
-func (s *Service) JoinRoom(conn *websocket.Conn) {
+func (s *HandlerService) JoinRoom(conn *websocket.Conn) {
 	defer func() {
 		if err := conn.Close(); err != nil {
 			s.logger.Error("error closing connection",
