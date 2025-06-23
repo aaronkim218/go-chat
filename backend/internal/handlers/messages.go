@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) DeleteMessageById(c *fiber.Ctx) error {
+func (s *HandlerService) DeleteMessageById(c *fiber.Ctx) error {
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err

@@ -29,7 +29,7 @@ func New(cfg *Config) *fiber.App {
 	app := createFiberApp()
 	setupStatic(app)
 
-	service := handlers.NewService(&handlers.ServiceConfig{
+	service := handlers.NewService(&handlers.HandlerServiceConfig{
 		Storage:      cfg.Storage,
 		Hub:          cfg.Hub,
 		JwtSecret:    cfg.JwtSecret,

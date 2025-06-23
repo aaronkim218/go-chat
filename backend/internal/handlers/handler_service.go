@@ -8,7 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type Service struct {
+type HandlerService struct {
 	storage      storage.Storage
 	hub          *hub.Hub
 	jwtSecret    string
@@ -16,7 +16,7 @@ type Service struct {
 	fiberStorage fiber.Storage
 }
 
-type ServiceConfig struct {
+type HandlerServiceConfig struct {
 	Storage      storage.Storage
 	Hub          *hub.Hub
 	JwtSecret    string
@@ -24,8 +24,8 @@ type ServiceConfig struct {
 	FiberStorage fiber.Storage
 }
 
-func NewService(cfg *ServiceConfig) *Service {
-	return &Service{
+func NewService(cfg *HandlerServiceConfig) *HandlerService {
+	return &HandlerService{
 		storage:      cfg.Storage,
 		hub:          cfg.Hub,
 		jwtSecret:    cfg.JwtSecret,
