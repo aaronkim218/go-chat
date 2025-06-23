@@ -1,6 +1,7 @@
 export interface Room {
   id: string;
   host: string;
+  name: string;
 }
 
 export interface Message {
@@ -44,4 +45,9 @@ export interface SearchProfilesOptions {
   limit?: number;
   offset?: number;
   excludeRoom?: string;
+}
+
+export interface CreateRoomRequest {
+  name: string;
+  members: string[];
 }

@@ -13,7 +13,7 @@ import (
 )
 
 func (p *Postgres) CreateRoom(ctx context.Context, room models.Room, members []uuid.UUID) (types.BulkResult[uuid.UUID], error) {
-	const roomsQuery string = `INSERT INTO rooms (id, host) VALUES ($1, $2)`
+	const roomsQuery string = `INSERT INTO rooms (id, host, name) VALUES ($1, $2, $3)`
 	const usersRoomsHostQuery = `INSERT INTO users_rooms (user_id, room_id) VALUES ($1, $2)`
 	const usersRoomsMemberQuery string = `
 	INSERT INTO users_rooms (user_id, room_id)
@@ -25,7 +25,7 @@ func (p *Postgres) CreateRoom(ctx context.Context, room models.Room, members []u
 
 	bulkResult := types.BulkResult[uuid.UUID]{}
 	batch := &pgx.Batch{}
-	batch.Queue(roomsQuery, room.Id, room.Host)
+	batch.Queue(roomsQuery, room.Id, room.Host, room.Name)
 	batch.Queue(usersRoomsHostQuery, room.Host, room.Id)
 	for _, userId := range members {
 		batch.Queue(usersRoomsMemberQuery, userId, room.Id).Exec(func(ct pgconn.CommandTag) error {
@@ -52,7 +52,7 @@ func (p *Postgres) CreateRoom(ctx context.Context, room models.Room, members []u
 
 func (p *Postgres) GetRoomsByUserId(ctx context.Context, userId uuid.UUID) ([]models.Room, error) {
 	const query string = `
-	SELECT r.id, r.host
+	SELECT r.id, r.host, r.name
 	FROM users_rooms AS ur
 	LEFT JOIN rooms AS r on ur.room_id = r.id
 	WHERE ur.user_id = $1
