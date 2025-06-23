@@ -9,6 +9,7 @@ CREATE TABLE profiles (
 CREATE TABLE rooms (
     id UUID PRIMARY KEY,
     host UUID NOT NULL,
+    name TEXT NOT NULL,
     FOREIGN KEY (host) REFERENCES auth.users(id) ON DELETE SET NULL
 );
 

@@ -28,6 +28,7 @@ func (s *HandlerService) CreateRoom(c *fiber.Ctx) error {
 
 	type request struct {
 		Members []uuid.UUID `json:"members"`
+		Name    string      `json:"name"`
 	}
 
 	var req request
@@ -43,6 +44,7 @@ func (s *HandlerService) CreateRoom(c *fiber.Ctx) error {
 	room := models.Room{
 		Id:   roomId,
 		Host: userId,
+		Name: req.Name,
 	}
 
 	membersResults, err := s.storage.CreateRoom(c.Context(), room, req.Members)

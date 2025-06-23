@@ -1,6 +1,7 @@
 import axios from "axios";
 import {
   BulkResult,
+  CreateRoomRequest,
   CreateRoomResponse,
   Profile,
   Room,
@@ -42,9 +43,9 @@ export const getRoomsByUserId = async (): Promise<Room[]> => {
 };
 
 export const createRoom = async (
-  members: string[],
+  req: CreateRoomRequest,
 ): Promise<CreateRoomResponse> => {
-  const res = await client.post(`${BASE_URL}/rooms`, { members: members });
+  const res = await client.post(`${BASE_URL}/rooms`, req);
 
   if (res.status !== 201) {
     throw new Error(`failed to create room'`);
@@ -89,7 +90,7 @@ export const addUsersToRoom = async (
     user_ids: userIds,
   });
 
-  if (res.status !== 201) {
+  if (res.status !== 200) {
     throw new Error(`failed to add users to room`);
   }
 

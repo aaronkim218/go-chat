@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Room } from "../types";
+import { CreateRoomRequest, Room } from "../types";
 import { createRoom, deleteRoom, getRoomsByUserId } from "../api";
 import { useNavigate } from "react-router-dom";
 import { useRequireAuth } from "../hooks/useRequireAuth";
@@ -8,6 +8,9 @@ const RoomsPage = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const { session } = useRequireAuth();
   const navigate = useNavigate();
+  const [createRoomRequest, setCreateRoomRequest] = useState<CreateRoomRequest>(
+    { name: "", members: [] },
+  );
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -24,7 +27,7 @@ const RoomsPage = () => {
 
   const handleCreateRoom = async () => {
     try {
-      const resp = await createRoom([]);
+      const resp = await createRoom(createRoomRequest);
       setRooms((prev) => [resp.room, ...prev]);
     } catch (error) {
       console.error("error creating room:", error);
@@ -44,12 +47,23 @@ const RoomsPage = () => {
     <div>
       <h1>Rooms</h1>
       <button onClick={() => handleCreateRoom()}>Create Room</button>
+      <input
+        type="text"
+        placeholder="Room Name"
+        value={createRoomRequest.name}
+        onChange={(e) =>
+          setCreateRoomRequest({
+            ...createRoomRequest,
+            name: e.target.value,
+          })
+        }
+      />
       <ul>
         {rooms.map((room) => (
           <li key={room.id}>
             <div>
               <button onClick={() => navigate(`/chat/${room.id}`)}>
-                {room.id}
+                Name: {room.name} - Id: {room.id}
               </button>
               {room.host === session.user.id && (
                 <button onClick={() => handleDeleteRoom(room.id)}>
