@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",
+    "@types/google-one-tap": "^1.2.6",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.3.4",
