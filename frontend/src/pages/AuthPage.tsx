@@ -2,6 +2,7 @@ import { AuthError } from "@supabase/supabase-js";
 import { useState } from "react";
 import supabase from "../utils/supabase";
 import { useUserContext } from "../contexts/user";
+import GoogleSignInButton from "../components/GoogleSignInButton";
 
 const AuthPage = () => {
   const [email, setEmail] = useState("");
@@ -31,6 +32,7 @@ const AuthPage = () => {
     <div>Loading...</div>
   ) : (
     <div>
+      <GoogleSignInButton />
       <input placeholder="email" onChange={(e) => setEmail(e.target.value)} />
       <input
         placeholder="password"

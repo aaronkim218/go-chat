@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.0",
+    "@types/google-one-tap": "^1.2.6",
     "axios": "^1.10.0",
     "axios-case-converter": "^1.1.1",
     "react": "^19.0.0",
