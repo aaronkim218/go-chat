@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { UserMessage } from "../types";
+import { Profile, SearchProfilesOptions, UserMessage } from "../types";
 import {
   addUsersToRoom,
   deleteMessageById,
@@ -8,6 +8,7 @@ import {
 } from "../api";
 import { getJwt } from "../utils/jwt";
 import { useRequireAuth } from "../hooks/useRequireAuth";
+import UserSuggestionSearch from "../components/UserSuggestionSearch";
 
 const ChatPage = () => {
   const { roomId } = useParams();
@@ -18,7 +19,11 @@ const ChatPage = () => {
   const { session } = useRequireAuth();
   // const [retries, setRetries] = useState(0);
   const [newUsers, setNewUsers] = useState<string[]>([]);
-  const [newUser, setNewUser] = useState<string>("");
+  const [searchOptions, setSearchOptions] = useState<SearchProfilesOptions>({
+    username: "",
+    excludeRoom: roomId,
+  });
+  const [suggestions, setSuggestions] = useState<Profile[]>([]);
 
   useEffect(() => {
     if (!roomId) {
@@ -105,19 +110,16 @@ const ChatPage = () => {
         <h1>Chat</h1>
         <div>
           <h2>Add new users</h2>
-          <input
-            type="text"
-            placeholder="Type a message..."
-            onChange={(e) => setNewUser(e.target.value)}
-          />
-          <button
-            onClick={() => {
-              setNewUsers((prev) => [...prev, newUser]);
-              setNewUser("");
+          <UserSuggestionSearch
+            searchOptions={searchOptions}
+            setSearchOptions={setSearchOptions}
+            suggestions={suggestions}
+            setSuggestions={setSuggestions}
+            handleClick={(userId: string) => {
+              setNewUsers((prev) => [...prev, userId]);
+              setSearchOptions({ ...searchOptions, username: "" });
             }}
-          >
-            Add user to list
-          </button>
+          />
           <button onClick={() => handleAddUsersToRoom()}>Submit users</button>
           <ul>
             {newUsers.map((user, index) => (
