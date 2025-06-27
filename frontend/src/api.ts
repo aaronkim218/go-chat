@@ -158,3 +158,15 @@ export const searchProfiles = async (
 
   return res.data;
 };
+
+export const getProfilesByRoomId = async (
+  roomId: string,
+): Promise<Profile[]> => {
+  const res = await client.get(`${BASE_URL}/rooms/${roomId}/profiles`);
+
+  if (res.status !== 200) {
+    throw new Error(`failed to get profiles by room id='${roomId}'`);
+  }
+
+  return res.data;
+};

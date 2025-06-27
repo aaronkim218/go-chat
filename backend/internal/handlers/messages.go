@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *HandlerService) DeleteMessageById(c *fiber.Ctx) error {
+func (hs *HandlerService) DeleteMessageById(c *fiber.Ctx) error {
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
@@ -24,7 +24,7 @@ func (s *HandlerService) DeleteMessageById(c *fiber.Ctx) error {
 		return xerrors.BadRequestError(fmt.Sprintf("invalid user id: %s", messageId))
 	}
 
-	if err := s.storage.DeleteMessageById(c.Context(), uuidMessageId, userId); err != nil {
+	if err := hs.storage.DeleteMessageById(c.Context(), uuidMessageId, userId); err != nil {
 		return err
 	}
 

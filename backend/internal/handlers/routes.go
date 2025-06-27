@@ -12,7 +12,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
 )
 
-func (s *HandlerService) RegisterRoutes(app *fiber.App) {
+func (hs *HandlerService) RegisterRoutes(app *fiber.App) {
 	app.Route("/api", func(api fiber.Router) {
 		api.Use(swagger.New(swagger.Config{
 			BasePath: "/api/",
@@ -22,11 +22,11 @@ func (s *HandlerService) RegisterRoutes(app *fiber.App) {
 		api.Use(jwtware.New(jwtware.Config{
 			SigningKey: jwtware.SigningKey{
 				JWTAlg: jwtware.HS256,
-				Key:    []byte(s.jwtSecret),
+				Key:    []byte(hs.jwtSecret),
 			},
 		}))
 		api.Use(idempotency.New(idempotency.Config{
-			Storage: s.fiberStorage,
+			Storage: hs.fiberStorage,
 		}))
 		api.Use(middleware.SetCacheHeaders())
 		api.Use(cache.New(cache.Config{
@@ -35,35 +35,36 @@ func (s *HandlerService) RegisterRoutes(app *fiber.App) {
 				_, ok := constants.CacheableRoutes[c.Path()]
 				return !ok
 			},
-			Storage:      s.fiberStorage,
+			Storage:      hs.fiberStorage,
 			CacheControl: true,
 			Expiration:   constants.CacheExpiration,
 		}))
 		api.Use(middleware.SetUserId())
 
 		api.Route("/rooms", func(rooms fiber.Router) {
-			rooms.Get("/", s.GetRoomsByUserId)
-			rooms.Post("/", s.CreateRoom)
-			rooms.Delete("/:roomId", s.DeleteRoom)
-			rooms.Get("/:roomId/messages", s.GetMessagesByRoom)
-			rooms.Post("/:roomId/users", s.AddUsersToRoom)
+			rooms.Get("/", hs.GetRoomsByUserId)
+			rooms.Post("/", hs.CreateRoom)
+			rooms.Delete("/:roomId", hs.DeleteRoom)
+			rooms.Get("/:roomId/messages", hs.GetMessagesByRoom)
+			rooms.Post("/:roomId/users", hs.AddUsersToRoom)
+			rooms.Get("/:roomId/profiles", hs.GetProfilesByRoomId)
 		})
 
 		api.Route("/profiles", func(profiles fiber.Router) {
-			profiles.Get("/", s.GetProfileByUserId)
-			profiles.Patch("/", s.PatchProfileByUserId)
-			profiles.Post("/", s.CreateProfile)
-			profiles.Get("/search", s.SearchProfiles)
+			profiles.Get("/", hs.GetProfileByUserId)
+			profiles.Patch("/", hs.PatchProfileByUserId)
+			profiles.Post("/", hs.CreateProfile)
+			profiles.Get("/search", hs.SearchProfiles)
 		})
 
 		api.Route("/messages", func(messages fiber.Router) {
-			messages.Delete("/:messageId", s.DeleteMessageById)
+			messages.Delete("/:messageId", hs.DeleteMessageById)
 		})
 	})
 
 	app.Route("/ws", func(ws fiber.Router) {
 		ws.Route("/rooms", func(rooms fiber.Router) {
-			rooms.Get("/:roomId", websocket.New(s.JoinRoom))
+			rooms.Get("/:roomId", websocket.New(hs.JoinRoom))
 		})
 	})
 }

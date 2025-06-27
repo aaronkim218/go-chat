@@ -4,6 +4,7 @@ import { Profile, SearchProfilesOptions, UserMessage } from "../types";
 import {
   addUsersToRoom,
   deleteMessageById,
+  getProfilesByRoomId,
   getUserMessagesByRoomId,
 } from "../api";
 import { getJwt } from "../utils/jwt";
@@ -24,6 +25,7 @@ const ChatPage = () => {
     excludeRoom: roomId,
   });
   const [suggestions, setSuggestions] = useState<Profile[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
 
   useEffect(() => {
     if (!roomId) {
@@ -65,7 +67,17 @@ const ChatPage = () => {
       }
     };
 
+    const fetchProfiles = async () => {
+      try {
+        const profiles = await getProfilesByRoomId(roomId);
+        setProfiles(profiles);
+      } catch (error) {
+        console.error("error getting profiles for room:", error);
+      }
+    };
+
     fetchMessages();
+    fetchProfiles();
 
     return () => {
       ws.current?.close();
@@ -108,6 +120,16 @@ const ChatPage = () => {
     return (
       <div>
         <h1>Chat</h1>
+        <div>
+          <h6>Profiles</h6>
+          <ul>
+            {profiles.map((profile) => (
+              <li key={profile.userId}>
+                {profile.username} ({profile.firstName} {profile.lastName})
+              </li>
+            ))}
+          </ul>
+        </div>
         <div>
           <h2>Add new users</h2>
           <UserSuggestionSearch

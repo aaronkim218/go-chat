@@ -11,13 +11,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (s *HandlerService) GetProfileByUserId(c *fiber.Ctx) error {
+func (hs *HandlerService) GetProfileByUserId(c *fiber.Ctx) error {
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
 	}
 
-	profile, err := s.storage.GetProfileByUserId(c.Context(), userId)
+	profile, err := hs.storage.GetProfileByUserId(c.Context(), userId)
 	if err != nil {
 		return err
 	}
@@ -25,7 +25,7 @@ func (s *HandlerService) GetProfileByUserId(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(profile)
 }
 
-func (s *HandlerService) PatchProfileByUserId(c *fiber.Ctx) error {
+func (hs *HandlerService) PatchProfileByUserId(c *fiber.Ctx) error {
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
@@ -40,7 +40,7 @@ func (s *HandlerService) PatchProfileByUserId(c *fiber.Ctx) error {
 		return xerrors.UnprocessableEntityError(errMap)
 	}
 
-	if err := s.storage.PatchProfileByUserId(
+	if err := hs.storage.PatchProfileByUserId(
 		c.Context(),
 		partialProfile,
 		userId,
@@ -51,7 +51,7 @@ func (s *HandlerService) PatchProfileByUserId(c *fiber.Ctx) error {
 	return c.SendStatus(http.StatusNoContent)
 }
 
-func (s *HandlerService) CreateProfile(c *fiber.Ctx) error {
+func (hs *HandlerService) CreateProfile(c *fiber.Ctx) error {
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
@@ -68,7 +68,7 @@ func (s *HandlerService) CreateProfile(c *fiber.Ctx) error {
 		return xerrors.UnprocessableEntityError(errMap)
 	}
 
-	if err := s.storage.CreateProfile(
+	if err := hs.storage.CreateProfile(
 		c.Context(),
 		profile,
 	); err != nil {
@@ -78,7 +78,7 @@ func (s *HandlerService) CreateProfile(c *fiber.Ctx) error {
 	return c.SendStatus(http.StatusCreated)
 }
 
-func (s *HandlerService) SearchProfiles(c *fiber.Ctx) error {
+func (hs *HandlerService) SearchProfiles(c *fiber.Ctx) error {
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
@@ -93,7 +93,7 @@ func (s *HandlerService) SearchProfiles(c *fiber.Ctx) error {
 		return xerrors.UnprocessableEntityError(errMap)
 	}
 
-	profiles, err := s.storage.SearchProfiles(c.Context(), options, userId)
+	profiles, err := hs.storage.SearchProfiles(c.Context(), options, userId)
 	if err != nil {
 		return err
 	}
