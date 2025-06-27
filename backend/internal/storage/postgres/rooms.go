@@ -5,6 +5,7 @@ import (
 
 	"go-chat/internal/models"
 	"go-chat/internal/types"
+	"go-chat/internal/utils"
 	"go-chat/internal/xerrors"
 
 	"github.com/google/uuid"
@@ -92,4 +93,37 @@ func (p *Postgres) DeleteRoomById(ctx context.Context, roomId uuid.UUID, userId 
 	}
 
 	return nil
+}
+
+func (p *Postgres) GetProfilesByRoomId(ctx context.Context, roomId uuid.UUID, userId uuid.UUID) ([]models.Profile, error) {
+	const query string = `
+	SELECT p.user_id, p.username, p.first_name, p.last_name
+	FROM users_rooms AS ur
+	INNER JOIN profiles AS p on ur.user_id = p.user_id
+	WHERE ur.room_id = $1
+	AND EXISTS (
+		SELECT 1 FROM users_rooms WHERE user_id = $2 AND room_id = $1
+	)
+	`
+
+	rows, err := utils.Retry(ctx, func(ctx context.Context) (pgx.Rows, error) {
+		return p.Pool.Query(ctx, query, roomId, userId)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	profiles, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (models.Profile, error) {
+		profile, err := pgx.RowToStructByName[models.Profile](row)
+		if err != nil {
+			return models.Profile{}, err
+		}
+
+		return profile, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return profiles, nil
 }

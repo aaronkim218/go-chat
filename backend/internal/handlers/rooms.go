@@ -20,7 +20,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *HandlerService) CreateRoom(c *fiber.Ctx) error {
+func (hs *HandlerService) CreateRoom(c *fiber.Ctx) error {
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
@@ -47,7 +47,7 @@ func (s *HandlerService) CreateRoom(c *fiber.Ctx) error {
 		Name: req.Name,
 	}
 
-	membersResults, err := s.storage.CreateRoom(c.Context(), room, req.Members)
+	membersResults, err := hs.storage.CreateRoom(c.Context(), room, req.Members)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (s *HandlerService) CreateRoom(c *fiber.Ctx) error {
 	})
 }
 
-func (s *HandlerService) GetMessagesByRoom(c *fiber.Ctx) error {
+func (hs *HandlerService) GetMessagesByRoom(c *fiber.Ctx) error {
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (s *HandlerService) GetMessagesByRoom(c *fiber.Ctx) error {
 		return xerrors.BadRequestError(fmt.Sprintf("invalid room id: %s", roomId))
 	}
 
-	userMessages, err := s.storage.GetUserMessagesByRoomId(c.Context(), uuidRoomId, userId)
+	userMessages, err := hs.storage.GetUserMessagesByRoomId(c.Context(), uuidRoomId, userId)
 	if err != nil {
 		return err
 	}
@@ -129,7 +129,7 @@ func (s *HandlerService) GetRoomsByUserId(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(rooms)
 }
 
-func (s *HandlerService) DeleteRoom(c *fiber.Ctx) error {
+func (hs *HandlerService) DeleteRoom(c *fiber.Ctx) error {
 	userId, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
@@ -142,17 +142,38 @@ func (s *HandlerService) DeleteRoom(c *fiber.Ctx) error {
 		return xerrors.BadRequestError(fmt.Sprintf("invalid user id: %s", roomId))
 	}
 
-	if err := s.storage.DeleteRoomById(c.Context(), uuidRoomId, userId); err != nil {
+	if err := hs.storage.DeleteRoomById(c.Context(), uuidRoomId, userId); err != nil {
 		return err
 	}
 
 	return c.SendStatus(http.StatusNoContent)
 }
 
-func (s *HandlerService) JoinRoom(conn *websocket.Conn) {
+func (hs *HandlerService) GetProfilesByRoomId(c *fiber.Ctx) error {
+	userId, err := xcontext.GetUserId(c)
+	if err != nil {
+		return err
+	}
+
+	roomId := c.Params("roomId")
+
+	uuidRoomId, err := uuid.Parse(roomId)
+	if err != nil {
+		return xerrors.BadRequestError(fmt.Sprintf("invalid user id: %s", roomId))
+	}
+
+	profiles, err := hs.storage.GetProfilesByRoomId(c.Context(), uuidRoomId, userId)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(http.StatusOK).JSON(profiles)
+}
+
+func (hs *HandlerService) JoinRoom(conn *websocket.Conn) {
 	defer func() {
 		if err := conn.Close(); err != nil {
-			s.logger.Error("error closing connection",
+			hs.logger.Error("error closing connection",
 				slog.String("error", err.Error()),
 			)
 		}
@@ -160,7 +181,7 @@ func (s *HandlerService) JoinRoom(conn *websocket.Conn) {
 
 	_, msg, err := conn.ReadMessage()
 	if err != nil {
-		s.logger.Error("expected token but got error reading message",
+		hs.logger.Error("expected token but got error reading message",
 			slog.String("error", err.Error()),
 		)
 		return
@@ -169,12 +190,12 @@ func (s *HandlerService) JoinRoom(conn *websocket.Conn) {
 	token, err := jwt.Parse(
 		string(msg),
 		func(t *jwt.Token) (interface{}, error) {
-			return []byte(s.jwtSecret), nil
+			return []byte(hs.jwtSecret), nil
 		},
 		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}),
 	)
 	if err != nil {
-		s.logger.Error("failed to parse token",
+		hs.logger.Error("failed to parse token",
 			slog.String("error", err.Error()),
 			slog.String("msg", string(msg)),
 		)
@@ -183,7 +204,7 @@ func (s *HandlerService) JoinRoom(conn *websocket.Conn) {
 
 	userId, err := utils.GetUserIdFromToken(token)
 	if err != nil {
-		s.logger.Error("failed to get user id from token",
+		hs.logger.Error("failed to get user id from token",
 			slog.String("error", err.Error()),
 		)
 		return
@@ -191,7 +212,7 @@ func (s *HandlerService) JoinRoom(conn *websocket.Conn) {
 
 	roomId, err := uuid.Parse(conn.Params("roomId"))
 	if err != nil {
-		s.logger.Error("invalid room id",
+		hs.logger.Error("invalid room id",
 			slog.String("error", err.Error()),
 			slog.String("roomId", conn.Params("roomId")),
 		)
@@ -209,30 +230,30 @@ func (s *HandlerService) JoinRoom(conn *websocket.Conn) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		exists, existsErr = s.storage.CheckUserInRoom(context.TODO(), roomId, userId)
+		exists, existsErr = hs.storage.CheckUserInRoom(context.TODO(), roomId, userId)
 	}()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		profile, profileErr = s.storage.GetProfileByUserId(context.TODO(), userId)
+		profile, profileErr = hs.storage.GetProfileByUserId(context.TODO(), userId)
 	}()
 
 	wg.Wait()
 
 	if existsErr != nil {
-		s.logger.Error("error checking user in room",
+		hs.logger.Error("error checking user in room",
 			slog.String("error", existsErr.Error()),
 		)
 		return
 	} else if !exists {
-		s.logger.Error("user in room not found",
+		hs.logger.Error("user in room not found",
 			slog.String("userId", userId.String()),
 			slog.String("roomId", roomId.String()),
 		)
 		return
 	} else if profileErr != nil {
-		s.logger.Error("error getting profile",
+		hs.logger.Error("error getting profile",
 			slog.String("userId", userId.String()),
 			slog.String("error", profileErr.Error()),
 		)
@@ -240,7 +261,7 @@ func (s *HandlerService) JoinRoom(conn *websocket.Conn) {
 	}
 
 	ctx, cancel := context.WithCancel(context.TODO())
-	s.hub.AddClient(hub.AddClientRequest{
+	hs.hub.AddClient(hub.AddClientRequest{
 		RoomId: roomId,
 		Client: &types.Client{
 			Profile: profile,
@@ -251,7 +272,7 @@ func (s *HandlerService) JoinRoom(conn *websocket.Conn) {
 	})
 
 	<-ctx.Done()
-	s.logger.Info(
+	hs.logger.Info(
 		"client disconnected",
 		slog.String("ip", conn.IP()),
 		slog.String("room_id", roomId.String()),
