@@ -26,7 +26,9 @@ baseAxios.interceptors.request.use((config) => {
   return config;
 });
 
-const client = applyCaseMiddleware(baseAxios);
+const client = applyCaseMiddleware(baseAxios, {
+  ignoreParams: true,
+});
 
 export const getRoomsByUserId = async (): Promise<Room[]> => {
   const res = await client.get(`${BASE_URL}/rooms`, {

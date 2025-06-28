@@ -9,5 +9,5 @@ var (
 )
 
 const (
-	CacheExpiration = 5 * time.Minute
+	CacheExpiration = 10 * time.Second
 )
