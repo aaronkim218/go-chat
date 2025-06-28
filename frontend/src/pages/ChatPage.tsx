@@ -121,7 +121,7 @@ const ChatPage = () => {
       <div>
         <h1>Chat</h1>
         <div>
-          <h6>Profiles</h6>
+          <h6 className="">Profiles</h6>
           <ul>
             {profiles.map((profile) => (
               <li key={profile.userId}>
