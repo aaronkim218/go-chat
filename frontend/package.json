@@ -11,12 +11,14 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.0",
+    "@tailwindcss/vite": "^4.1.11",
     "@types/google-one-tap": "^1.2.6",
     "axios": "^1.10.0",
     "axios-case-converter": "^1.1.1",
     "react": "^19.0.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.2",
+    "tailwindcss": "^4.1.11",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
