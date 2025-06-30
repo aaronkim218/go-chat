@@ -14,36 +14,39 @@ import SetupPage from "./pages/Setup";
 import BaseLayout from "./layouts/BaseLayout";
 import ForeignProfilePage from "./pages/ForeignProfilePage";
 import SearchPage from "./pages/SearchPage";
+import { ThemeProvider } from "./components/ThemeProvider";
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <UserProvider>
-        <Routes>
-          <Route element={<BaseLayout />}>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<AuthPage />} />
-            <Route path="/setup" element={<SetupPage />} />
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <BrowserRouter>
+        <UserProvider>
+          <Routes>
+            <Route element={<BaseLayout />}>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<AuthPage />} />
+              <Route path="/setup" element={<SetupPage />} />
 
-            <Route element={<RequireUser />}>
-              <Route element={<AuthLayout />}>
-                <Route path="/home" element={<HomePage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route
-                  path="/profile/:profileId"
-                  element={<ForeignProfilePage />}
-                />
-                <Route path="/search" element={<SearchPage />} />
-                <Route path="/chat/:roomId" element={<ChatPage />} />
-                <Route path="/rooms" element={<RoomsPage />} />
+              <Route element={<RequireUser />}>
+                <Route element={<AuthLayout />}>
+                  <Route path="/home" element={<HomePage />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route
+                    path="/profile/:profileId"
+                    element={<ForeignProfilePage />}
+                  />
+                  <Route path="/search" element={<SearchPage />} />
+                  <Route path="/chat/:roomId" element={<ChatPage />} />
+                  <Route path="/rooms" element={<RoomsPage />} />
+                </Route>
               </Route>
-            </Route>
 
-            <Route path="*" element={<NotFoundPage />} />
-          </Route>
-        </Routes>
-      </UserProvider>
-    </BrowserRouter>
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
+        </UserProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 };
 
