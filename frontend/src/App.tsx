@@ -15,6 +15,7 @@ import BaseLayout from "./layouts/BaseLayout";
 import ForeignProfilePage from "./pages/ForeignProfilePage";
 import SearchPage from "./pages/SearchPage";
 import { ThemeProvider } from "./components/ThemeProvider";
+import UnauthLayout from "./layouts/UnauthLayout";
 
 const App = () => {
   return (
@@ -23,10 +24,11 @@ const App = () => {
         <UserProvider>
           <Routes>
             <Route element={<BaseLayout />}>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<AuthPage />} />
-              <Route path="/setup" element={<SetupPage />} />
-
+              <Route element={<UnauthLayout />}>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<AuthPage />} />
+                <Route path="/setup" element={<SetupPage />} />
+              </Route>
               <Route element={<RequireUser />}>
                 <Route element={<AuthLayout />}>
                   <Route path="/home" element={<HomePage />} />

@@ -3,6 +3,16 @@ import { useState } from "react";
 import supabase from "../utils/supabase";
 import { useUserContext } from "../contexts/user";
 import GoogleSignInButton from "../components/GoogleSignInButton";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 const AuthPage = () => {
   const [email, setEmail] = useState("");
@@ -31,16 +41,47 @@ const AuthPage = () => {
   return firstLoad ? (
     <div>Loading...</div>
   ) : (
-    <div>
-      <GoogleSignInButton />
-      <input placeholder="email" onChange={(e) => setEmail(e.target.value)} />
-      <input
-        placeholder="password"
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button onClick={() => handleSignUp()}>sign up</button>
-      <button onClick={() => handleSignIn()}>sign in</button>
-      {error && <p>Error: {error.message}</p>}
+    <div className=" flex flex-col items-center justify-center h-screen">
+      <Card className="w-96">
+        <CardHeader>
+          <CardTitle>Authenticate yourself 🫵</CardTitle>
+        </CardHeader>
+        <CardContent className=" flex flex-col gap-8">
+          <div className=" flex flex-col gap-4">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              type="email"
+              id="email"
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className=" flex flex-col gap-4">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              type="password"
+              id="password"
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+        </CardContent>
+        <CardFooter className=" flex flex-col items-center gap-2">
+          <Button
+            className=" cursor-pointer w-full"
+            onClick={() => handleSignIn()}
+          >
+            Log in
+          </Button>
+          <Button
+            className=" cursor-pointer w-full"
+            variant={"outline"}
+            onClick={() => handleSignUp()}
+          >
+            Sign up
+          </Button>
+          <GoogleSignInButton />
+          {error && <p>Error: {error.message}</p>}
+        </CardFooter>
+      </Card>
     </div>
   );
 };
