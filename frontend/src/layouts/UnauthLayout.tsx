@@ -2,8 +2,6 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ModeToggle } from "@/components/ModeToggle";
 import { Button } from "@/components/ui/button";
 import LogoutButton from "@/components/LogoutButton";
-import { Avatar } from "@/components/ui/avatar";
-import { AvatarImage } from "@radix-ui/react-avatar";
 
 const UnauthLayout = () => {
   const navigate = useNavigate();
