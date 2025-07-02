@@ -1,6 +1,7 @@
 import { AuthError } from "@supabase/supabase-js";
 import { useState } from "react";
 import supabase from "../utils/supabase";
+import { Button } from "./ui/button";
 
 const LogoutButton = () => {
   const [authErr, setAuthErr] = useState<AuthError | null>(null);
@@ -13,7 +14,9 @@ const LogoutButton = () => {
 
   return (
     <>
-      <button onClick={() => handleLogout()}>Logout</button>
+      <Button className=" cursor-pointer" onClick={() => handleLogout()}>
+        Logout
+      </Button>
       <p>{authErr && <p>Error: {authErr.message}</p>}</p>
     </>
   );
