@@ -4,6 +4,17 @@ import { createRoom, deleteRoom, getRoomsByUserId } from "../../../../api";
 import { useRequireAuth } from "../../../../hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface RoomsProps {
   setRoomId: (roomId: string) => void;
@@ -30,6 +41,11 @@ const Rooms = ({ setRoomId }: RoomsProps) => {
   }, []);
 
   const handleCreateRoom = async () => {
+    if (!createRoomRequest.name) {
+      console.error("Room name is required");
+      return;
+    }
+
     try {
       const resp = await createRoom(createRoomRequest);
       setRooms((prev) => [resp.room, ...prev]);
@@ -50,25 +66,44 @@ const Rooms = ({ setRoomId }: RoomsProps) => {
   return (
     <div>
       <h1>Rooms</h1>
-      <button onClick={() => handleCreateRoom()}>Create Room</button>
-      <input
-        type="text"
-        placeholder="Room Name"
-        value={createRoomRequest.name}
-        onChange={(e) =>
-          setCreateRoomRequest({
-            ...createRoomRequest,
-            name: e.target.value,
-          })
-        }
-      />
+      <Dialog>
+        <DialogTrigger>
+          <Button variant={"secondary"}>Create Room</Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enter room details</DialogTitle>
+            <DialogDescription>
+              Enter a name for the room cmon
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            type="text"
+            placeholder="Room Name"
+            value={createRoomRequest.name}
+            onChange={(e) =>
+              setCreateRoomRequest({
+                ...createRoomRequest,
+                name: e.target.value,
+              })
+            }
+          />
+          <DialogFooter>
+            {/* <DialogClose asChild> */}
+            <DialogClose>
+              <Button variant="secondary">Cancel</Button>
+            </DialogClose>
+            <Button onClick={() => handleCreateRoom()}>Save changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <ul>
         {rooms.map((room) => (
           <li key={room.id}>
             <div>
-              <button onClick={() => setRoomId(room.id)}>
+              <Button variant={"outline"} onClick={() => setRoomId(room.id)}>
                 Name: {room.name} - Id: {room.id}
-              </button>
+              </Button>
               {room.host === session.user.id && (
                 <Button onClick={() => handleDeleteRoom(room.id)}>
                   <Trash />
