@@ -1,17 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Profile, SearchProfilesOptions, UserMessage } from "../../../../types";
-import {
-  addUsersToRoom,
-  deleteMessageById,
-  getProfilesByRoomId,
-  getUserMessagesByRoomId,
-} from "../../../../api";
+import { UserMessage } from "../../../../types";
+import { deleteMessageById, getUserMessagesByRoomId } from "../../../../api";
 import { getJwt } from "../../../../utils/jwt";
 import { useRequireAuth } from "../../../../hooks/useRequireAuth";
-import UserSuggestionSearch from "../../../../components/UserSuggestionSearch";
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 interface MessagesProps {
   roomId: string;
@@ -24,13 +19,6 @@ const Messages = ({ roomId }: MessagesProps) => {
   const ws = useRef<WebSocket | null>(null);
   const { session } = useRequireAuth();
   // const [retries, setRetries] = useState(0);
-  const [newUsers, setNewUsers] = useState<string[]>([]);
-  const [searchOptions, setSearchOptions] = useState<SearchProfilesOptions>({
-    username: "",
-    excludeRoom: roomId,
-  });
-  const [suggestions, setSuggestions] = useState<Profile[]>([]);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
 
   useEffect(() => {
     ws.current = new WebSocket(
@@ -67,22 +55,12 @@ const Messages = ({ roomId }: MessagesProps) => {
       }
     };
 
-    const fetchProfiles = async () => {
-      try {
-        const profiles = await getProfilesByRoomId(roomId);
-        setProfiles(profiles);
-      } catch (error) {
-        console.error("error getting profiles for room:", error);
-      }
-    };
-
     fetchMessages();
-    fetchProfiles();
 
     return () => {
       ws.current?.close();
     };
-  }, []);
+  }, [roomId]);
 
   const handleSendMessage = () => {
     if (!newMessage) {
@@ -107,56 +85,9 @@ const Messages = ({ roomId }: MessagesProps) => {
     }
   };
 
-  const handleAddUsersToRoom = async () => {
-    try {
-      const resp = await addUsersToRoom(roomId, newUsers);
-      console.log("TODO: do something with addUsersToRoom response: ", resp);
-    } catch (error) {
-      console.error("error adding users to room:", error);
-    }
-  };
-
   return (
     <div>
       <h1>Chat</h1>
-      <div>
-        <h6 className="">Profiles</h6>
-        <ul>
-          {profiles.map((profile) => (
-            <li key={profile.userId}>
-              {profile.username} ({profile.firstName} {profile.lastName})
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <h2>Add new users</h2>
-        <UserSuggestionSearch
-          searchOptions={searchOptions}
-          setSearchOptions={setSearchOptions}
-          suggestions={suggestions}
-          setSuggestions={setSuggestions}
-          handleClick={(userId: string) => {
-            setNewUsers((prev) => [...prev, userId]);
-            setSearchOptions({ ...searchOptions, username: "" });
-          }}
-        />
-        <button onClick={() => handleAddUsersToRoom()}>Submit users</button>
-        <ul>
-          {newUsers.map((user, index) => (
-            <li key={index}>
-              {user}
-              <button
-                onClick={() =>
-                  setNewUsers((prev) => prev.filter((u) => u !== user))
-                }
-              >
-                Remove
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
       <div>
         {userMessages.map((message) => (
           <div key={message.id}>
@@ -172,13 +103,12 @@ const Messages = ({ roomId }: MessagesProps) => {
         ))}
       </div>
       <div>
-        <input
-          type="text"
+        <Textarea
           placeholder="Type a message..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
         />
-        <button onClick={() => handleSendMessage()}>Send</button>
+        <Button onClick={() => handleSendMessage()}>Send</Button>
       </div>
     </div>
   );
