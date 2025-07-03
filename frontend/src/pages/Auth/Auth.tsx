@@ -1,8 +1,8 @@
 import { AuthError } from "@supabase/supabase-js";
 import { useState } from "react";
-import supabase from "../utils/supabase";
-import { useUserContext } from "../contexts/user";
-import GoogleSignInButton from "../components/GoogleSignInButton";
+import supabase from "../../utils/supabase";
+import { useUserContext } from "../../contexts/user";
+import GoogleSignInButton from "../../components/GoogleSignInButton";
 import {
   Card,
   CardContent,
@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
-const AuthPage = () => {
+const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<AuthError | null>(null);
@@ -86,4 +86,4 @@ const AuthPage = () => {
   );
 };
 
-export default AuthPage;
+export default Auth;

@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
-import { CreateRoomRequest, Room } from "../types";
-import { createRoom, deleteRoom, getRoomsByUserId } from "../api";
-import { useNavigate } from "react-router-dom";
-import { useRequireAuth } from "../hooks/useRequireAuth";
+import { CreateRoomRequest, Room } from "../../../../types";
+import { createRoom, deleteRoom, getRoomsByUserId } from "../../../../api";
+import { useRequireAuth } from "../../../../hooks/useRequireAuth";
+import { Button } from "@/components/ui/button";
+import { Trash } from "lucide-react";
 
-const RoomsPage = () => {
+interface RoomsProps {
+  setRoomId: (roomId: string) => void;
+}
+
+const Rooms = ({ setRoomId }: RoomsProps) => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const { session } = useRequireAuth();
-  const navigate = useNavigate();
   const [createRoomRequest, setCreateRoomRequest] = useState<CreateRoomRequest>(
     { name: "", members: [] },
   );
@@ -62,13 +66,13 @@ const RoomsPage = () => {
         {rooms.map((room) => (
           <li key={room.id}>
             <div>
-              <button onClick={() => navigate(`/chat/${room.id}`)}>
+              <button onClick={() => setRoomId(room.id)}>
                 Name: {room.name} - Id: {room.id}
               </button>
               {room.host === session.user.id && (
-                <button onClick={() => handleDeleteRoom(room.id)}>
-                  Delete
-                </button>
+                <Button onClick={() => handleDeleteRoom(room.id)}>
+                  <Trash />
+                </Button>
               )}
             </div>
           </li>
@@ -78,4 +82,4 @@ const RoomsPage = () => {
   );
 };
 
-export default RoomsPage;
+export default Rooms;

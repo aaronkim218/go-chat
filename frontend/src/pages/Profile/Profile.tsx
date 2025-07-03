@@ -1,12 +1,12 @@
+import { patchProfileByUserId } from "@/api";
+import { useUserContext } from "@/contexts/user";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { isObjectEmpty } from "@/utils/object";
+import { getProfileDiff } from "@/utils/profile";
 import { useState } from "react";
-import { useRequireAuth } from "../hooks/useRequireAuth";
-import { patchProfileByUserId } from "../api";
-import { useUserContext } from "../contexts/user";
-import { getProfileDiff } from "../utils/profile";
-import { isObjectEmpty } from "../utils/object";
 import { v4 as uuidv4 } from "uuid";
 
-const ProfilePage = () => {
+const Profile = () => {
   const { setProfile } = useUserContext();
   const { profile } = useRequireAuth();
   const [updatedProfile, setUpdatedProfile] = useState(profile);
@@ -61,4 +61,4 @@ const ProfilePage = () => {
   );
 };
 
-export default ProfilePage;
+export default Profile;
