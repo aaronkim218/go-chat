@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
-const LandingPage = () => {
+const Landing = () => {
   const navigate = useNavigate();
 
   const routeToLogin = () => {
@@ -25,4 +25,4 @@ const LandingPage = () => {
   );
 };
 
-export default LandingPage;
+export default Landing;

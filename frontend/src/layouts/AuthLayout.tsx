@@ -3,12 +3,12 @@ import NavBar from "../components/NavBar";
 
 const AuthLayout = () => {
   return (
-    <>
+    <div className="flex h-full">
       <NavBar />
-      <main>
+      <main className="flex w-full">
         <Outlet />
       </main>
-    </>
+    </div>
   );
 };
 

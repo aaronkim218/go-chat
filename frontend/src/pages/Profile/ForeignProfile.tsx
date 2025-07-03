@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 
-const ForeignProfilePage = () => {
+const ForeignProfile = () => {
   const { profileId } = useParams();
 
   return (
@@ -10,4 +10,4 @@ const ForeignProfilePage = () => {
   );
 };
 
-export default ForeignProfilePage;
+export default ForeignProfile;

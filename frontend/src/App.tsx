@@ -1,21 +1,20 @@
 import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import ChatPage from "./pages/ChatPage";
-import NotFoundPage from "./pages/NotFoundPage";
-import AuthPage from "./pages/AuthPage";
-import RoomsPage from "./pages/RoomsPage";
-import ProfilePage from "./pages/ProfilePage";
-import HomePage from "./pages/HomePage";
+import NotFound from "./pages/NotFound/NotFound";
+import Auth from "./pages/Auth/Auth";
+import Home from "./pages/Home/Home";
 import RequireUser from "./guards/RequireUser";
 import { UserProvider } from "./contexts/user";
 import AuthLayout from "./layouts/AuthLayout";
-import LandingPage from "./pages/LandingPage";
-import SetupPage from "./pages/Setup";
+import Landing from "./pages/Landing/Landing";
+import Setup from "./pages/Setup/Setup";
 import BaseLayout from "./layouts/BaseLayout";
-import ForeignProfilePage from "./pages/ForeignProfilePage";
-import SearchPage from "./pages/SearchPage";
+import ForeignProfile from "./pages/Profile/ForeignProfile";
+import Search from "./pages/Search/Search";
 import { ThemeProvider } from "./components/ThemeProvider";
 import UnauthLayout from "./layouts/UnauthLayout";
+import Chat from "./pages/Chat/Chat";
+import Profile from "./pages/Profile/Profile";
 
 const App = () => {
   return (
@@ -25,25 +24,24 @@ const App = () => {
           <Routes>
             <Route element={<BaseLayout />}>
               <Route element={<UnauthLayout />}>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/login" element={<AuthPage />} />
-                <Route path="/setup" element={<SetupPage />} />
+                <Route path="/" element={<Landing />} />
+                <Route path="/login" element={<Auth />} />
+                <Route path="/setup" element={<Setup />} />
               </Route>
               <Route element={<RequireUser />}>
                 <Route element={<AuthLayout />}>
-                  <Route path="/home" element={<HomePage />} />
-                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/home" element={<Home />} />
+                  <Route path="/profile" element={<Profile />} />
                   <Route
                     path="/profile/:profileId"
-                    element={<ForeignProfilePage />}
+                    element={<ForeignProfile />}
                   />
-                  <Route path="/search" element={<SearchPage />} />
-                  <Route path="/chat/:roomId" element={<ChatPage />} />
-                  <Route path="/rooms" element={<RoomsPage />} />
+                  <Route path="/search" element={<Search />} />
+                  <Route path="/chat" element={<Chat />} />
                 </Route>
               </Route>
 
-              <Route path="*" element={<NotFoundPage />} />
+              <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
         </UserProvider>

@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { searchProfiles } from "../api";
-import { Profile, SearchProfilesOptions } from "../types";
 import { useNavigate } from "react-router-dom";
-import UserSuggestionSearch from "../components/UserSuggestionSearch";
+import UserSuggestionSearch from "@/components/UserSuggestionSearch";
+import { Profile, SearchProfilesOptions } from "@/types";
+import { searchProfiles } from "@/api";
 
 const SUGGESTIONS_LIMIT = 5;
 
-const SearchPage = () => {
+const Search = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [options, setOptions] = useState<SearchProfilesOptions>({
     username: "",
@@ -58,4 +58,4 @@ const SearchPage = () => {
   );
 };
 
-export default SearchPage;
+export default Search;
