@@ -1,5 +1,5 @@
 import { Profile, SearchProfilesOptions } from "@/types";
-import { Button } from "../../ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,

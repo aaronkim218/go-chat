@@ -7,8 +7,8 @@ import {
   Room,
   SearchProfilesOptions,
   UserMessage,
-} from "./types";
-import { getJwt } from "./utils/jwt";
+} from "@/types";
+import { getJwt } from "@/utils/jwt";
 import applyCaseMiddleware from "axios-case-converter";
 
 const BASE_URL = import.meta.env.VITE_SERVER_URL;

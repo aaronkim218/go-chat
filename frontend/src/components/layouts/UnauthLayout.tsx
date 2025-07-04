@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { ModeToggle } from "../shared/ModeToggle";
+import { ModeToggle } from "@/components/shared/ModeToggle";
 import { Button } from "@/components/ui/button";
 import LogoutButton from "@/components/features/auth/LogoutButton";
 

@@ -6,7 +6,7 @@ import {
 import Rooms from "./components/Rooms/Rooms";
 import { useState } from "react";
 import Messages from "./components/Messages/Messages";
-import Details from "./components/Details/Details";
+import Details from "@/pages/Chat/components/Details/Details";
 import { Room } from "@/types";
 
 const Chat = () => {

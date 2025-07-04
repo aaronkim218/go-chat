@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { useUserContext } from "../../contexts/User";
+import { useUserContext } from "@/contexts/User";
 
 const BaseLayout = () => {
   const { firstLoad } = useUserContext();
