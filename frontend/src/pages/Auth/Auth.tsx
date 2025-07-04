@@ -1,7 +1,6 @@
 import { AuthError } from "@supabase/supabase-js";
 import { useState } from "react";
-import supabase from "../../utils/supabase";
-import { useUserContext } from "../../contexts/User";
+import supabase from "@/utils/supabase";
 import GoogleSignInButton from "@/components/features/auth/GoogleSignInButton";
 import {
   Card,
@@ -13,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { useUserContext } from "@/contexts/User";
 
 const Auth = () => {
   const [email, setEmail] = useState("");

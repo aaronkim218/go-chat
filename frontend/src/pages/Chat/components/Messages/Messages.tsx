@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { UserMessage } from "../../../../types";
-import { getUserMessagesByRoomId } from "../../../../api";
-import { getJwt } from "../../../../utils/jwt";
+import { UserMessage } from "@/types";
+import { getUserMessagesByRoomId } from "@/api";
+import { getJwt } from "@/utils/jwt";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import UserMessageContainer from "@/components/features/chat/UserMessageContainer";

@@ -1,4 +1,4 @@
-import { useUserContext } from "../contexts/User";
+import { useUserContext } from "@/contexts/User";
 
 export const useRequireAuth = () => {
   const { session, profile } = useUserContext();

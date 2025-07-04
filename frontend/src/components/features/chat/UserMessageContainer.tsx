@@ -3,7 +3,7 @@ import { Button } from "../../ui/button";
 import { Trash, User } from "lucide-react";
 import { deleteMessageById } from "@/api";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { Avatar, AvatarFallback } from "../../ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface UserMessageContainerProps {
   userMessage: UserMessage;

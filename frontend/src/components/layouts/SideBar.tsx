@@ -1,12 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { useRequireAuth } from "../../hooks/useRequireAuth";
-import LogoutButton from "../features/auth/LogoutButton";
-import { Button } from "../ui/button";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
+import LogoutButton from "@/components/features/auth/LogoutButton";
+import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "../ui/collapsible";
+} from "@/components/ui/collapsible";
 import { useState } from "react";
 import {
   ChevronDown,
@@ -16,7 +16,7 @@ import {
   MessageCircle,
   Search,
 } from "lucide-react";
-import { ModeToggle } from "../shared/ModeToggle";
+import { ModeToggle } from "@/components/shared/ModeToggle";
 
 const SideBar = () => {
   const { session } = useRequireAuth();

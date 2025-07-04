@@ -1,20 +1,20 @@
-import "./App.css";
+import "@/App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import NotFound from "./pages/NotFound/NotFound";
-import Auth from "./pages/Auth/Auth";
-import Home from "./pages/Home/Home";
-import RequireUser from "./components/guards/RequireUser";
-import { UserProvider } from "./contexts/User";
-import AuthLayout from "./components/layouts/AuthLayout";
-import Landing from "./pages/Landing/Landing";
-import Setup from "./pages/Setup/Setup";
-import BaseLayout from "./components/layouts/BaseLayout";
-import ForeignProfile from "./pages/Profile/ForeignProfile";
-import Search from "./pages/Search/Search";
-import { ThemeProvider } from "./contexts/Theme";
-import UnauthLayout from "./components/layouts/UnauthLayout";
-import Chat from "./pages/Chat/Chat";
-import Profile from "./pages/Profile/Profile";
+import NotFound from "@/pages/NotFound/NotFound";
+import Auth from "@/pages/Auth/Auth";
+import Home from "@/pages/Home/Home";
+import RequireUser from "@/components/guards/RequireUser";
+import { UserProvider } from "@/contexts/User";
+import AuthLayout from "@/components/layouts/AuthLayout";
+import Landing from "@/pages/Landing/Landing";
+import Setup from "@/pages/Setup/Setup";
+import BaseLayout from "@/components/layouts/BaseLayout";
+import ForeignProfile from "@/pages/Profile/ForeignProfile";
+import Search from "@/pages/Search/Search";
+import { ThemeProvider } from "@/contexts/Theme";
+import UnauthLayout from "@/components/layouts/UnauthLayout";
+import Chat from "@/pages/Chat/Chat";
+import Profile from "@/pages/Profile/Profile";
 
 const App = () => {
   return (

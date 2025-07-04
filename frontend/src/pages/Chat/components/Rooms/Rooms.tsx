@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { CreateRoomRequest, Room } from "../../../../types";
-import { createRoom, getRoomsByUserId } from "../../../../api";
+import { CreateRoomRequest, Room } from "@/types";
+import { createRoom, getRoomsByUserId } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
