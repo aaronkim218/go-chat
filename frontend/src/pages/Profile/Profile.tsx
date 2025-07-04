@@ -1,5 +1,5 @@
 import { patchProfileByUserId } from "@/api";
-import { useUserContext } from "@/contexts/user";
+import { useUserContext } from "@/contexts/User";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { isObjectEmpty } from "@/utils/object";
 import { getProfileDiff } from "@/utils/profile";

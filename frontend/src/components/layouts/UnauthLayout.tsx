@@ -1,7 +1,7 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { ModeToggle } from "@/components/ModeToggle";
+import { ModeToggle } from "../shared/ModeToggle";
 import { Button } from "@/components/ui/button";
-import LogoutButton from "@/components/LogoutButton";
+import LogoutButton from "@/components/features/auth/LogoutButton";
 
 const UnauthLayout = () => {
   const navigate = useNavigate();

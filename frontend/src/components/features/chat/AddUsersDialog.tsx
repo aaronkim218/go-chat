@@ -1,5 +1,5 @@
 import { Profile, SearchProfilesOptions } from "@/types";
-import { Button } from "./ui/button";
+import { Button } from "../../ui/button";
 import {
   Dialog,
   DialogClose,
@@ -9,8 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "./ui/dialog";
-import UserSuggestionSearch from "./UserSuggestionSearch";
+} from "../../ui/dialog";
+import UserSuggestionSearch from "../profiles/UserSuggestionSearch";
 
 interface AddUsersDialogProps {
   onAddUsers: () => void;

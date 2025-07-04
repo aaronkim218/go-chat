@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { useUserContext } from "../../contexts/user";
+import { useUserContext } from "../../contexts/User";
 import { createProfile, CreateProfileRequest } from "../../api";
 import { Profile } from "../../types";
 import { v4 as uuidv4 } from "uuid";

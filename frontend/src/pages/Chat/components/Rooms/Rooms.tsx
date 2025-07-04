@@ -1,9 +1,7 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CreateRoomRequest, Room } from "../../../../types";
-import { createRoom, deleteRoom, getRoomsByUserId } from "../../../../api";
-import { useRequireAuth } from "../../../../hooks/useRequireAuth";
+import { createRoom, getRoomsByUserId } from "../../../../api";
 import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -17,12 +15,12 @@ import {
 } from "@/components/ui/dialog";
 
 interface RoomsProps {
-  setRoomId: (roomId: string) => void;
+  setActiveRoom: (room: Room) => void;
+  rooms: Room[];
+  setRooms: React.Dispatch<React.SetStateAction<Room[]>>;
 }
 
-const Rooms = ({ setRoomId }: RoomsProps) => {
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const { session } = useRequireAuth();
+const Rooms = ({ setActiveRoom, rooms, setRooms }: RoomsProps) => {
   const [createRoomRequest, setCreateRoomRequest] = useState<CreateRoomRequest>(
     { name: "", members: [] },
   );
@@ -51,15 +49,6 @@ const Rooms = ({ setRoomId }: RoomsProps) => {
       setRooms((prev) => [resp.room, ...prev]);
     } catch (error) {
       console.error("error creating room:", error);
-    }
-  };
-
-  const handleDeleteRoom = async (roomId: string) => {
-    try {
-      await deleteRoom(roomId);
-      setRooms((prev) => prev.filter((room) => room.id !== roomId));
-    } catch (error) {
-      console.error("error deleting room:", error);
     }
   };
 
@@ -101,14 +90,9 @@ const Rooms = ({ setRoomId }: RoomsProps) => {
         {rooms.map((room) => (
           <li key={room.id}>
             <div>
-              <Button variant={"outline"} onClick={() => setRoomId(room.id)}>
-                Name: {room.name} - Id: {room.id}
+              <Button variant={"outline"} onClick={() => setActiveRoom(room)}>
+                {room.name}
               </Button>
-              {room.host === session.user.id && (
-                <Button onClick={() => handleDeleteRoom(room.id)}>
-                  <Trash />
-                </Button>
-              )}
             </div>
           </li>
         ))}

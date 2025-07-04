@@ -1,12 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { useRequireAuth } from "../hooks/useRequireAuth";
-import LogoutButton from "./LogoutButton";
-import { Button } from "./ui/button";
+import { useRequireAuth } from "../../hooks/useRequireAuth";
+import LogoutButton from "../features/auth/LogoutButton";
+import { Button } from "../ui/button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "./ui/collapsible";
+} from "../ui/collapsible";
 import { useState } from "react";
 import {
   ChevronDown,
@@ -16,9 +16,9 @@ import {
   MessageCircle,
   Search,
 } from "lucide-react";
-import { ModeToggle } from "./ModeToggle";
+import { ModeToggle } from "../shared/ModeToggle";
 
-const NavBar = () => {
+const SideBar = () => {
   const { session } = useRequireAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(true);
@@ -29,7 +29,7 @@ const NavBar = () => {
         {isOpen ? <ChevronDown /> : <ChevronRight />}
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <nav className=" flex flex-col items-center gap-2">
+        <div className=" flex flex-col items-center gap-2">
           <Button onClick={() => navigate("/home")}>
             <House />
           </Button>
@@ -45,10 +45,10 @@ const NavBar = () => {
           <p>{session.user.email}</p>
           <LogoutButton />
           <ModeToggle />
-        </nav>
+        </div>
       </CollapsibleContent>
     </Collapsible>
   );
 };
 
-export default NavBar;
+export default SideBar;

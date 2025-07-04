@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useUserContext } from "../contexts/user";
+import { useUserContext } from "@/contexts/User";
 
 const RequireUser = () => {
   const { session, profile, firstLoad } = useUserContext();
