@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import UserSuggestionSearch from "@/components/UserSuggestionSearch";
+import UserSuggestionSearch from "@/components/features/profiles/UserSuggestionSearch";
 import { Profile, SearchProfilesOptions } from "@/types";
 import { searchProfiles } from "@/api";
 

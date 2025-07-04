@@ -1,7 +1,7 @@
 import { AuthError } from "@supabase/supabase-js";
 import { useState } from "react";
-import supabase from "../utils/supabase";
-import { Button } from "./ui/button";
+import supabase from "../../../utils/supabase";
+import { Button } from "../../ui/button";
 import { LogOut } from "lucide-react";
 
 const LogoutButton = () => {

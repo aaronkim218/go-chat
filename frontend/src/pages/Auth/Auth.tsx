@@ -1,8 +1,8 @@
 import { AuthError } from "@supabase/supabase-js";
 import { useState } from "react";
 import supabase from "../../utils/supabase";
-import { useUserContext } from "../../contexts/user";
-import GoogleSignInButton from "../../components/GoogleSignInButton";
+import { useUserContext } from "../../contexts/User";
+import GoogleSignInButton from "@/components/features/auth/GoogleSignInButton";
 import {
   Card,
   CardContent,

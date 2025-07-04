@@ -1,10 +1,10 @@
 import { Outlet } from "react-router-dom";
-import NavBar from "../components/NavBar";
+import SideBar from "./SideBar";
 
 const AuthLayout = () => {
   return (
     <div className="flex h-full">
-      <NavBar />
+      <SideBar />
       <main className="flex w-full">
         <Outlet />
       </main>

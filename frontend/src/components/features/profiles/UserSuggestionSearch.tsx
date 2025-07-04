@@ -1,5 +1,5 @@
-import { Profile, SearchProfilesOptions } from "../types";
-import { searchProfiles } from "../api";
+import { Profile, SearchProfilesOptions } from "@/types";
+import { searchProfiles } from "@/api";
 
 interface UserSuggestionSearchProps {
   searchOptions: SearchProfilesOptions;

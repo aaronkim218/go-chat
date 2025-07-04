@@ -7,28 +7,34 @@ import Rooms from "./components/Rooms/Rooms";
 import { useState } from "react";
 import Messages from "./components/Messages/Messages";
 import Details from "./components/Details/Details";
+import { Room } from "@/types";
 
 const Chat = () => {
-  const [roomId, setRoomId] = useState<string | null>(null);
+  const [activeRoom, setActiveRoom] = useState<Room | null>(null);
+  const [rooms, setRooms] = useState<Room[]>([]);
 
   return (
     <div className=" w-full">
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel>
-          <Rooms setRoomId={setRoomId} />
+          <Rooms
+            setActiveRoom={setActiveRoom}
+            rooms={rooms}
+            setRooms={setRooms}
+          />
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel>
-          {roomId ? (
-            <Messages roomId={roomId} />
+          {activeRoom ? (
+            <Messages roomId={activeRoom.id} />
           ) : (
             <div>Select a room for messages</div>
           )}
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel>
-          {roomId ? (
-            <Details roomId={roomId} />
+          {activeRoom ? (
+            <Details activeRoom={activeRoom} setRooms={setRooms} />
           ) : (
             <div>Select a room for details</div>
           )}{" "}

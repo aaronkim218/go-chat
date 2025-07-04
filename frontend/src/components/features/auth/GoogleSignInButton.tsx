@@ -1,5 +1,5 @@
 import { CredentialResponse } from "google-one-tap";
-import supabase from "../utils/supabase";
+import supabase from "@/utils/supabase";
 import { useEffect } from "react";
 
 declare global {

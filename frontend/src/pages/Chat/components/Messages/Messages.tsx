@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserMessage } from "../../../../types";
-import { deleteMessageById, getUserMessagesByRoomId } from "../../../../api";
+import { getUserMessagesByRoomId } from "../../../../api";
 import { getJwt } from "../../../../utils/jwt";
-import { useRequireAuth } from "../../../../hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import UserMessageContainer from "@/components/features/chat/UserMessageContainer";
 
 interface MessagesProps {
   roomId: string;
@@ -17,7 +16,6 @@ const Messages = ({ roomId }: MessagesProps) => {
   const [userMessages, setUserMessages] = useState<UserMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const ws = useRef<WebSocket | null>(null);
-  const { session } = useRequireAuth();
   // const [retries, setRetries] = useState(0);
 
   useEffect(() => {
@@ -74,32 +72,16 @@ const Messages = ({ roomId }: MessagesProps) => {
     }
   };
 
-  const handleDeleteMessage = async (messageId: string) => {
-    try {
-      await deleteMessageById(messageId);
-      setUserMessages((prev) =>
-        prev.filter((message) => message.id !== messageId),
-      );
-    } catch (error) {
-      console.error("error deleting message:", error);
-    }
-  };
-
   return (
     <div>
       <h1>Chat</h1>
       <div>
-        {userMessages.map((message) => (
-          <div key={message.id}>
-            <p>
-              {message.username}: {message.content}
-            </p>
-            {message.author === session.user.id && (
-              <Button onClick={() => handleDeleteMessage(message.id)}>
-                <Trash />
-              </Button>
-            )}
-          </div>
+        {userMessages.map((userMessage) => (
+          <UserMessageContainer
+            key={userMessage.id}
+            userMessage={userMessage}
+            setUserMessages={setUserMessages}
+          />
         ))}
       </div>
       <div>
