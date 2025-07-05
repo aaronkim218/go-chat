@@ -41,11 +41,6 @@ const Rooms = ({ activeRoom, setActiveRoom, rooms, setRooms }: RoomsProps) => {
   }, []);
 
   const handleCreateRoom = async () => {
-    if (!createRoomRequest.name) {
-      console.error("Room name is required");
-      return;
-    }
-
     try {
       const resp = await createRoom(createRoomRequest);
       setRooms((prev) => [resp.room, ...prev]);

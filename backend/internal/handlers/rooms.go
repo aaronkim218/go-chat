@@ -36,6 +36,11 @@ func (hs *HandlerService) CreateRoom(c *fiber.Ctx) error {
 		return xerrors.InvalidJSON()
 	}
 
+	// TODO: change this
+	if req.Name == "" {
+		req.Name = "Default room name"
+	}
+
 	roomId, err := uuid.NewRandom()
 	if err != nil {
 		return xerrors.InternalServerError()
