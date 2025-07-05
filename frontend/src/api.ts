@@ -61,6 +61,7 @@ export const createRoom = async (
     throw new Error(`failed to create room'`);
   }
 
+  console.log("createRoom response: ", res.data);
   return CreateRoomResponseSchema.parse(res.data);
 };
 

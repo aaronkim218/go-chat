@@ -1,12 +1,13 @@
 import { Profile, SearchProfilesOptions } from "@/types";
 import { searchProfiles } from "@/api";
+import { Button } from "@/components/ui/button";
 
 interface UserSuggestionSearchProps {
   searchOptions: SearchProfilesOptions;
   setSearchOptions: (options: SearchProfilesOptions) => void;
   suggestions: Profile[];
   setSuggestions: (suggestions: Profile[]) => void;
-  handleClick: (userId: string) => void;
+  handleClick: (profile: Profile) => void;
 }
 
 const UserSuggestionSearch = ({
@@ -43,12 +44,9 @@ const UserSuggestionSearch = ({
       />
       <div>
         {suggestions.map((profile) => (
-          <button
-            key={profile.userId}
-            onClick={() => handleClick(profile.userId)}
-          >
+          <Button key={profile.userId} onClick={() => handleClick(profile)}>
             {profile.username} ({profile.firstName} {profile.lastName})
-          </button>
+          </Button>
         ))}
       </div>
     </>

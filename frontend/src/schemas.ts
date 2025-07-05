@@ -37,8 +37,8 @@ const FailureSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
 
 const BulkResultSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
   z.object({
-    successes: z.array(itemSchema),
-    failures: z.array(FailureSchema(itemSchema)),
+    successes: z.array(itemSchema).nullable(),
+    failures: z.array(FailureSchema(itemSchema)).nullable(),
   });
 
 export const BulkResultStringSchema = BulkResultSchema(z.string());

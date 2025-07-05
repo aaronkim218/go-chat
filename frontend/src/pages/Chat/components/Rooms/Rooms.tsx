@@ -16,12 +16,13 @@ import {
 import { Separator } from "@/components/ui/separator";
 
 interface RoomsProps {
+  activeRoom: Room | null;
   setActiveRoom: (room: Room) => void;
   rooms: Room[];
   setRooms: React.Dispatch<React.SetStateAction<Room[]>>;
 }
 
-const Rooms = ({ setActiveRoom, rooms, setRooms }: RoomsProps) => {
+const Rooms = ({ activeRoom, setActiveRoom, rooms, setRooms }: RoomsProps) => {
   const [createRoomRequest, setCreateRoomRequest] = useState<CreateRoomRequest>(
     { name: "", members: [] },
   );
@@ -54,18 +55,18 @@ const Rooms = ({ setActiveRoom, rooms, setRooms }: RoomsProps) => {
   };
 
   return (
-    <div>
-      <h1>Rooms</h1>
+    <div className="flex flex-col gap-4 p-4">
+      Rooms
       <Separator />
       <Dialog>
         <DialogTrigger asChild>
-          <Button variant={"secondary"}>Create Room</Button>
+          <Button variant={"secondary"}>New Room</Button>
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Enter room details</DialogTitle>
+            <DialogTitle>Enter room name</DialogTitle>
             <DialogDescription>
-              Enter a name for the room cmon
+              Leave blank for default room name
             </DialogDescription>
           </DialogHeader>
           <Input
@@ -88,14 +89,16 @@ const Rooms = ({ setActiveRoom, rooms, setRooms }: RoomsProps) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <ul>
+      <ul className="flex flex-col gap-2">
         {rooms.map((room) => (
-          <li key={room.id}>
-            <div>
-              <Button variant={"outline"} onClick={() => setActiveRoom(room)}>
-                {room.name}
-              </Button>
-            </div>
+          <li className=" w-full" key={room.id}>
+            <Button
+              className=" w-full"
+              variant={room.id === activeRoom?.id ? "secondary" : "ghost"}
+              onClick={() => setActiveRoom(room)}
+            >
+              {room.name}
+            </Button>
           </li>
         ))}
       </ul>
