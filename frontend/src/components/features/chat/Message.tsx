@@ -19,7 +19,7 @@ interface MessageProps {
 
 const Message = ({ userMessage, setUserMessages }: MessageProps) => {
   const { session } = useRequireAuth();
-  const [_, setTick] = useState(0);
+  const [, setTick] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
