@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 
 interface RoomsProps {
   setActiveRoom: (room: Room) => void;
@@ -55,8 +56,9 @@ const Rooms = ({ setActiveRoom, rooms, setRooms }: RoomsProps) => {
   return (
     <div>
       <h1>Rooms</h1>
+      <Separator />
       <Dialog>
-        <DialogTrigger>
+        <DialogTrigger asChild>
           <Button variant={"secondary"}>Create Room</Button>
         </DialogTrigger>
         <DialogContent>
@@ -79,7 +81,7 @@ const Rooms = ({ setActiveRoom, rooms, setRooms }: RoomsProps) => {
           />
           <DialogFooter>
             {/* <DialogClose asChild> */}
-            <DialogClose>
+            <DialogClose asChild>
               <Button variant="secondary">Cancel</Button>
             </DialogClose>
             <Button onClick={() => handleCreateRoom()}>Save changes</Button>

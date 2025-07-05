@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useUserContext } from "@/contexts/User";
 import { createProfile, CreateProfileRequest } from "@/api";
-import { Profile } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 import {
   Card,
@@ -14,6 +13,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Profile } from "@/types";
 
 const Setup = () => {
   const { session, setProfile } = useUserContext();

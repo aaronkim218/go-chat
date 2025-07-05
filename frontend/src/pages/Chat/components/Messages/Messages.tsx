@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { UserMessage } from "@/types";
 import { getUserMessagesByRoomId } from "@/api";
 import { getJwt } from "@/utils/jwt";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import UserMessageContainer from "@/components/features/chat/UserMessageContainer";
+import Message from "@/components/features/chat/Message";
+import { Send } from "lucide-react";
+import { UserMessageSchema } from "@/schemas";
+import { UserMessage } from "@/types";
+import camelcaseKeys from "camelcase-keys";
 
 interface MessagesProps {
   roomId: string;
@@ -17,6 +20,9 @@ const Messages = ({ roomId }: MessagesProps) => {
   const [newMessage, setNewMessage] = useState("");
   const ws = useRef<WebSocket | null>(null);
   // const [retries, setRetries] = useState(0);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [autoScroll, setAutoScroll] = useState(true);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     ws.current = new WebSocket(
@@ -36,7 +42,8 @@ const Messages = ({ roomId }: MessagesProps) => {
     };
 
     ws.current.onmessage = (event) => {
-      const userMessage = JSON.parse(event.data) as UserMessage;
+      const data = camelcaseKeys(JSON.parse(event.data), { deep: true });
+      const userMessage = UserMessageSchema.parse(data);
       setUserMessages((prev) => [...prev, userMessage]);
     };
 
@@ -60,6 +67,27 @@ const Messages = ({ roomId }: MessagesProps) => {
     };
   }, [roomId]);
 
+  useEffect(() => {
+    if (autoScroll && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [userMessages]);
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    const handleScroll = () => {
+      const bottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 50;
+      setAutoScroll(bottom);
+    };
+
+    el.addEventListener("scroll", handleScroll);
+    return () => {
+      el.removeEventListener("scroll", handleScroll);
+    };
+  });
+
   const handleSendMessage = () => {
     if (!newMessage) {
       console.error("cannot send an empty message");
@@ -73,24 +101,29 @@ const Messages = ({ roomId }: MessagesProps) => {
   };
 
   return (
-    <div>
-      <h1>Chat</h1>
-      <div>
+    <div className="">
+      <div
+        ref={scrollContainerRef}
+        className=" flex flex-col gap-4 overflow-y-auto h-[85vh] px-4 pt-4"
+      >
         {userMessages.map((userMessage) => (
-          <UserMessageContainer
+          <Message
             key={userMessage.id}
             userMessage={userMessage}
             setUserMessages={setUserMessages}
           />
         ))}
+        <div ref={messagesEndRef} />
       </div>
-      <div>
+      <div className=" flex h-[15vh]">
         <Textarea
           placeholder="Type a message..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
         />
-        <Button onClick={() => handleSendMessage()}>Send</Button>
+        <Button onClick={() => handleSendMessage()}>
+          <Send />
+        </Button>
       </div>
     </div>
   );

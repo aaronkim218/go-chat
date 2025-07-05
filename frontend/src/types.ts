@@ -1,38 +1,16 @@
-export interface Room {
-  id: string;
-  host: string;
-  name: string;
-}
-
-export interface Message {
-  id: string;
-  roomId: string;
-  createdAt: Date;
-  author: string;
-  content: string;
-}
-
-export interface Profile {
-  userId: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-}
-
-export type UserMessage = Message & {
-  username: string;
-  firstName: string;
-  lastName: string;
-};
-
-export interface CreateRoomResponse {
-  room: Room;
-  membersResults: BulkResult<string>;
-}
+import * as z from "zod/v4";
+import {
+  BulkResultStringSchema,
+  CreateRoomResponseSchema,
+  MessageSchema,
+  ProfileSchema,
+  RoomSchema,
+  UserMessageSchema,
+} from "./schemas";
 
 export type Failure<T> = {
   item: T;
-  error: Error;
+  message: string;
 };
 
 export type BulkResult<T> = {
@@ -51,3 +29,15 @@ export interface CreateRoomRequest {
   name: string;
   members: string[];
 }
+
+export type Message = z.infer<typeof MessageSchema>;
+
+export type UserMessage = z.infer<typeof UserMessageSchema>;
+
+export type Profile = z.infer<typeof ProfileSchema>;
+
+export type Room = z.infer<typeof RoomSchema>;
+
+export type BulkResultString = z.infer<typeof BulkResultStringSchema>;
+
+export type CreateRoomResponse = z.infer<typeof CreateRoomResponseSchema>;

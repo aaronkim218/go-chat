@@ -16,7 +16,7 @@ const Chat = () => {
   return (
     <div className=" w-full">
       <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel>
+        <ResizablePanel defaultSize={15}>
           <Rooms
             setActiveRoom={setActiveRoom}
             rooms={rooms}
@@ -24,7 +24,7 @@ const Chat = () => {
           />
         </ResizablePanel>
         <ResizableHandle />
-        <ResizablePanel>
+        <ResizablePanel defaultSize={65}>
           {activeRoom ? (
             <Messages roomId={activeRoom.id} />
           ) : (
@@ -32,7 +32,7 @@ const Chat = () => {
           )}
         </ResizablePanel>
         <ResizableHandle />
-        <ResizablePanel>
+        <ResizablePanel defaultSize={20}>
           {activeRoom ? (
             <Details activeRoom={activeRoom} setRooms={setRooms} />
           ) : (
