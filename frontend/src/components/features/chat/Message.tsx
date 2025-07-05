@@ -1,7 +1,6 @@
-import { Ellipsis, Trash, User } from "lucide-react";
+import { Ellipsis, Trash } from "lucide-react";
 import { deleteMessageById } from "@/api";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +9,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getTimeAgo } from "@/utils/time";
 import { UserMessage } from "@/types";
+import CustomAvatar from "@/components/shared/CustomAvatar";
+import { useEffect, useState } from "react";
 
 interface MessageProps {
   userMessage: UserMessage;
@@ -18,6 +19,15 @@ interface MessageProps {
 
 const Message = ({ userMessage, setUserMessages }: MessageProps) => {
   const { session } = useRequireAuth();
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick((prev) => prev + 1);
+    }, 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleDeleteMessage = async (messageId: string) => {
     try {
@@ -30,14 +40,6 @@ const Message = ({ userMessage, setUserMessages }: MessageProps) => {
     }
   };
 
-  const getAvatarFallback = (): string | null => {
-    if (userMessage.firstName || userMessage.lastName) {
-      return `${userMessage.firstName?.charAt(0).toUpperCase() || ""}${userMessage.lastName?.charAt(0).toUpperCase() || ""}`;
-    }
-
-    return null;
-  };
-
   return (
     <div
       key={userMessage.id}
@@ -45,9 +47,10 @@ const Message = ({ userMessage, setUserMessages }: MessageProps) => {
     >
       <div className=" group flex min-w-1/3 max-w-3/4 gap-4">
         {userMessage.author !== session.user.id && (
-          <Avatar>
-            <AvatarFallback>{getAvatarFallback() || <User />}</AvatarFallback>
-          </Avatar>
+          <CustomAvatar
+            firstName={userMessage.firstName}
+            lastName={userMessage.lastName}
+          />
         )}
         <div
           className={`flex flex-col gap-1 px-4 pb-4 pt-2 w-full ${userMessage.author === session.user.id ? "bg-secondary" : "bg-primary"} rounded-lg`}

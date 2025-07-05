@@ -15,14 +15,17 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Profile, Room, SearchProfilesOptions } from "@/types";
 import { useEffect, useState } from "react";
 import { Separator } from "@/components/ui/separator";
+import { Crown, UserPlus, X } from "lucide-react";
+import CustomAvatar from "@/components/shared/CustomAvatar";
 
 interface DetailsProps {
   activeRoom: Room;
   setRooms: React.Dispatch<React.SetStateAction<Room[]>>;
+  setActiveRoom: React.Dispatch<React.SetStateAction<Room | null>>;
 }
 
-const Details = ({ activeRoom, setRooms }: DetailsProps) => {
-  const [newUsers, setNewUsers] = useState<string[]>([]);
+const Details = ({ activeRoom, setRooms, setActiveRoom }: DetailsProps) => {
+  const [newUsers, setNewUsers] = useState<Profile[]>([]);
   const [searchOptions, setSearchOptions] = useState<SearchProfilesOptions>({
     username: "",
     excludeRoom: activeRoom.id,
@@ -46,7 +49,8 @@ const Details = ({ activeRoom, setRooms }: DetailsProps) => {
 
   const handleAddUsersToRoom = async () => {
     try {
-      const resp = await addUsersToRoom(activeRoom.id, newUsers);
+      const userIds = newUsers.map((user) => user.userId);
+      const resp = await addUsersToRoom(activeRoom.id, userIds);
       console.log("TODO: do something with addUsersToRoom response: ", resp);
     } catch (error) {
       console.error("error adding users to room:", error);
@@ -57,74 +61,87 @@ const Details = ({ activeRoom, setRooms }: DetailsProps) => {
     try {
       await deleteRoom(roomId);
       setRooms((prev) => prev.filter((room) => room.id !== roomId));
+      setActiveRoom(null);
     } catch (error) {
       console.error("error deleting room:", error);
     }
   };
 
   return (
-    <div>
-      <h1>Details</h1>
+    <div className="flex flex-col gap-4 p-4">
+      Details
       <Separator />
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="secondary">Add Users</Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Search for users below</DialogTitle>
-            <DialogDescription>
-              Submit when you have added all the users you want
-            </DialogDescription>
-          </DialogHeader>
-          <UserSuggestionSearch
-            searchOptions={searchOptions}
-            setSearchOptions={setSearchOptions}
-            suggestions={suggestions}
-            setSuggestions={setSuggestions}
-            handleClick={(userId: string) => {
-              setNewUsers((prev) => [...prev, userId]);
-              setSearchOptions({ ...searchOptions, username: "" });
-            }}
-          />
-          <ul>
-            {newUsers.map((user, index) => (
-              <li key={index}>
-                {user}
-                <button
-                  onClick={() =>
-                    setNewUsers((prev) => prev.filter((u) => u !== user))
-                  }
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-          <DialogFooter>
-            {/* <DialogClose asChild> */}
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            <Button onClick={() => handleAddUsersToRoom()}>Save changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <div>
-        <h6 className="">Members</h6>
-        <ul>
-          {profiles.map((profile) => (
-            <li key={profile.userId}>
-              {profile.username} ({profile.firstName} {profile.lastName}){" "}
-              {profile.userId === activeRoom.host && "(host)"}
-            </li>
-          ))}
-        </ul>
+      <div className=" flex items-center justify-between">
+        Members
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="secondary">
+              <UserPlus />
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Search for users below</DialogTitle>
+              <DialogDescription>
+                Submit when you have added all the users you want
+              </DialogDescription>
+            </DialogHeader>
+            <UserSuggestionSearch
+              searchOptions={searchOptions}
+              setSearchOptions={setSearchOptions}
+              suggestions={suggestions}
+              setSuggestions={setSuggestions}
+              handleClick={(profile: Profile) => {
+                setNewUsers((prev) => [...prev, profile]);
+                setSearchOptions({ ...searchOptions, username: "" });
+                setSuggestions([]);
+              }}
+            />
+            <ul>
+              {newUsers.map((user, index) => (
+                <li className=" flex justify-between items-center" key={index}>
+                  {user.username}
+                  <Button
+                    onClick={() =>
+                      setNewUsers((prev) => prev.filter((u) => u !== user))
+                    }
+                  >
+                    <X />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
+              <Button onClick={() => handleAddUsersToRoom()}>
+                Save changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
+      <ul className=" flex flex-col gap-2">
+        {profiles.map((profile) => (
+          <li className=" flex items-center gap-2" key={profile.userId}>
+            <CustomAvatar
+              firstName={profile.firstName}
+              lastName={profile.lastName}
+            />
+            {profile.username} ({profile.firstName} {profile.lastName}){" "}
+            {profile.userId === activeRoom.host && <Crown />}
+          </li>
+        ))}
+      </ul>
       {activeRoom.host === session.user.id && (
-        <Button onClick={() => handleDeleteRoom(activeRoom.id)}>
-          Delete Room
-        </Button>
+        <>
+          <Separator />
+          Danger Zone
+          <Button onClick={() => handleDeleteRoom(activeRoom.id)}>
+            Delete Room
+          </Button>
+        </>
       )}
     </div>
   );

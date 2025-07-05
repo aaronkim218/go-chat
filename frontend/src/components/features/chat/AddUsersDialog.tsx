@@ -18,7 +18,7 @@ interface AddUsersDialogProps {
   setSearchOptions: (options: SearchProfilesOptions) => void;
   suggestions: Profile[];
   setSuggestions: (suggestions: Profile[]) => void;
-  handleClick: (userId: string) => void;
+  handleClick: (profile: Profile) => void;
 }
 
 const AddUsersDialog = ({
