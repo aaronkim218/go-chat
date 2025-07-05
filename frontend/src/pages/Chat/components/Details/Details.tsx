@@ -14,6 +14,7 @@ import UserSuggestionSearch from "@/components/features/profiles/UserSuggestionS
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Profile, Room, SearchProfilesOptions } from "@/types";
 import { useEffect, useState } from "react";
+import { Separator } from "@/components/ui/separator";
 
 interface DetailsProps {
   activeRoom: Room;
@@ -64,8 +65,9 @@ const Details = ({ activeRoom, setRooms }: DetailsProps) => {
   return (
     <div>
       <h1>Details</h1>
+      <Separator />
       <Dialog>
-        <DialogTrigger>
+        <DialogTrigger asChild>
           <Button variant="secondary">Add Users</Button>
         </DialogTrigger>
         <DialogContent>
@@ -101,7 +103,7 @@ const Details = ({ activeRoom, setRooms }: DetailsProps) => {
           </ul>
           <DialogFooter>
             {/* <DialogClose asChild> */}
-            <DialogClose>
+            <DialogClose asChild>
               <Button variant="outline">Cancel</Button>
             </DialogClose>
             <Button onClick={() => handleAddUsersToRoom()}>Save changes</Button>

@@ -1,6 +1,6 @@
 import axios from "axios";
 import {
-  BulkResult,
+  BulkResultString,
   CreateRoomRequest,
   CreateRoomResponse,
   Profile,
@@ -10,6 +10,14 @@ import {
 } from "@/types";
 import { getJwt } from "@/utils/jwt";
 import applyCaseMiddleware from "axios-case-converter";
+import {
+  BulkResultStringSchema,
+  CreateRoomResponseSchema,
+  ProfileSchema,
+  RoomSchema,
+  UserMessageSchema,
+} from "./schemas";
+import * as z from "zod/v4";
 
 const BASE_URL = import.meta.env.VITE_SERVER_URL;
 const IDEMPOTENCY_HEADER = "X-Idempotency-Key";
@@ -41,7 +49,7 @@ export const getRoomsByUserId = async (): Promise<Room[]> => {
     throw new Error("failed to fetch rooms");
   }
 
-  return res.data;
+  return z.array(RoomSchema).parse(res.data);
 };
 
 export const createRoom = async (
@@ -53,7 +61,7 @@ export const createRoom = async (
     throw new Error(`failed to create room'`);
   }
 
-  return res.data;
+  return CreateRoomResponseSchema.parse(res.data);
 };
 
 export const deleteRoom = async (roomId: string): Promise<void> => {
@@ -81,13 +89,13 @@ export const getUserMessagesByRoomId = async (
     throw new Error(`failed to fetch messages for room with id='${roomId}'`);
   }
 
-  return res.data;
+  return z.array(UserMessageSchema).parse(res.data);
 };
 
 export const addUsersToRoom = async (
   roomId: string,
   userIds: string[],
-): Promise<BulkResult<string>> => {
+): Promise<BulkResultString> => {
   const res = await client.post(`${BASE_URL}/rooms/${roomId}/users`, {
     user_ids: userIds,
   });
@@ -96,14 +104,14 @@ export const addUsersToRoom = async (
     throw new Error(`failed to add users to room`);
   }
 
-  return res.data;
+  return BulkResultStringSchema.parse(res.data);
 };
 
 export const getProfileByUserId = async (): Promise<Profile | null> => {
   const res = await client.get(`${BASE_URL}/profiles`);
 
   if (res.status === 200) {
-    return res.data;
+    return ProfileSchema.parse(res.data);
   } else if (res.status === 404) {
     return null;
   }
@@ -158,7 +166,7 @@ export const searchProfiles = async (
     throw new Error(`failed to create profile for user`);
   }
 
-  return res.data;
+  return z.array(ProfileSchema).parse(res.data);
 };
 
 export const getProfilesByRoomId = async (
@@ -170,5 +178,5 @@ export const getProfilesByRoomId = async (
     throw new Error(`failed to get profiles by room id='${roomId}'`);
   }
 
-  return res.data;
+  return z.array(ProfileSchema).parse(res.data);
 };

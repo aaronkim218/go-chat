@@ -8,8 +8,8 @@ import {
 } from "react";
 import supabase from "@/utils/supabase";
 import { useNavigate } from "react-router-dom";
-import { Profile } from "@/types";
 import { getProfileByUserId } from "@/api";
+import { Profile } from "@/types";
 
 interface UserContextType {
   session: Session | null;
