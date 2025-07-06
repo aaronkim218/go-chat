@@ -8,6 +8,7 @@ interface UserSuggestionSearchProps {
   suggestions: Profile[];
   setSuggestions: (suggestions: Profile[]) => void;
   handleClick: (profile: Profile) => void;
+  inputId?: string;
 }
 
 const UserSuggestionSearch = ({
@@ -16,6 +17,7 @@ const UserSuggestionSearch = ({
   suggestions,
   setSuggestions,
   handleClick,
+  inputId,
 }: UserSuggestionSearchProps) => {
   const handleSuggest = async (opts: SearchProfilesOptions) => {
     if (!opts.username) {
@@ -34,6 +36,7 @@ const UserSuggestionSearch = ({
   return (
     <>
       <input
+        id={inputId}
         type="text"
         placeholder="Search by username"
         value={searchOptions.username}

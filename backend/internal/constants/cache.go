@@ -1,10 +1,17 @@
 package constants
 
-import "time"
+import (
+	"time"
+
+	"github.com/gofiber/fiber/v2"
+)
 
 var (
-	CacheableRoutes = map[string]struct{}{
-		SearchProfiles: {},
+	// functions return true if request should be cached
+	CacheableRoutes = map[string]func(c *fiber.Ctx) bool{
+		SearchProfiles: func(c *fiber.Ctx) bool {
+			return c.Query("excludeRoom") == ""
+		},
 	}
 )
 

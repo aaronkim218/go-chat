@@ -4,9 +4,14 @@ import { User } from "lucide-react";
 interface CustomAvatarProps {
   firstName: string;
   lastName: string;
+  className?: string;
 }
 
-const CustomAvatar = ({ firstName, lastName }: CustomAvatarProps) => {
+const CustomAvatar = ({
+  firstName,
+  lastName,
+  className,
+}: CustomAvatarProps) => {
   const getAvatarFallback = (): string | null => {
     if (firstName || lastName) {
       return `${firstName?.charAt(0).toUpperCase() || ""}${lastName?.charAt(0).toUpperCase() || ""}`;
@@ -16,8 +21,10 @@ const CustomAvatar = ({ firstName, lastName }: CustomAvatarProps) => {
   };
 
   return (
-    <Avatar>
-      <AvatarFallback>{getAvatarFallback() || <User />}</AvatarFallback>
+    <Avatar className={className}>
+      <AvatarFallback className=" text-[75%]">
+        {getAvatarFallback() || <User />}
+      </AvatarFallback>
     </Avatar>
   );
 };
