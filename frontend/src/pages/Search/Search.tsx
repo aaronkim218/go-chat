@@ -13,10 +13,11 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import CustomAvatar from "@/components/shared/CustomAvatar";
+import { Search } from "lucide-react";
 
 const SUGGESTIONS_LIMIT = 5;
 
-const Search = () => {
+const SearchProfiles = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [options, setOptions] = useState<SearchProfilesOptions>({
     username: "",
@@ -53,7 +54,9 @@ const Search = () => {
             navigate(`/profile/${profile.userId}`)
           }
         />
-        <Button onClick={() => handleSearch()}>Search</Button>
+        <Button onClick={() => handleSearch()}>
+          <Search />
+        </Button>
       </div>
       <Table>
         <TableHeader>
@@ -88,4 +91,4 @@ const Search = () => {
   );
 };
 
-export default Search;
+export default SearchProfiles;

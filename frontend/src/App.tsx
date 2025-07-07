@@ -10,7 +10,7 @@ import Landing from "@/pages/Landing/Landing";
 import Setup from "@/pages/Setup/Setup";
 import BaseLayout from "@/components/layouts/BaseLayout";
 import ForeignProfile from "@/pages/Profile/ForeignProfile";
-import Search from "@/pages/Search/Search";
+import SearchProfiles from "@/pages/Search/Search";
 import { ThemeProvider } from "@/contexts/Theme";
 import UnauthLayout from "@/components/layouts/UnauthLayout";
 import Chat from "@/pages/Chat/Chat";
@@ -36,7 +36,7 @@ const App = () => {
                     path="/profile/:profileId"
                     element={<ForeignProfile />}
                   />
-                  <Route path="/search" element={<Search />} />
+                  <Route path="/search" element={<SearchProfiles />} />
                   <Route path="/chat" element={<Chat />} />
                 </Route>
               </Route>
