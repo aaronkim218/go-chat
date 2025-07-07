@@ -14,17 +14,45 @@ interface MessagesProps {
   roomId: string;
 }
 
+const MAX_RETRIES = 3;
+
 const Messages = ({ roomId }: MessagesProps) => {
   const navigate = useNavigate();
   const [userMessages, setUserMessages] = useState<UserMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const ws = useRef<WebSocket | null>(null);
-  // const [retries, setRetries] = useState(0);
+  const retries = useRef(0);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [autoScroll, setAutoScroll] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    initWebsocket();
+
+    const fetchMessages = async () => {
+      try {
+        const msgs = await getUserMessagesByRoomId(roomId);
+        setUserMessages(msgs);
+      } catch (error) {
+        console.error("error getting messages for room:", error);
+      }
+    };
+
+    fetchMessages();
+
+    return () => {
+      ws.current?.close();
+    };
+  }, [roomId]);
+
+  const initWebsocket = () => {
+    if (ws.current) {
+      ws.current.onopen = null;
+      ws.current.onmessage = null;
+      ws.current.onclose = null;
+      ws.current = null;
+    }
+
     ws.current = new WebSocket(
       `${import.meta.env.VITE_WEBSOCKET_URL}/rooms/${roomId}`,
     );
@@ -49,23 +77,16 @@ const Messages = ({ roomId }: MessagesProps) => {
 
     ws.current.onclose = () => {
       console.log("websocket closed");
-    };
-
-    const fetchMessages = async () => {
-      try {
-        const msgs = await getUserMessagesByRoomId(roomId);
-        setUserMessages(msgs);
-      } catch (error) {
-        console.error("error getting messages for room:", error);
+      if (retries.current < MAX_RETRIES) {
+        retries.current += 1;
+        setTimeout(() => {
+          initWebsocket();
+        }, 1000 * retries.current);
+      } else {
+        console.error("Max retries reached, unable to reconnect to websocket");
       }
     };
-
-    fetchMessages();
-
-    return () => {
-      ws.current?.close();
-    };
-  }, [roomId]);
+  };
 
   useEffect(() => {
     if (autoScroll && messagesEndRef.current) {
@@ -86,7 +107,7 @@ const Messages = ({ roomId }: MessagesProps) => {
     return () => {
       el.removeEventListener("scroll", handleScroll);
     };
-  });
+  }, []);
 
   const handleSendMessage = () => {
     if (!newMessage) {
