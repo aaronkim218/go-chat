@@ -33,24 +33,42 @@ const Details = ({ activeRoom, setRooms, setActiveRoom }: DetailsProps) => {
   const [suggestions, setSuggestions] = useState<Profile[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const { session } = useRequireAuth();
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const fetchProfiles = async () => {
-      try {
-        const profiles = await getProfilesByRoomId(activeRoom.id);
-        setProfiles(profiles);
-      } catch (error) {
-        console.error("error getting profiles for room:", error);
-      }
-    };
-
     fetchProfiles();
-  }, [activeRoom]);
+    setSearchOptions({
+      username: "",
+      excludeRoom: activeRoom.id,
+    });
+    setSuggestions([]);
+    setNewUsers([]);
+  }, [activeRoom.id]);
+
+  const fetchProfiles = async () => {
+    try {
+      const profiles = await getProfilesByRoomId(activeRoom.id);
+      setProfiles(profiles);
+    } catch (error) {
+      console.error("error getting profiles for room:", error);
+    }
+  };
 
   const handleAddUsersToRoom = async () => {
     try {
       const userIds = newUsers.map((user) => user.userId);
       const resp = await addUsersToRoom(activeRoom.id, userIds);
+      setOpen(false);
+      setNewUsers([]);
+      const successfulIds = new Set(resp.successes);
+      const successfulNewUsers = newUsers.filter((user) =>
+        successfulIds.has(user.userId),
+      );
+      setProfiles((prev) =>
+        [...prev, ...successfulNewUsers].sort((a, b) =>
+          a.username.toLowerCase().localeCompare(b.username.toLowerCase()),
+        ),
+      );
       console.log("TODO: do something with addUsersToRoom response: ", resp);
     } catch (error) {
       console.error("error adding users to room:", error);
@@ -73,7 +91,7 @@ const Details = ({ activeRoom, setRooms, setActiveRoom }: DetailsProps) => {
       <Separator />
       <div className=" flex items-center justify-between">
         Members
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button variant="secondary">
               <UserPlus />
@@ -81,7 +99,7 @@ const Details = ({ activeRoom, setRooms, setActiveRoom }: DetailsProps) => {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Search for users below</DialogTitle>
+              <DialogTitle>Search for new users below</DialogTitle>
               <DialogDescription>
                 Submit when you have added all the users you want
               </DialogDescription>

@@ -32,8 +32,12 @@ func (hs *HandlerService) RegisterRoutes(app *fiber.App) {
 		api.Use(cache.New(cache.Config{
 			KeyGenerator: middleware.CacheKeyGenerator,
 			Next: func(c *fiber.Ctx) bool {
-				_, ok := constants.CacheableRoutes[c.Path()]
-				return !ok
+				fn, ok := constants.CacheableRoutes[c.Path()]
+				if !ok {
+					return true
+				}
+
+				return !fn(c)
 			},
 			Storage:      hs.fiberStorage,
 			CacheControl: true,

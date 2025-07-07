@@ -43,7 +43,8 @@ func (p *Postgres) GetUserMessagesByRoomId(ctx context.Context, roomId uuid.UUID
 	    SELECT 1
 	    FROM users_rooms
 	    WHERE room_id = $1 AND user_id = $2
-	  );
+	  )
+	ORDER BY m.created_at ASC
 	`
 
 	rows, err := utils.Retry(ctx, func(ctx context.Context) (pgx.Rows, error) {

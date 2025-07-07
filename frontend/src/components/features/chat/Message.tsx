@@ -75,7 +75,11 @@ const Message = ({ userMessage, setUserMessages }: MessageProps) => {
               </DropdownMenu>
             )}
           </div>
-          {userMessage.content}
+          <p
+            className={`${userMessage.author === session.user.id ? "text-secondary-foreground" : "text-primary-foreground"}`}
+          >
+            {userMessage.content}
+          </p>
         </div>
       </div>
     </div>

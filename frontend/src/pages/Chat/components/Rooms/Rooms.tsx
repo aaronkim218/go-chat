@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { CreateRoomRequest, Room } from "@/types";
+import {
+  CreateRoomRequest,
+  Profile,
+  Room,
+  SearchProfilesOptions,
+} from "@/types";
 import { createRoom, getRoomsByUserId } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +19,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
+import UserSuggestionSearch from "@/components/features/profiles/UserSuggestionSearch";
+import { Label } from "@/components/ui/label";
+import { X } from "lucide-react";
 
 interface RoomsProps {
   activeRoom: Room | null;
@@ -23,9 +32,16 @@ interface RoomsProps {
 }
 
 const Rooms = ({ activeRoom, setActiveRoom, rooms, setRooms }: RoomsProps) => {
+  const { profile } = useRequireAuth();
   const [createRoomRequest, setCreateRoomRequest] = useState<CreateRoomRequest>(
-    { name: "", members: [] },
+    { name: `${profile.username}'s Room`, members: [] },
   );
+  const [open, setOpen] = useState(false);
+  const [searchOptions, setSearchOptions] = useState<SearchProfilesOptions>({
+    username: "",
+  });
+  const [suggestions, setSuggestions] = useState<Profile[]>([]);
+  const [newMembers, setNewMembers] = useState<Profile[]>([]);
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -42,8 +58,15 @@ const Rooms = ({ activeRoom, setActiveRoom, rooms, setRooms }: RoomsProps) => {
 
   const handleCreateRoom = async () => {
     try {
-      const resp = await createRoom(createRoomRequest);
+      const userIds = newMembers.map((member) => member.userId);
+      const resp = await createRoom({
+        ...createRoomRequest,
+        members: [...userIds],
+      });
       setRooms((prev) => [resp.room, ...prev]);
+      setOpen(false);
+      setActiveRoom(resp.room);
+      setCreateRoomRequest({ name: "", members: [] });
     } catch (error) {
       console.error("error creating room:", error);
     }
@@ -53,7 +76,16 @@ const Rooms = ({ activeRoom, setActiveRoom, rooms, setRooms }: RoomsProps) => {
     <div className="flex flex-col gap-4 p-4">
       Rooms
       <Separator />
-      <Dialog>
+      <Dialog
+        open={open}
+        onOpenChange={(open: boolean) => {
+          setOpen(open);
+          setCreateRoomRequest({
+            name: `${profile.username}'s Room`,
+            members: [],
+          });
+        }}
+      >
         <DialogTrigger asChild>
           <Button variant={"secondary"}>New Room</Button>
         </DialogTrigger>
@@ -64,19 +96,48 @@ const Rooms = ({ activeRoom, setActiveRoom, rooms, setRooms }: RoomsProps) => {
               Leave blank for default room name
             </DialogDescription>
           </DialogHeader>
-          <Input
-            type="text"
-            placeholder="Room Name"
-            value={createRoomRequest.name}
-            onChange={(e) =>
-              setCreateRoomRequest({
-                ...createRoomRequest,
-                name: e.target.value,
-              })
-            }
-          />
+          <div className=" flex flex-col gap-2">
+            <Label htmlFor="roomName">Room Name</Label>
+            <Input
+              id="roomName"
+              type="text"
+              value={createRoomRequest.name}
+              onChange={(e) =>
+                setCreateRoomRequest({
+                  ...createRoomRequest,
+                  name: e.target.value,
+                })
+              }
+            />
+            <Label htmlFor="memberSearch">Add Members</Label>
+            <UserSuggestionSearch
+              inputId="memberSearch"
+              searchOptions={searchOptions}
+              setSearchOptions={setSearchOptions}
+              suggestions={suggestions}
+              setSuggestions={setSuggestions}
+              handleClick={(profile: Profile) => {
+                setNewMembers((prev) => [...prev, profile]);
+                setSearchOptions({ ...searchOptions, username: "" });
+                setSuggestions([]);
+              }}
+            />
+            <ul>
+              {newMembers.map((member, index) => (
+                <li className=" flex justify-between items-center" key={index}>
+                  {member.username}
+                  <Button
+                    onClick={() =>
+                      setNewMembers((prev) => prev.filter((m) => m !== member))
+                    }
+                  >
+                    <X />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </div>
           <DialogFooter>
-            {/* <DialogClose asChild> */}
             <DialogClose asChild>
               <Button variant="secondary">Cancel</Button>
             </DialogClose>
