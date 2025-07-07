@@ -24,3 +24,12 @@ func CacheKeyGenerator(c *fiber.Ctx) string {
 		return c.Path()
 	}
 }
+
+func SkipCache(c *fiber.Ctx) bool {
+	fn, ok := constants.CacheableRoutes[c.Path()]
+	if !ok {
+		return true
+	}
+
+	return !fn(c)
+}
