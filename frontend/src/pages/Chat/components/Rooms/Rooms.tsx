@@ -149,7 +149,7 @@ const Rooms = ({ activeRoom, setActiveRoom, rooms, setRooms }: RoomsProps) => {
         {rooms.map((room) => (
           <li className=" w-full" key={room.id}>
             <Button
-              className=" w-full"
+              className=" w-full justify-start"
               variant={room.id === activeRoom?.id ? "secondary" : "ghost"}
               onClick={() => setActiveRoom(room)}
             >
