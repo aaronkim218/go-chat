@@ -25,7 +25,7 @@ const Chat = () => {
             setRooms={setRooms}
           />
         </ResizablePanel>
-        <ResizableHandle />
+        <ResizableHandle withHandle />
         <ResizablePanel defaultSize={55}>
           {activeRoom ? (
             <Messages roomId={activeRoom.id} />
@@ -36,7 +36,7 @@ const Chat = () => {
             </div>
           )}
         </ResizablePanel>
-        <ResizableHandle />
+        <ResizableHandle withHandle />
         <ResizablePanel defaultSize={30}>
           {activeRoom ? (
             <Details

@@ -1,4 +1,15 @@
 import { patchProfileByUserId } from "@/api";
+import CustomAvatar from "@/components/shared/CustomAvatar";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useUserContext } from "@/contexts/User";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { isObjectEmpty } from "@/utils/object";
@@ -26,37 +37,66 @@ const Profile = () => {
   };
 
   return (
-    <div>
-      <h1>Profile</h1>
-      <p>User id: {profile.userId}</p>
-      <p>Username: {profile.username}</p>
-      <p>First name: {profile.firstName}</p>
-      <p>Last name: {profile.lastName}</p>
-      <input
-        type="text"
-        value={updatedProfile.username}
-        onChange={(e) =>
-          setUpdatedProfile({ ...updatedProfile, username: e.target.value })
-        }
-        placeholder="username"
-      />
-      <input
-        type="text"
-        value={updatedProfile.firstName}
-        onChange={(e) =>
-          setUpdatedProfile({ ...updatedProfile, firstName: e.target.value })
-        }
-        placeholder="first name"
-      />
-      <input
-        type="text"
-        value={updatedProfile.lastName}
-        onChange={(e) =>
-          setUpdatedProfile({ ...updatedProfile, lastName: e.target.value })
-        }
-        placeholder="last name"
-      />
-      <button onClick={() => handlePatchProfile()}>Save profile</button>
+    <div className=" w-full flex flex-col justify-center items-center gap-4 p-4">
+      <div className=" flex justify-center gap-2 w-full">
+        <Card className=" min-w-1/3">
+          <CardContent className=" flex flex-col justify-center items-center h-full">
+            <CustomAvatar
+              firstName={profile.firstName}
+              lastName={profile.lastName}
+              className=" scale-600"
+            />
+          </CardContent>
+        </Card>
+        <Card className=" min-w-1/3">
+          <CardHeader>
+            <CardTitle>Your Profile</CardTitle>
+          </CardHeader>
+          <CardContent className=" flex flex-col gap-4">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              type="text"
+              value={updatedProfile.username}
+              onChange={(e) =>
+                setUpdatedProfile({
+                  ...updatedProfile,
+                  username: e.target.value,
+                })
+              }
+            />
+            <Label htmlFor="firstName">First Name</Label>
+            <Input
+              id="firstName"
+              type="text"
+              value={updatedProfile.firstName}
+              onChange={(e) =>
+                setUpdatedProfile({
+                  ...updatedProfile,
+                  firstName: e.target.value,
+                })
+              }
+              placeholder="First Name"
+            />
+            <Label htmlFor="lastName">Last Name</Label>
+            <Input
+              id="lastName"
+              type="text"
+              value={updatedProfile.lastName}
+              onChange={(e) =>
+                setUpdatedProfile({
+                  ...updatedProfile,
+                  lastName: e.target.value,
+                })
+              }
+              placeholder="Last Name"
+            />
+          </CardContent>
+          <CardFooter className=" justify-end">
+            <Button onClick={() => handlePatchProfile()}>Save profile</Button>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 };

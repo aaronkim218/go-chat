@@ -156,7 +156,10 @@ const Details = ({ activeRoom, setRooms, setActiveRoom }: DetailsProps) => {
         <>
           <Separator />
           Danger Zone
-          <Button onClick={() => handleDeleteRoom(activeRoom.id)}>
+          <Button
+            variant={"destructive"}
+            onClick={() => handleDeleteRoom(activeRoom.id)}
+          >
             Delete Room
           </Button>
         </>
