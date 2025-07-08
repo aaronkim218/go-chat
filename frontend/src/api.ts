@@ -119,6 +119,18 @@ export const getProfileByUserId = async (): Promise<Profile | null> => {
   throw new Error(`failed to fetch profile for user`);
 };
 
+export const getForeignProfileByUserId = async (
+  profileId: string,
+): Promise<Profile> => {
+  const res = await client.get(`${BASE_URL}/profiles`);
+
+  if (res.status !== 200) {
+    throw new Error(`failed to fetch profile for user with id='${profileId}'`);
+  }
+
+  return ProfileSchema.parse(res.data);
+};
+
 export const patchProfileByUserId = async (
   partialProfile: Partial<Profile>,
   idempotencyKey: string,
