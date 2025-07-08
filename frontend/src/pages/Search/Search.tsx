@@ -51,7 +51,7 @@ const SearchProfiles = () => {
           suggestions={suggestions}
           setSuggestions={setSuggestions}
           handleClick={(profile: Profile) =>
-            navigate(`/profile/${profile.userId}`)
+            navigate(`/profile/${profile.userId}`, { state: { profile } })
           }
         />
         <Button onClick={() => handleSearch()}>
@@ -70,7 +70,9 @@ const SearchProfiles = () => {
           {profiles.map((profile) => (
             <TableRow
               key={profile.userId}
-              onClick={() => navigate(`/profile/${profile.userId}`)}
+              onClick={() =>
+                navigate(`/profile/${profile.userId}`, { state: { profile } })
+              }
             >
               <TableCell>
                 <div className=" flex items-center gap-2">

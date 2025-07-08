@@ -52,6 +52,7 @@ func (hs *HandlerService) RegisterRoutes(app *fiber.App) {
 			profiles.Patch("/", hs.PatchProfileByUserId)
 			profiles.Post("/", hs.CreateProfile)
 			profiles.Get("/search", hs.SearchProfiles)
+			profiles.Get("/:profileId", hs.GetForeignProfileByUserId)
 		})
 
 		api.Route("/messages", func(messages fiber.Router) {

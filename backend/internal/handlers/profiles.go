@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"go-chat/internal/models"
@@ -9,6 +10,7 @@ import (
 	"go-chat/internal/xerrors"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 func (hs *HandlerService) GetProfileByUserId(c *fiber.Ctx) error {
@@ -18,6 +20,26 @@ func (hs *HandlerService) GetProfileByUserId(c *fiber.Ctx) error {
 	}
 
 	profile, err := hs.storage.GetProfileByUserId(c.Context(), userId)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(http.StatusOK).JSON(profile)
+}
+
+func (hs *HandlerService) GetForeignProfileByUserId(c *fiber.Ctx) error {
+	profileId := c.Params("profileId")
+
+	if profileId == "" {
+		return xerrors.BadRequestError("profile id is required")
+	}
+
+	uuidProfileId, err := uuid.Parse(profileId)
+	if err != nil {
+		return xerrors.BadRequestError(fmt.Sprintf("invalid room id: %s", profileId))
+	}
+
+	profile, err := hs.storage.GetProfileByUserId(c.Context(), uuidProfileId)
 	if err != nil {
 		return err
 	}
