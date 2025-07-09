@@ -14,6 +14,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "../ui/sidebar";
 import {
   DropdownMenu,
@@ -22,12 +23,14 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import useLogout from "@/hooks/useLogout";
+import { Button } from "../ui/button";
 
 const CustomSidebar = () => {
   const { profile } = useRequireAuth();
   const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(0);
   const { handleLogout } = useLogout();
+  const { open } = useSidebar();
 
   const items = [
     {
@@ -83,13 +86,13 @@ const CustomSidebar = () => {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className=" pl-0">
+                <Button variant={"ghost"} className="pl-0">
                   <CustomAvatar
                     firstName={profile.firstName}
                     lastName={profile.lastName}
                   />
-                  {profile.username}
-                </SidebarMenuButton>
+                  {open && profile.username}
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="right">
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
