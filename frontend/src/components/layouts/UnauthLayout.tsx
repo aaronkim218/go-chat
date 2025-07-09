@@ -1,11 +1,13 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ModeToggle } from "@/components/shared/ModeToggle";
 import { Button } from "@/components/ui/button";
-import LogoutButton from "@/components/features/auth/LogoutButton";
+import { LogOut } from "lucide-react";
+import useLogout from "@/hooks/useLogout";
 
 const UnauthLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { handleLogout } = useLogout();
 
   const routeToLogin = () => {
     navigate("/login");
@@ -55,7 +57,11 @@ const UnauthLayout = () => {
               Log in
             </Button>
           )}
-          {location.pathname === "/setup" && <LogoutButton />}
+          {location.pathname === "/setup" && (
+            <Button className=" cursor-pointer" onClick={() => handleLogout()}>
+              <LogOut />
+            </Button>
+          )}
         </div>
       </nav>
       <main>
