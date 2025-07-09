@@ -1,8 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
-import LogoutButton from "@/components/features/auth/LogoutButton";
 import { useState } from "react";
-import { House, MessageCircle, Users } from "lucide-react";
+import { House, LogOut, MessageCircle, User, Users } from "lucide-react";
 import { ModeToggle } from "@/components/shared/ModeToggle";
 import CustomAvatar from "@/components/shared/CustomAvatar";
 import {
@@ -22,11 +21,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import useLogout from "@/hooks/useLogout";
 
 const CustomSidebar = () => {
   const { profile } = useRequireAuth();
   const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(0);
+  const { handleLogout } = useLogout();
 
   const items = [
     {
@@ -55,25 +56,19 @@ const CustomSidebar = () => {
             <SidebarMenu>
               {items.map((item, index) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={activeIndex === index}>
-                    <div
-                      className="flex items-center"
-                      onClick={() => {
-                        item.onClick();
-                        setActiveIndex(index);
-                      }}
-                    >
-                      {item.icon}
-                      {item.title}
-                    </div>
+                  <SidebarMenuButton
+                    isActive={activeIndex === index}
+                    className="flex items-center"
+                    onClick={() => {
+                      item.onClick();
+                      setActiveIndex(index);
+                    }}
+                  >
+                    {item.icon}
+                    {item.title}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <ModeToggle />
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -81,25 +76,27 @@ const CustomSidebar = () => {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <ModeToggle variant={"ghost"} />
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton>
-                  <div className=" flex items-center gap-4">
-                    <CustomAvatar
-                      firstName={profile.firstName}
-                      lastName={profile.lastName}
-                      className=" w-4 h-4 scale-200"
-                    />
-                    {profile.username}
-                  </div>
+                <SidebarMenuButton className=" pl-0">
+                  <CustomAvatar
+                    firstName={profile.firstName}
+                    lastName={profile.lastName}
+                  />
+                  {profile.username}
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="right">
-                <DropdownMenuItem>
-                  <LogoutButton />
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
-                  Profile
+                  <User /> Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleLogout()}>
+                  <LogOut /> Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

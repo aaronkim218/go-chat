@@ -22,9 +22,7 @@ const CustomAvatar = ({
 
   return (
     <Avatar className={className}>
-      <AvatarFallback className=" text-[75%]">
-        {getAvatarFallback() || <User />}
-      </AvatarFallback>
+      <AvatarFallback>{getAvatarFallback() || <User />}</AvatarFallback>
     </Avatar>
   );
 };
