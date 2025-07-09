@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"go-chat/internal/types"
+	"go-chat/internal/utils"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -51,13 +52,15 @@ func (p *Postgres) CheckUserInRoom(ctx context.Context, roomId uuid.UUID, userId
 	const query string = `SELECT 1 FROM users_rooms WHERE user_id = $1 AND room_id = $2`
 
 	var exists int
-	if err := p.Pool.QueryRow(ctx, query, userId, roomId).Scan(&exists); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return false, nil
+	return utils.Retry(ctx, func(ctx context.Context) (bool, error) {
+		if err := p.Pool.QueryRow(ctx, query, userId, roomId).Scan(&exists); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return false, nil
+			}
+
+			return false, err
 		}
 
-		return false, err
-	}
-
-	return true, nil
+		return true, nil
+	})
 }

@@ -9,6 +9,7 @@ import (
 	"go-chat/internal/constants"
 	"go-chat/internal/models"
 	"go-chat/internal/types"
+	"go-chat/internal/utils"
 	"go-chat/internal/xerrors"
 
 	"github.com/google/uuid"
@@ -17,7 +18,10 @@ import (
 
 func (p *Postgres) GetProfileByUserId(ctx context.Context, userId uuid.UUID) (models.Profile, error) {
 	const query string = `SELECT user_id, username, first_name, last_name FROM profiles WHERE user_id = $1`
-	rows, err := p.Pool.Query(ctx, query, userId)
+
+	rows, err := utils.Retry(ctx, func(ctx context.Context) (pgx.Rows, error) {
+		return p.Pool.Query(ctx, query, userId)
+	})
 	if err != nil {
 		return models.Profile{}, err
 	}
@@ -60,37 +64,45 @@ func (p *Postgres) PatchProfileByUserId(ctx context.Context, partialProfile type
 		return err
 	}
 
-	ct, err := p.Pool.Exec(ctx, query, args...)
-	if err != nil {
-		if xerrors.IsUniqueViolation(err, constants.ProfilesUsernameUniqueConstraint) {
-			return xerrors.ConflictError("user", "username", *partialProfile.Username)
+	_, err = utils.Retry(ctx, func(ctx context.Context) (struct{}, error) {
+		ct, err := p.Pool.Exec(ctx, query, args...)
+		if err != nil {
+			if xerrors.IsUniqueViolation(err, constants.ProfilesUsernameUniqueConstraint) {
+				return struct{}{}, utils.CreateNonRetryableError(xerrors.ConflictError("user", "username", *partialProfile.Username))
+			}
+
+			return struct{}{}, err
 		}
 
-		return err
-	}
+		if ct.RowsAffected() == 0 {
+			return struct{}{}, utils.CreateNonRetryableError(xerrors.NotFoundError("profile", map[string]string{
+				"user_id": userId.String(),
+			}))
+		}
 
-	if ct.RowsAffected() == 0 {
-		return xerrors.NotFoundError("profile", map[string]string{
-			"user_id": userId.String(),
-		})
-	}
+		return struct{}{}, nil
+	})
 
-	return nil
+	return err
 }
 
 func (p *Postgres) CreateProfile(ctx context.Context, profile models.Profile) error {
 	const query string = `INSERT INTO profiles (user_id, username, first_name, last_name) VALUES ($1, $2, $3, $4)`
-	if _, err := p.Pool.Exec(ctx, query, profile.UserId, profile.Username, profile.FirstName, profile.LastName); err != nil {
-		if xerrors.IsUniqueViolation(err, constants.ProfilesPKeyUniqueConstraint) {
-			return xerrors.ConflictError("profile", "id", profile.UserId.String())
-		} else if xerrors.IsUniqueViolation(err, constants.ProfilesUsernameUniqueConstraint) {
-			return xerrors.ConflictError("user", "username", profile.Username)
+
+	_, err := utils.Retry(ctx, func(ctx context.Context) (struct{}, error) {
+		_, err := p.Pool.Exec(ctx, query, profile.UserId, profile.Username, profile.FirstName, profile.LastName)
+		if err != nil {
+			if xerrors.IsUniqueViolation(err, constants.ProfilesPKeyUniqueConstraint) {
+				return struct{}{}, utils.CreateNonRetryableError(xerrors.ConflictError("profile", "id", profile.UserId.String()))
+			} else if xerrors.IsUniqueViolation(err, constants.ProfilesUsernameUniqueConstraint) {
+				return struct{}{}, utils.CreateNonRetryableError(xerrors.ConflictError("user", "username", profile.Username))
+			}
 		}
 
-		return err
-	}
+		return struct{}{}, err
+	})
 
-	return nil
+	return err
 }
 
 func (p *Postgres) SearchProfiles(ctx context.Context, options types.SearchProfilesOptions, userId uuid.UUID) ([]models.Profile, error) {
@@ -125,7 +137,9 @@ func (p *Postgres) SearchProfiles(ctx context.Context, options types.SearchProfi
 		return nil, err
 	}
 
-	rows, err := p.Pool.Query(ctx, query, args...)
+	rows, err := utils.Retry(ctx, func(ctx context.Context) (pgx.Rows, error) {
+		return p.Pool.Query(ctx, query, args...)
+	})
 	if err != nil {
 		return nil, err
 	}

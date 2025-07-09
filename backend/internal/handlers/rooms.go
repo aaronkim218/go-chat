@@ -36,9 +36,10 @@ func (hs *HandlerService) CreateRoom(c *fiber.Ctx) error {
 		return xerrors.InvalidJSON()
 	}
 
-	// TODO: change this
 	if req.Name == "" {
-		req.Name = "Default room name"
+		return xerrors.UnprocessableEntityError(map[string]string{
+			"name": "name cannot be empty",
+		})
 	}
 
 	roomId, err := uuid.NewRandom()
