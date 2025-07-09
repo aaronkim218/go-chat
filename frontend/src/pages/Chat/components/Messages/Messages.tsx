@@ -5,18 +5,18 @@ import { getJwt } from "@/utils/jwt";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import Message from "@/components/features/chat/Message";
-import { Send } from "lucide-react";
+import { CornerDownLeft, Send } from "lucide-react";
 import { UserMessageSchema } from "@/schemas";
-import { UserMessage } from "@/types";
+import { Room, UserMessage } from "@/types";
 import camelcaseKeys from "camelcase-keys";
 
 interface MessagesProps {
-  roomId: string;
+  activeRoom: Room | null;
 }
 
 const MAX_RETRIES = 3;
 
-const Messages = ({ roomId }: MessagesProps) => {
+const Messages = ({ activeRoom }: MessagesProps) => {
   const navigate = useNavigate();
   const [userMessages, setUserMessages] = useState<UserMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -25,27 +25,32 @@ const Messages = ({ roomId }: MessagesProps) => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [autoScroll, setAutoScroll] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const activeRoomRef = useRef<Room | null>(activeRoom);
 
   useEffect(() => {
-    initWebsocket();
+    activeRoomRef.current = activeRoom;
 
-    const fetchMessages = async () => {
-      try {
-        const msgs = await getUserMessagesByRoomId(roomId);
-        setUserMessages(msgs);
-      } catch (error) {
-        console.error("error getting messages for room:", error);
-      }
-    };
-
-    fetchMessages();
+    if (activeRoomRef.current) {
+      initWebsocket(activeRoomRef.current.id);
+      fetchMessages(activeRoomRef.current.id);
+    }
 
     return () => {
+      activeRoomRef.current = null;
       ws.current?.close();
     };
-  }, [roomId]);
+  }, [activeRoom]);
 
-  const initWebsocket = () => {
+  const fetchMessages = async (roomId: string) => {
+    try {
+      const msgs = await getUserMessagesByRoomId(roomId);
+      setUserMessages(msgs);
+    } catch (error) {
+      console.error("error getting messages for room:", error);
+    }
+  };
+
+  const initWebsocket = (roomId: string) => {
     if (ws.current) {
       ws.current.onopen = null;
       ws.current.onmessage = null;
@@ -77,13 +82,22 @@ const Messages = ({ roomId }: MessagesProps) => {
 
     ws.current.onclose = () => {
       console.log("websocket closed");
-      if (retries.current < MAX_RETRIES) {
+      if (!activeRoomRef.current) {
+        console.error("No active room to reconnect to");
+      } else if (retries.current >= MAX_RETRIES) {
+        console.error("Max retries reached, unable to reconnect to websocket");
+      } else {
         retries.current += 1;
         setTimeout(() => {
-          initWebsocket();
+          if (activeRoomRef.current) {
+            console.log(
+              `Reconnecting to websocket... Attempt ${retries.current}`,
+            );
+            initWebsocket(activeRoomRef.current.id);
+          } else {
+            console.error("No active room to reconnect to");
+          }
         }, 1000 * retries.current);
-      } else {
-        console.error("Max retries reached, unable to reconnect to websocket");
       }
     };
   };
@@ -109,7 +123,7 @@ const Messages = ({ roomId }: MessagesProps) => {
     };
   }, []);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = (newMessage: string) => {
     if (!newMessage) {
       console.error("cannot send an empty message");
       return;
@@ -121,7 +135,7 @@ const Messages = ({ roomId }: MessagesProps) => {
     }
   };
 
-  return (
+  return activeRoom ? (
     <div className="">
       <div
         ref={scrollContainerRef}
@@ -142,10 +156,15 @@ const Messages = ({ roomId }: MessagesProps) => {
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
         />
-        <Button onClick={() => handleSendMessage()}>
+        <Button onClick={() => handleSendMessage(newMessage)}>
           <Send />
         </Button>
       </div>
+    </div>
+  ) : (
+    <div className=" flex flex-col justify-center items-center h-full text-2xl">
+      You need to select a room first
+      <CornerDownLeft className=" mt-4 scale-200" />
     </div>
   );
 };

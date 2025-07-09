@@ -15,7 +15,7 @@ import (
 func (p *Postgres) CreateMessage(ctx context.Context, message models.Message) error {
 	const query string = `INSERT INTO messages (id, room_id, created_at, author, content) VALUES ($1, $2, $3, $4, $5)`
 
-	if _, err := utils.Retry(ctx, func(ctx context.Context) (struct{}, error) {
+	_, err := utils.Retry(ctx, func(ctx context.Context) (struct{}, error) {
 		_, err := p.Pool.Exec(ctx, query,
 			message.Id,
 			message.RoomId,
@@ -25,11 +25,9 @@ func (p *Postgres) CreateMessage(ctx context.Context, message models.Message) er
 		)
 
 		return struct{}{}, err
-	}); err != nil {
-		return err
-	}
+	})
 
-	return nil
+	return err
 }
 
 func (p *Postgres) GetUserMessagesByRoomId(ctx context.Context, roomId uuid.UUID, userId uuid.UUID) ([]types.UserMessage, error) {
@@ -72,7 +70,7 @@ func (p *Postgres) GetUserMessagesByRoomId(ctx context.Context, roomId uuid.UUID
 func (p *Postgres) DeleteMessageById(ctx context.Context, messageId uuid.UUID, userId uuid.UUID) error {
 	const query string = `DELETE FROM messages WHERE id = $1 AND author = $2`
 
-	if _, err := utils.Retry(ctx, func(ctx context.Context) (struct{}, error) {
+	_, err := utils.Retry(ctx, func(ctx context.Context) (struct{}, error) {
 		ct, err := p.Pool.Exec(ctx, query, messageId, userId)
 		if err != nil {
 			return struct{}{}, err
@@ -88,9 +86,7 @@ func (p *Postgres) DeleteMessageById(ctx context.Context, messageId uuid.UUID, u
 		}
 
 		return struct{}{}, nil
-	}); err != nil {
-		return err
-	}
+	})
 
-	return nil
+	return err
 }

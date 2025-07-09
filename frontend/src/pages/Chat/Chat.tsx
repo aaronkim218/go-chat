@@ -27,14 +27,7 @@ const Chat = () => {
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={55}>
-          {activeRoom ? (
-            <Messages roomId={activeRoom.id} />
-          ) : (
-            <div className=" flex flex-col justify-center items-center h-full text-2xl">
-              You need to select a room first
-              <CornerDownLeft className=" mt-4 scale-200" />
-            </div>
-          )}
+          <Messages activeRoom={activeRoom} />
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={30}>
@@ -46,7 +39,7 @@ const Chat = () => {
             />
           ) : (
             <div className=" flex flex-col justify-center items-center h-full text-2xl">
-              What he said
+              What they said
               <CornerDownLeft className=" mt-4 scale-200" />
             </div>
           )}{" "}

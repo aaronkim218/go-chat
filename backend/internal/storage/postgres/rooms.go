@@ -58,7 +58,10 @@ func (p *Postgres) GetRoomsByUserId(ctx context.Context, userId uuid.UUID) ([]mo
 	LEFT JOIN rooms AS r on ur.room_id = r.id
 	WHERE ur.user_id = $1
 	`
-	rows, err := p.Pool.Query(ctx, query, userId)
+
+	rows, err := utils.Retry(ctx, func(ctx context.Context) (pgx.Rows, error) {
+		return p.Pool.Query(ctx, query, userId)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -80,19 +83,24 @@ func (p *Postgres) GetRoomsByUserId(ctx context.Context, userId uuid.UUID) ([]mo
 
 func (p *Postgres) DeleteRoomById(ctx context.Context, roomId uuid.UUID, userId uuid.UUID) error {
 	const query string = `DELETE FROM rooms WHERE id = $1 AND host = $2`
-	ct, err := p.Pool.Exec(ctx, query, roomId, userId)
-	if err != nil {
-		return err
-	}
 
-	if ct.RowsAffected() == 0 {
-		return xerrors.NotFoundError("room", map[string]string{
-			"id":   roomId.String(),
-			"host": userId.String(),
-		})
-	}
+	_, err := utils.Retry(ctx, func(ctx context.Context) (struct{}, error) {
+		ct, err := p.Pool.Exec(ctx, query, roomId, userId)
+		if err != nil {
+			return struct{}{}, err
+		}
 
-	return nil
+		if ct.RowsAffected() == 0 {
+			return struct{}{}, utils.CreateNonRetryableError(xerrors.NotFoundError("room", map[string]string{
+				"id":   roomId.String(),
+				"host": userId.String(),
+			}))
+		}
+
+		return struct{}{}, nil
+	})
+
+	return err
 }
 
 func (p *Postgres) GetProfilesByRoomId(ctx context.Context, roomId uuid.UUID, userId uuid.UUID) ([]models.Profile, error) {
