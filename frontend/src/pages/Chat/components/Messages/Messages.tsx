@@ -121,7 +121,7 @@ const Messages = ({ activeRoom }: MessagesProps) => {
     return () => {
       el.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [activeRoom]);
 
   const handleSendMessage = (newMessage: string) => {
     if (!newMessage) {
