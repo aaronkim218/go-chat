@@ -10,7 +10,7 @@ import {
 import { getTimeAgo } from "@/utils/time";
 import { UserMessage } from "@/types";
 import CustomAvatar from "@/components/shared/CustomAvatar";
-import { useEffect, useState } from "react";
+import { useTick } from "@/hooks/useTick";
 
 interface MessageProps {
   userMessage: UserMessage;
@@ -19,15 +19,7 @@ interface MessageProps {
 
 const Message = ({ userMessage, setUserMessages }: MessageProps) => {
   const { session } = useRequireAuth();
-  const [, setTick] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTick((prev) => prev + 1);
-    }, 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, []);
+  useTick();
 
   const handleDeleteMessage = async (messageId: string) => {
     try {
@@ -76,7 +68,7 @@ const Message = ({ userMessage, setUserMessages }: MessageProps) => {
             )}
           </div>
           <p
-            className={`${userMessage.author === session.user.id ? "text-secondary-foreground" : "text-primary-foreground"}`}
+            className={`${userMessage.author === session.user.id ? "text-secondary-foreground" : "text-primary-foreground"} w-full break-words`}
           >
             {userMessage.content}
           </p>

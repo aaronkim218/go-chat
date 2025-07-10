@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useState } from "react";
 import { House, LogOut, MessageCircle, User, Users } from "lucide-react";
@@ -25,30 +25,33 @@ import {
 import useLogout from "@/hooks/useLogout";
 import { Button } from "../ui/button";
 
+const ITEMS = [
+  {
+    title: "Home",
+    icon: <House />,
+    path: "/home",
+  },
+  {
+    title: "Chat",
+    icon: <MessageCircle />,
+    path: "/chat",
+  },
+  {
+    title: "Search",
+    icon: <Users />,
+    path: "/search",
+  },
+];
+
 const CustomSidebar = () => {
   const { profile } = useRequireAuth();
   const navigate = useNavigate();
-  const [activeIndex, setActiveIndex] = useState(0);
   const { handleLogout } = useLogout();
   const { open } = useSidebar();
-
-  const items = [
-    {
-      title: "Home",
-      onClick: () => navigate("/home"),
-      icon: <House />,
-    },
-    {
-      title: "Chat",
-      onClick: () => navigate("/chat"),
-      icon: <MessageCircle />,
-    },
-    {
-      title: "Search",
-      onClick: () => navigate("/search"),
-      icon: <Users />,
-    },
-  ];
+  const location = useLocation();
+  const [activeIndex, setActiveIndex] = useState(() =>
+    ITEMS.findIndex((item) => item.path === location.pathname),
+  );
 
   return (
     <Sidebar collapsible="icon">
@@ -57,13 +60,13 @@ const CustomSidebar = () => {
           <SidebarGroupLabel>Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item, index) => (
+              {ITEMS.map((item, index) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     isActive={activeIndex === index}
                     className="flex items-center"
                     onClick={() => {
-                      item.onClick();
+                      navigate(item.path);
                       setActiveIndex(index);
                     }}
                   >
@@ -86,7 +89,7 @@ const CustomSidebar = () => {
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant={"ghost"} className="pl-0">
+                <Button variant={"ghost"} className="p-0">
                   <CustomAvatar
                     firstName={profile.firstName}
                     lastName={profile.lastName}
