@@ -42,8 +42,7 @@ const SearchProfiles = () => {
   };
 
   return (
-    <div className="flex flex-col items-center w-full gap-12">
-      <h1>Search profiles page</h1>
+    <div className="flex flex-col items-center w-full gap-12 p-8">
       <div className=" flex">
         <UserSuggestionSearch
           searchOptions={options}

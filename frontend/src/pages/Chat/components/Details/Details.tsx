@@ -36,7 +36,7 @@ const Details = ({ activeRoom, setRooms, setActiveRoom }: DetailsProps) => {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    fetchProfiles();
+    fetchProfiles(activeRoom.id);
     setSearchOptions({
       username: "",
       excludeRoom: activeRoom.id,
@@ -45,16 +45,16 @@ const Details = ({ activeRoom, setRooms, setActiveRoom }: DetailsProps) => {
     setNewUsers([]);
   }, [activeRoom.id]);
 
-  const fetchProfiles = async () => {
+  const fetchProfiles = async (roomId: string) => {
     try {
-      const profiles = await getProfilesByRoomId(activeRoom.id);
+      const profiles = await getProfilesByRoomId(roomId);
       setProfiles(profiles);
     } catch (error) {
       console.error("error getting profiles for room:", error);
     }
   };
 
-  const handleAddUsersToRoom = async () => {
+  const handleAddUsersToRoom = async (newUsers: Profile[]) => {
     try {
       const userIds = newUsers.map((user) => user.userId);
       const resp = await addUsersToRoom(activeRoom.id, userIds);
@@ -133,7 +133,7 @@ const Details = ({ activeRoom, setRooms, setActiveRoom }: DetailsProps) => {
               <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
-              <Button onClick={() => handleAddUsersToRoom()}>
+              <Button onClick={() => handleAddUsersToRoom(newUsers)}>
                 Save changes
               </Button>
             </DialogFooter>

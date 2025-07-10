@@ -1,6 +1,6 @@
 import { getForeignProfileByUserId } from "@/api";
 import CustomAvatar from "@/components/shared/CustomAvatar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -46,9 +46,6 @@ const ForeignProfile = () => {
           </CardContent>
         </Card>
         <Card className=" min-w-1/3">
-          <CardHeader>
-            <CardTitle>Your Profile</CardTitle>
-          </CardHeader>
           <CardContent className=" flex flex-col gap-4">
             <Label>Username</Label>
             {profile.username}

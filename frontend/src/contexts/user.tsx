@@ -7,9 +7,10 @@ import {
   useState,
 } from "react";
 import supabase from "@/utils/supabase";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getProfileByUserId } from "@/api";
 import { Profile } from "@/types";
+import { isAuthPath } from "@/utils/path";
 
 interface UserContextType {
   session: Session | null;
@@ -25,6 +26,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [firstLoad, setFirstLoad] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const {
@@ -63,7 +65,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const profile = await fetchProfile();
     setProfile(profile);
     if (profile) {
-      navigate("/home");
+      if (!isAuthPath(location.pathname)) {
+        navigate("/home");
+      }
     } else {
       navigate("/setup");
     }
