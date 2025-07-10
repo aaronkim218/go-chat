@@ -1,4 +1,3 @@
-import { AuthError } from "@supabase/supabase-js";
 import { useState } from "react";
 import supabase from "@/utils/supabase";
 import GoogleSignInButton from "@/components/features/auth/GoogleSignInButton";
@@ -13,11 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useUserContext } from "@/contexts/User";
+import { toast } from "sonner";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<AuthError | null>(null);
   const { firstLoad } = useUserContext();
 
   const handleSignUp = async () => {
@@ -26,7 +25,9 @@ const Auth = () => {
       password: password,
     });
 
-    setError(error);
+    if (error?.message) {
+      toast.error(error.message);
+    }
   };
 
   const handleSignIn = async () => {
@@ -35,7 +36,9 @@ const Auth = () => {
       password: password,
     });
 
-    setError(error);
+    if (error?.message) {
+      toast.error(error.message);
+    }
   };
 
   return firstLoad ? (
@@ -79,7 +82,6 @@ const Auth = () => {
             Sign up
           </Button>
           <GoogleSignInButton />
-          {error && <p>Error: {error.message}</p>}
         </CardFooter>
       </Card>
     </div>

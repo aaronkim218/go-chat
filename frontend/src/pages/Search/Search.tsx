@@ -14,6 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import CustomAvatar from "@/components/shared/CustomAvatar";
 import { Search } from "lucide-react";
+import { toast } from "sonner";
+import { UNKNOWN_ERROR } from "@/constants";
 
 const SUGGESTIONS_LIMIT = 5;
 
@@ -37,7 +39,11 @@ const SearchProfiles = () => {
       setProfiles(resp);
       setSuggestions([]);
     } catch (error) {
-      console.error("Error searching profiles:", error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error(UNKNOWN_ERROR);
+      }
     }
   };
 

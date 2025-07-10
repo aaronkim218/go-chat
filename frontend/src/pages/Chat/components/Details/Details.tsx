@@ -17,6 +17,8 @@ import { useEffect, useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Crown, UserPlus, X } from "lucide-react";
 import CustomAvatar from "@/components/shared/CustomAvatar";
+import { toast } from "sonner";
+import { UNKNOWN_ERROR } from "@/constants";
 
 interface DetailsProps {
   activeRoom: Room;
@@ -50,7 +52,11 @@ const Details = ({ activeRoom, setRooms, setActiveRoom }: DetailsProps) => {
       const profiles = await getProfilesByRoomId(roomId);
       setProfiles(profiles);
     } catch (error) {
-      console.error("error getting profiles for room:", error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error(UNKNOWN_ERROR);
+      }
     }
   };
 
@@ -71,7 +77,11 @@ const Details = ({ activeRoom, setRooms, setActiveRoom }: DetailsProps) => {
       );
       console.log("TODO: do something with addUsersToRoom response: ", resp);
     } catch (error) {
-      console.error("error adding users to room:", error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error(UNKNOWN_ERROR);
+      }
     }
   };
 
@@ -81,7 +91,11 @@ const Details = ({ activeRoom, setRooms, setActiveRoom }: DetailsProps) => {
       setRooms((prev) => prev.filter((room) => room.id !== roomId));
       setActiveRoom(null);
     } catch (error) {
-      console.error("error deleting room:", error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error(UNKNOWN_ERROR);
+      }
     }
   };
 
