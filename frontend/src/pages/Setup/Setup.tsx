@@ -14,6 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Profile } from "@/types";
+import { toast } from "sonner";
+import { UNKNOWN_ERROR } from "@/constants";
 
 const Setup = () => {
   const { session, setProfile } = useUserContext();
@@ -22,7 +24,6 @@ const Setup = () => {
   const [lastName, setLastName] = useState("");
   const navigate = useNavigate();
   const [idempotencyKey, setIdempotencyKey] = useState(uuidv4());
-  const [error, setError] = useState<Error | null>(null);
 
   if (session) {
     const handleCreateProfile = async () => {
@@ -42,8 +43,11 @@ const Setup = () => {
         setProfile(profile);
         navigate("/home");
       } catch (error) {
-        console.error("Error creating profile:", error);
-        setError(error as Error);
+        if (error instanceof Error) {
+          toast.error(error.message);
+        } else {
+          toast.error(UNKNOWN_ERROR);
+        }
       } finally {
         setIdempotencyKey(uuidv4());
       }
@@ -82,7 +86,6 @@ const Setup = () => {
             <Button onClick={() => handleCreateProfile()}>
               Create Profile
             </Button>
-            {error && <p>Error: {error.message}</p>}
           </CardFooter>
         </Card>
       </div>

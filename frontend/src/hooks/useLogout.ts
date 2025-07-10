@@ -1,17 +1,16 @@
-import { AuthError } from "@supabase/supabase-js";
-import { useState } from "react";
 import supabase from "@/utils/supabase";
+import { toast } from "sonner";
 
 const useLogout = () => {
-  const [authErr, setAuthErr] = useState<AuthError | null>(null);
-
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
 
-    setAuthErr(error);
+    if (error?.message) {
+      toast.error(error.message);
+    }
   };
 
-  return { handleLogout, authErr };
+  return { handleLogout };
 };
 
 export default useLogout;

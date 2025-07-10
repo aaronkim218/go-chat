@@ -10,11 +10,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { UNKNOWN_ERROR } from "@/constants";
 import { useUserContext } from "@/contexts/User";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { isObjectEmpty } from "@/utils/object";
 import { getProfileDiff } from "@/utils/profile";
 import { useState } from "react";
+import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 
 const Profile = () => {
@@ -26,11 +28,18 @@ const Profile = () => {
   const handlePatchProfile = async () => {
     try {
       const partialProfile = getProfileDiff(profile, updatedProfile);
-      if (isObjectEmpty(partialProfile)) return;
+      if (isObjectEmpty(partialProfile)) {
+        toast.info("No changes to save");
+        return;
+      }
       await patchProfileByUserId(partialProfile, idempotencyKey);
       setProfile(updatedProfile);
     } catch (error) {
-      console.error("Failed to patch profile:", error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error(UNKNOWN_ERROR);
+      }
     } finally {
       setIdempotencyKey(uuidv4());
     }

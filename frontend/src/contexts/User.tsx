@@ -11,6 +11,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { getProfileByUserId } from "@/api";
 import { Profile } from "@/types";
 import { isAuthPath } from "@/utils/path";
+import { toast } from "sonner";
+import { UNKNOWN_ERROR } from "@/constants";
 
 interface UserContextType {
   session: Session | null;
@@ -56,7 +58,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     try {
       return await getProfileByUserId();
     } catch (error) {
-      console.error("error getting profile by user id:", error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error(UNKNOWN_ERROR);
+      }
       return null;
     }
   };

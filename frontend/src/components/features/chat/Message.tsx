@@ -11,6 +11,8 @@ import { getTimeAgo } from "@/utils/time";
 import { UserMessage } from "@/types";
 import CustomAvatar from "@/components/shared/CustomAvatar";
 import { useTick } from "@/hooks/useTick";
+import { toast } from "sonner";
+import { UNKNOWN_ERROR } from "@/constants";
 
 interface MessageProps {
   userMessage: UserMessage;
@@ -28,7 +30,11 @@ const Message = ({ userMessage, setUserMessages }: MessageProps) => {
         prev.filter((message) => message.id !== messageId),
       );
     } catch (error) {
-      console.error("error deleting message:", error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error(UNKNOWN_ERROR);
+      }
     }
   };
 

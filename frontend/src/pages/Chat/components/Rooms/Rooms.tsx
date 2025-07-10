@@ -23,6 +23,8 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import UserSuggestionSearch from "@/components/features/profiles/UserSuggestionSearch";
 import { Label } from "@/components/ui/label";
 import { X } from "lucide-react";
+import { toast } from "sonner";
+import { UNKNOWN_ERROR } from "@/constants";
 
 interface RoomsProps {
   activeRoom: Room | null;
@@ -44,17 +46,21 @@ const Rooms = ({ activeRoom, setActiveRoom, rooms, setRooms }: RoomsProps) => {
   const [newMembers, setNewMembers] = useState<Profile[]>([]);
 
   useEffect(() => {
-    const fetchRooms = async () => {
-      try {
-        const response = await getRoomsByUserId();
-        setRooms(response);
-      } catch (error) {
-        console.error("error getting rooms by user id:", error);
-      }
-    };
-
     fetchRooms();
   }, []);
+
+  const fetchRooms = async () => {
+    try {
+      const response = await getRoomsByUserId();
+      setRooms(response);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error(UNKNOWN_ERROR);
+      }
+    }
+  };
 
   const handleCreateRoom = async () => {
     try {
@@ -68,7 +74,11 @@ const Rooms = ({ activeRoom, setActiveRoom, rooms, setRooms }: RoomsProps) => {
       setActiveRoom(resp.room);
       setCreateRoomRequest({ name: "", members: [] });
     } catch (error) {
-      console.error("error creating room:", error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error(UNKNOWN_ERROR);
+      }
     }
   };
 

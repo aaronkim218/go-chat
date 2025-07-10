@@ -9,6 +9,8 @@ import { CornerDownLeft, Send } from "lucide-react";
 import { UserMessageSchema } from "@/schemas";
 import { Room, UserMessage } from "@/types";
 import camelcaseKeys from "camelcase-keys";
+import { toast } from "sonner";
+import { UNKNOWN_ERROR } from "@/constants";
 
 interface MessagesProps {
   activeRoom: Room | null;
@@ -46,7 +48,11 @@ const Messages = ({ activeRoom }: MessagesProps) => {
       const msgs = await getUserMessagesByRoomId(roomId);
       setUserMessages(msgs);
     } catch (error) {
-      console.error("error getting messages for room:", error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error(UNKNOWN_ERROR);
+      }
     }
   };
 
@@ -63,7 +69,6 @@ const Messages = ({ activeRoom }: MessagesProps) => {
     );
 
     ws.current.onopen = () => {
-      console.log("connected to websocket");
       const jwt = getJwt();
       if (!jwt) {
         navigate("/");
@@ -81,21 +86,11 @@ const Messages = ({ activeRoom }: MessagesProps) => {
     };
 
     ws.current.onclose = () => {
-      console.log("websocket closed");
-      if (!activeRoomRef.current) {
-        console.error("No active room to reconnect to");
-      } else if (retries.current >= MAX_RETRIES) {
-        console.error("Max retries reached, unable to reconnect to websocket");
-      } else {
+      if (activeRoomRef.current && retries.current < MAX_RETRIES) {
         retries.current += 1;
         setTimeout(() => {
           if (activeRoomRef.current) {
-            console.log(
-              `Reconnecting to websocket... Attempt ${retries.current}`,
-            );
             initWebsocket(activeRoomRef.current.id);
-          } else {
-            console.error("No active room to reconnect to");
           }
         }, 1000 * retries.current);
       }
@@ -125,7 +120,7 @@ const Messages = ({ activeRoom }: MessagesProps) => {
 
   const handleSendMessage = (newMessage: string) => {
     if (!newMessage) {
-      console.error("cannot send an empty message");
+      toast.warning("cannot send an empty message");
       return;
     }
 

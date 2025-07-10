@@ -1,6 +1,7 @@
 import { CredentialResponse } from "google-one-tap";
 import supabase from "@/utils/supabase";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
 declare global {
   interface Window {
@@ -18,8 +19,8 @@ const GoogleSignInButton = () => {
         token: response.credential,
       });
 
-      if (error) {
-        console.error("Error signing in with Google:", error);
+      if (error?.message) {
+        toast.error(error.message);
       }
     };
 

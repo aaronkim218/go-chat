@@ -3,6 +3,8 @@ import { searchProfiles } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { UNKNOWN_ERROR } from "@/constants";
 
 interface UserSuggestionSearchProps {
   searchOptions: SearchProfilesOptions;
@@ -37,7 +39,11 @@ const UserSuggestionSearch = ({
       setSuggestions(resp);
       setOpen(resp.length > 0);
     } catch (error) {
-      console.error("Error suggesting profiles:", error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error(UNKNOWN_ERROR);
+      }
     }
   };
 

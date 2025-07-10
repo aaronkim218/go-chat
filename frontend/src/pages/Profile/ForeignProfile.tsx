@@ -2,8 +2,10 @@ import { getForeignProfileByUserId } from "@/api";
 import CustomAvatar from "@/components/shared/CustomAvatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { UNKNOWN_ERROR } from "@/constants";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
 const ForeignProfile = () => {
   const { profileId } = useParams();
@@ -13,25 +15,27 @@ const ForeignProfile = () => {
 
   useEffect(() => {
     if (!profileId) {
-      console.error("Profile ID is required. navigating back to home.");
       navigate("/home");
       return;
     }
 
-    const fetchProfile = async () => {
-      console.log("Fetching profile for user ID:", profileId);
-      try {
-        const profile = await getForeignProfileByUserId(profileId);
-        setProfile(profile);
-      } catch (error) {
-        console.error("error getting profile by user id:", error);
-      }
-    };
-
     if (!profile) {
-      fetchProfile();
+      fetchProfile(profileId);
     }
   });
+
+  const fetchProfile = async (profileId: string) => {
+    try {
+      const profile = await getForeignProfileByUserId(profileId);
+      setProfile(profile);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error(UNKNOWN_ERROR);
+      }
+    }
+  };
 
   return profile ? (
     <div className=" w-full flex flex-col justify-center items-center gap-4 p-4">
