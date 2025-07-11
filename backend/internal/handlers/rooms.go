@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"sync"
+	"time"
 
 	"go-chat/internal/hub"
 	"go-chat/internal/models"
@@ -48,9 +49,11 @@ func (hs *HandlerService) CreateRoom(c *fiber.Ctx) error {
 	}
 
 	room := models.Room{
-		Id:   roomId,
-		Host: userId,
-		Name: req.Name,
+		Id:        roomId,
+		Host:      userId,
+		Name:      req.Name,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	membersResults, err := hs.storage.CreateRoom(c.Context(), room, req.Members)

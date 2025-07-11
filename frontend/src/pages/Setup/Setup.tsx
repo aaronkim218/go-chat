@@ -13,9 +13,12 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Profile } from "@/types";
 import { toast } from "sonner";
-import { UNKNOWN_ERROR } from "@/constants";
+import {
+  MAX_USERNAME_LENGTH,
+  MIN_USERNAME_LENGTH,
+  UNKNOWN_ERROR,
+} from "@/constants";
 
 const Setup = () => {
   const { session, setProfile } = useUserContext();
@@ -27,19 +30,23 @@ const Setup = () => {
 
   if (session) {
     const handleCreateProfile = async () => {
+      if (
+        username.length < MIN_USERNAME_LENGTH ||
+        username.length > MAX_USERNAME_LENGTH
+      ) {
+        toast.error(
+          `Username must be between ${MIN_USERNAME_LENGTH} and ${MAX_USERNAME_LENGTH} characters.`,
+        );
+        return;
+      }
+
       try {
         const req: CreateProfileRequest = {
           username: username,
           firstName: firstName,
           lastName: lastName,
         };
-        await createProfile(req, idempotencyKey);
-        const profile: Profile = {
-          userId: session?.user.id,
-          username: username,
-          firstName: firstName,
-          lastName: lastName,
-        };
+        const profile = await createProfile(req, idempotencyKey);
         setProfile(profile);
         navigate("/home");
       } catch (error) {

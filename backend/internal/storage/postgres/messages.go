@@ -13,15 +13,16 @@ import (
 )
 
 func (p *Postgres) CreateMessage(ctx context.Context, message models.Message) error {
-	const query string = `INSERT INTO messages (id, room_id, created_at, author, content) VALUES ($1, $2, $3, $4, $5)`
+	const query string = `INSERT INTO messages (id, room_id, author, content, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)`
 
 	_, err := utils.Retry(ctx, func(ctx context.Context) (struct{}, error) {
 		_, err := p.Pool.Exec(ctx, query,
 			message.Id,
 			message.RoomId,
-			message.CreatedAt,
 			message.Author,
 			message.Content,
+			message.CreatedAt,
+			message.UpdatedAt,
 		)
 
 		return struct{}{}, err
@@ -33,7 +34,7 @@ func (p *Postgres) CreateMessage(ctx context.Context, message models.Message) er
 func (p *Postgres) GetUserMessagesByRoomId(ctx context.Context, roomId uuid.UUID, userId uuid.UUID) ([]types.UserMessage, error) {
 	// TODO: can i use some kind of table constraint to enforce the existence of user_id room_id pair in users_rooms?
 	const query string = `
-	SELECT m.id, m.room_id, m.created_at, m.author, m.content, p.username, p.first_name, p.last_name
+	SELECT m.id, m.room_id, m.author, m.content, m.created_at, m.updated_at, p.username, p.first_name, p.last_name
 	FROM messages AS m
 	INNER JOIN profiles AS p ON m.author = p.user_id
 	WHERE room_id = $1

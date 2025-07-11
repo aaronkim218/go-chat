@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"go-chat/internal/models"
 	"go-chat/internal/types"
@@ -62,6 +63,8 @@ func (hs *HandlerService) PatchProfileByUserId(c *fiber.Ctx) error {
 		return xerrors.UnprocessableEntityError(errMap)
 	}
 
+	partialProfile.UpdatedAt = time.Now()
+
 	if err := hs.storage.PatchProfileByUserId(
 		c.Context(),
 		partialProfile,
@@ -70,7 +73,7 @@ func (hs *HandlerService) PatchProfileByUserId(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.SendStatus(http.StatusNoContent)
+	return c.Status(http.StatusOK).JSON(partialProfile)
 }
 
 func (hs *HandlerService) CreateProfile(c *fiber.Ctx) error {
@@ -84,11 +87,13 @@ func (hs *HandlerService) CreateProfile(c *fiber.Ctx) error {
 		return xerrors.InvalidJSON()
 	}
 
-	profile.UserId = userId
-
 	if errMap := profile.Validate(); len(errMap) > 0 {
 		return xerrors.UnprocessableEntityError(errMap)
 	}
+
+	profile.UserId = userId
+	profile.CreatedAt = time.Now()
+	profile.UpdatedAt = time.Now()
 
 	if err := hs.storage.CreateProfile(
 		c.Context(),
@@ -97,7 +102,7 @@ func (hs *HandlerService) CreateProfile(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.SendStatus(http.StatusCreated)
+	return c.Status(http.StatusCreated).JSON(profile)
 }
 
 func (hs *HandlerService) SearchProfiles(c *fiber.Ctx) error {

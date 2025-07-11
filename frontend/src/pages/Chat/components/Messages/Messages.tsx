@@ -14,11 +14,12 @@ import { UNKNOWN_ERROR } from "@/constants";
 
 interface MessagesProps {
   activeRoom: Room | null;
+  setRooms: React.Dispatch<React.SetStateAction<Room[]>>;
 }
 
 const MAX_RETRIES = 3;
 
-const Messages = ({ activeRoom }: MessagesProps) => {
+const Messages = ({ activeRoom, setRooms }: MessagesProps) => {
   const navigate = useNavigate();
   const [userMessages, setUserMessages] = useState<UserMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -83,6 +84,26 @@ const Messages = ({ activeRoom }: MessagesProps) => {
       const data = camelcaseKeys(JSON.parse(event.data), { deep: true });
       const userMessage = UserMessageSchema.parse(data);
       setUserMessages((prev) => [...prev, userMessage]);
+      setRooms((prev) => {
+        const currentRoomId = activeRoomRef.current?.id;
+        if (!currentRoomId) return prev;
+
+        if (prev.length > 0 && prev[0].id === currentRoomId) {
+          return prev;
+        }
+
+        const currentRoomIndex = prev.findIndex(
+          (room) => room.id === currentRoomId,
+        );
+        if (currentRoomIndex === -1) return prev;
+
+        const currentRoom = prev[currentRoomIndex];
+        const otherRooms = prev.filter(
+          (_, index) => index !== currentRoomIndex,
+        );
+
+        return [currentRoom, ...otherRooms];
+      });
     };
 
     ws.current.onclose = () => {

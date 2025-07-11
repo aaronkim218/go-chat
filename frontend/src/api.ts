@@ -3,6 +3,7 @@ import {
   BulkResultString,
   CreateRoomRequest,
   CreateRoomResponse,
+  PatchProfileResponse,
   Profile,
   Room,
   SearchProfilesOptions,
@@ -13,6 +14,7 @@ import applyCaseMiddleware from "axios-case-converter";
 import {
   BulkResultStringSchema,
   CreateRoomResponseSchema,
+  PatchProfileResponseSchema,
   ProfileSchema,
   RoomSchema,
   UserMessageSchema,
@@ -134,16 +136,18 @@ export const getForeignProfileByUserId = async (
 export const patchProfileByUserId = async (
   partialProfile: Partial<Profile>,
   idempotencyKey: string,
-): Promise<void> => {
+): Promise<PatchProfileResponse> => {
   const res = await client.patch(`${BASE_URL}/profiles`, partialProfile, {
     headers: {
       [IDEMPOTENCY_HEADER]: idempotencyKey,
     },
   });
 
-  if (res.status !== 204) {
+  if (res.status !== 200) {
     throw new Error(`failed to update profile for user`);
   }
+
+  return PatchProfileResponseSchema.parse(res.data);
 };
 
 export interface CreateProfileRequest {
@@ -155,7 +159,7 @@ export interface CreateProfileRequest {
 export const createProfile = async (
   req: CreateProfileRequest,
   idempotencyKey: string,
-): Promise<void> => {
+): Promise<Profile> => {
   const res = await client.post(`${BASE_URL}/profiles`, req, {
     headers: {
       [IDEMPOTENCY_HEADER]: idempotencyKey,
@@ -165,6 +169,8 @@ export const createProfile = async (
   if (res.status !== 201) {
     throw new Error(`failed to create profile for user`);
   }
+
+  return ProfileSchema.parse(res.data);
 };
 
 export const searchProfiles = async (
