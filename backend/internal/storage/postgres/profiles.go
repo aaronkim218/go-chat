@@ -17,7 +17,7 @@ import (
 )
 
 func (p *Postgres) GetProfileByUserId(ctx context.Context, userId uuid.UUID) (models.Profile, error) {
-	const query string = `SELECT user_id, username, first_name, last_name FROM profiles WHERE user_id = $1`
+	const query string = `SELECT user_id, username, first_name, last_name, created_at, updated_at FROM profiles WHERE user_id = $1`
 
 	rows, err := utils.Retry(ctx, func(ctx context.Context) (pgx.Rows, error) {
 		return p.Pool.Query(ctx, query, userId)
@@ -57,6 +57,7 @@ func (p *Postgres) PatchProfileByUserId(ctx context.Context, partialProfile type
 		builder = builder.Set("username", *partialProfile.Username)
 	}
 
+	builder = builder.Set("updated_at", partialProfile.UpdatedAt)
 	builder = builder.Where("user_id = ?", userId.String())
 
 	query, args, err := builder.ToSql()
@@ -87,10 +88,10 @@ func (p *Postgres) PatchProfileByUserId(ctx context.Context, partialProfile type
 }
 
 func (p *Postgres) CreateProfile(ctx context.Context, profile models.Profile) error {
-	const query string = `INSERT INTO profiles (user_id, username, first_name, last_name) VALUES ($1, $2, $3, $4)`
+	const query string = `INSERT INTO profiles (user_id, username, first_name, last_name, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)`
 
 	_, err := utils.Retry(ctx, func(ctx context.Context) (struct{}, error) {
-		_, err := p.Pool.Exec(ctx, query, profile.UserId, profile.Username, profile.FirstName, profile.LastName)
+		_, err := p.Pool.Exec(ctx, query, profile.UserId, profile.Username, profile.FirstName, profile.LastName, profile.CreatedAt, profile.UpdatedAt)
 		if err != nil {
 			if xerrors.IsUniqueViolation(err, constants.ProfilesPKeyUniqueConstraint) {
 				return struct{}{}, utils.CreateNonRetryableError(xerrors.ConflictError("profile", "id", profile.UserId.String()))
@@ -109,7 +110,7 @@ func (p *Postgres) SearchProfiles(ctx context.Context, options types.SearchProfi
 	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 
 	builder := psql.
-		Select("user_id, username, first_name, last_name").
+		Select("user_id, username, first_name, last_name, created_at, updated_at").
 		From("profiles").
 		Where("username ILIKE ?", "%"+options.Username+"%").
 		Where("user_id != ?", userId.String())

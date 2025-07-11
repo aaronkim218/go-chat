@@ -27,7 +27,7 @@ const Chat = () => {
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={55} minSize={45}>
-          <Messages activeRoom={activeRoom} />
+          <Messages activeRoom={activeRoom} setRooms={setRooms} />
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={30} minSize={25}>

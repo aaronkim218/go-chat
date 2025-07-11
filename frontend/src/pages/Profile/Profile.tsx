@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -32,8 +33,11 @@ const Profile = () => {
         toast.info("No changes to save");
         return;
       }
-      await patchProfileByUserId(partialProfile, idempotencyKey);
-      setProfile(updatedProfile);
+      const updatedFields = await patchProfileByUserId(
+        partialProfile,
+        idempotencyKey,
+      );
+      setProfile({ ...profile, ...updatedFields });
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);
@@ -60,6 +64,9 @@ const Profile = () => {
         <Card className=" min-w-1/3">
           <CardHeader>
             <CardTitle>Your Profile</CardTitle>
+            <CardDescription>
+              Last updated: {new Date(profile.updatedAt).toLocaleString()}
+            </CardDescription>
           </CardHeader>
           <CardContent className=" flex flex-col gap-4">
             <Label htmlFor="username">Username</Label>

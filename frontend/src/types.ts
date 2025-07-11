@@ -3,6 +3,8 @@ import {
   BulkResultStringSchema,
   CreateRoomResponseSchema,
   MessageSchema,
+  PatchProfileRequestSchema,
+  PatchProfileResponseSchema,
   ProfileSchema,
   RoomSchema,
   UserMessageSchema,
@@ -35,6 +37,10 @@ export type Message = z.infer<typeof MessageSchema>;
 export type UserMessage = z.infer<typeof UserMessageSchema>;
 
 export type Profile = z.infer<typeof ProfileSchema>;
+
+export type PatchProfileRequest = z.infer<typeof PatchProfileRequestSchema>;
+
+export type PatchProfileResponse = z.infer<typeof PatchProfileResponseSchema>;
 
 export type Room = z.infer<typeof RoomSchema>;
 

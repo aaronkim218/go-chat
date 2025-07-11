@@ -3,9 +3,10 @@ import * as z from "zod/v4";
 export const MessageSchema = z.object({
   id: z.string(),
   roomId: z.string(),
-  createdAt: z.coerce.date(),
   author: z.string(),
   content: z.string(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 });
 
 export const UserMessageSchema = MessageSchema.merge(
@@ -21,12 +22,29 @@ export const ProfileSchema = z.object({
   username: z.string(),
   firstName: z.string(),
   lastName: z.string(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+});
+
+export const PatchProfileRequestSchema = z.object({
+  username: z.string().optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+});
+
+export const PatchProfileResponseSchema = z.object({
+  username: z.string().optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  updatedAt: z.coerce.date(),
 });
 
 export const RoomSchema = z.object({
   id: z.string(),
   host: z.string(),
   name: z.string(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 });
 
 const FailureSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>

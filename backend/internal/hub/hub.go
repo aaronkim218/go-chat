@@ -120,9 +120,10 @@ func (h *Hub) handleActiveRoom(roomId uuid.UUID, ar *activeRoom) {
 			message := models.Message{
 				Id:        messageId,
 				RoomId:    roomId,
-				CreatedAt: time.Now(),
 				Author:    broadcastMessage.client.Profile.UserId,
 				Content:   string(broadcastMessage.message),
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
 			}
 
 			if err := h.storage.CreateMessage(context.TODO(), message); err != nil {

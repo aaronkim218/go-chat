@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"go-chat/internal/constants"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -12,6 +13,8 @@ type Profile struct {
 	Username  string    `json:"username" db:"username"`
 	FirstName string    `json:"first_name" db:"first_name"`
 	LastName  string    `json:"last_name" db:"last_name"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
 func (p *Profile) Validate() map[string]string {
