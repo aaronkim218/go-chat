@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"go-chat/internal/hub"
+	"go-chat/internal/plugins"
 	"go-chat/internal/server"
 	"go-chat/internal/settings"
 	"go-chat/internal/storage/postgres"
@@ -48,6 +49,7 @@ func main() {
 		Logger: slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			Level: utils.MustParseSlogLevel(settings.Hub.LogLevel),
 		})),
+		PluginRegistry: createPluginRegistry(),
 	})
 
 	app := server.New(&server.Config{
@@ -83,4 +85,12 @@ func main() {
 	}
 
 	slog.Info("server shutdown")
+}
+
+func createPluginRegistry() *plugins.PluginRegistry {
+	registry := plugins.NewPluginRegistry(&plugins.PluginRegistryConfig{})
+
+	registry.Register(plugins.NewUserMessagePlugin(&plugins.UserMessagePluginConfig{}))
+
+	return registry
 }

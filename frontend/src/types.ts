@@ -47,3 +47,16 @@ export type Room = z.infer<typeof RoomSchema>;
 export type BulkResultString = z.infer<typeof BulkResultStringSchema>;
 
 export type CreateRoomResponse = z.infer<typeof CreateRoomResponseSchema>;
+
+export interface OutgoingUserMessage {
+  content: string;
+}
+
+export enum WSMessageType {
+  USER_MESSAGE = "USER_MESSAGE",
+}
+
+export interface WSMessage<T> {
+  type: WSMessageType;
+  payload: T;
+}

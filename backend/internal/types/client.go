@@ -1,9 +1,9 @@
 package types
 
 import (
-	"context"
-
 	"go-chat/internal/models"
+
+	go_json "github.com/goccy/go-json"
 
 	"github.com/gofiber/contrib/websocket"
 )
@@ -11,6 +11,21 @@ import (
 type Client struct {
 	Profile models.Profile
 	Conn    *websocket.Conn
-	Ctx     context.Context
-	Cancel  context.CancelFunc
+	Done    chan struct{}
+}
+
+type ClientMessage struct {
+	Client    *Client
+	WsMessage WsMessage
+}
+
+type WsMessageType string
+
+const (
+	UserMessageType WsMessageType = "USER_MESSAGE"
+)
+
+type WsMessage struct {
+	Type    WsMessageType      `json:"type"`
+	Payload go_json.RawMessage `json:"payload"`
 }

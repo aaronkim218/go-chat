@@ -7,7 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import Message from "@/components/features/chat/Message";
 import { CornerDownLeft, Send } from "lucide-react";
 import { UserMessageSchema } from "@/schemas";
-import { Room, UserMessage } from "@/types";
+import {
+  OutgoingUserMessage,
+  Room,
+  UserMessage,
+  WSMessage,
+  WSMessageType,
+} from "@/types";
 import camelcaseKeys from "camelcase-keys";
 import { toast } from "sonner";
 import { UNKNOWN_ERROR } from "@/constants";
@@ -81,29 +87,18 @@ const Messages = ({ activeRoom, setRooms }: MessagesProps) => {
     };
 
     ws.current.onmessage = (event) => {
-      const data = camelcaseKeys(JSON.parse(event.data), { deep: true });
-      const userMessage = UserMessageSchema.parse(data);
-      setUserMessages((prev) => [...prev, userMessage]);
-      setRooms((prev) => {
-        const currentRoomId = activeRoomRef.current?.id;
-        if (!currentRoomId) return prev;
-
-        if (prev.length > 0 && prev[0].id === currentRoomId) {
-          return prev;
-        }
-
-        const currentRoomIndex = prev.findIndex(
-          (room) => room.id === currentRoomId,
-        );
-        if (currentRoomIndex === -1) return prev;
-
-        const currentRoom = prev[currentRoomIndex];
-        const otherRooms = prev.filter(
-          (_, index) => index !== currentRoomIndex,
-        );
-
-        return [currentRoom, ...otherRooms];
-      });
+      const wsMessage = camelcaseKeys(JSON.parse(event.data), {
+        deep: true,
+      }) as WSMessage<any>;
+      switch (wsMessage.type) {
+        case WSMessageType.USER_MESSAGE:
+          const userMessage = UserMessageSchema.parse(wsMessage.payload);
+          handleIncomingUserMessage(userMessage);
+          break;
+        default:
+          console.warn("Unknown WebSocket message type:", wsMessage.type);
+          break;
+      }
     };
 
     ws.current.onclose = () => {
@@ -116,6 +111,28 @@ const Messages = ({ activeRoom, setRooms }: MessagesProps) => {
         }, 1000 * retries.current);
       }
     };
+  };
+
+  const handleIncomingUserMessage = (userMessage: UserMessage) => {
+    setUserMessages((prev) => [...prev, userMessage]);
+    setRooms((prev) => {
+      const currentRoomId = activeRoomRef.current?.id;
+      if (!currentRoomId) return prev;
+
+      if (prev.length > 0 && prev[0].id === currentRoomId) {
+        return prev;
+      }
+
+      const currentRoomIndex = prev.findIndex(
+        (room) => room.id === currentRoomId,
+      );
+      if (currentRoomIndex === -1) return prev;
+
+      const currentRoom = prev[currentRoomIndex];
+      const otherRooms = prev.filter((_, index) => index !== currentRoomIndex);
+
+      return [currentRoom, ...otherRooms];
+    });
   };
 
   useEffect(() => {
@@ -146,7 +163,16 @@ const Messages = ({ activeRoom, setRooms }: MessagesProps) => {
     }
 
     if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(newMessage);
+      const outgoingUserMessage: OutgoingUserMessage = {
+        content: newMessage,
+      };
+
+      const wsMessage: WSMessage<OutgoingUserMessage> = {
+        type: WSMessageType.USER_MESSAGE,
+        payload: outgoingUserMessage,
+      };
+
+      ws.current.send(JSON.stringify(wsMessage));
       setNewMessage("");
     }
   };
