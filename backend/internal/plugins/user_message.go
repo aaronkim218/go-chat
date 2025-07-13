@@ -23,13 +23,13 @@ func (p *UserMessagePlugin) MessageType() types.WsMessageType {
 	return types.UserMessageType
 }
 
-type broadcastUserMessage struct {
+type incomingUserMessage struct {
 	Content string `json:"content"`
 }
 
 func (p *UserMessagePlugin) HandleClientMessage(pluginService *PluginService, clientMessage types.ClientMessage) error {
-	var bum broadcastUserMessage
-	if err := go_json.Unmarshal(clientMessage.WsMessage.Payload, &bum); err != nil {
+	var ium incomingUserMessage
+	if err := go_json.Unmarshal(clientMessage.WsMessage.Payload, &ium); err != nil {
 		return err
 	}
 
@@ -42,7 +42,7 @@ func (p *UserMessagePlugin) HandleClientMessage(pluginService *PluginService, cl
 		Id:        messageId,
 		RoomId:    pluginService.RoomId,
 		Author:    clientMessage.Client.Profile.UserId,
-		Content:   bum.Content,
+		Content:   ium.Content,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}

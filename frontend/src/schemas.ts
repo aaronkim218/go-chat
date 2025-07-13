@@ -1,4 +1,5 @@
 import * as z from "zod/v4";
+import { WSMessageType } from "./types";
 
 export const MessageSchema = z.object({
   id: z.string(),
@@ -65,3 +66,10 @@ export const CreateRoomResponseSchema = z.object({
   room: RoomSchema,
   membersResults: BulkResultSchema(z.string()),
 });
+
+export const IncomingWSMessageSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal(WSMessageType.USER_MESSAGE),
+    payload: UserMessageSchema,
+  }),
+]);

@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import Message from "@/components/features/chat/Message";
 import { CornerDownLeft, Send } from "lucide-react";
-import { UserMessageSchema } from "@/schemas";
+import { IncomingWSMessageSchema, UserMessageSchema } from "@/schemas";
 import {
   OutgoingUserMessage,
+  OutgoingWSMessage,
   Room,
   UserMessage,
-  WSMessage,
   WSMessageType,
 } from "@/types";
 import camelcaseKeys from "camelcase-keys";
@@ -87,17 +87,26 @@ const Messages = ({ activeRoom, setRooms }: MessagesProps) => {
     };
 
     ws.current.onmessage = (event) => {
-      const wsMessage = camelcaseKeys(JSON.parse(event.data), {
+      const data = camelcaseKeys(JSON.parse(event.data), {
         deep: true,
-      }) as WSMessage<any>;
-      switch (wsMessage.type) {
-        case WSMessageType.USER_MESSAGE:
-          const userMessage = UserMessageSchema.parse(wsMessage.payload);
-          handleIncomingUserMessage(userMessage);
-          break;
-        default:
-          console.warn("Unknown WebSocket message type:", wsMessage.type);
-          break;
+      });
+      try {
+        const incomingWsMessage = IncomingWSMessageSchema.parse(data);
+        switch (incomingWsMessage.type) {
+          case WSMessageType.USER_MESSAGE: {
+            const userMessage = UserMessageSchema.parse(
+              incomingWsMessage.payload,
+            );
+            handleIncomingUserMessage(userMessage);
+            break;
+          }
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          toast.error(`Failed to parse incoming message: ${error.message}`);
+        } else {
+          toast.error(UNKNOWN_ERROR);
+        }
       }
     };
 
@@ -167,7 +176,7 @@ const Messages = ({ activeRoom, setRooms }: MessagesProps) => {
         content: newMessage,
       };
 
-      const wsMessage: WSMessage<OutgoingUserMessage> = {
+      const wsMessage: OutgoingWSMessage<OutgoingUserMessage> = {
         type: WSMessageType.USER_MESSAGE,
         payload: outgoingUserMessage,
       };

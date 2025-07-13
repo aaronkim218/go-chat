@@ -56,7 +56,7 @@ export enum WSMessageType {
   USER_MESSAGE = "USER_MESSAGE",
 }
 
-export interface WSMessage<T> {
+export interface OutgoingWSMessage<T> {
   type: WSMessageType;
   payload: T;
 }
