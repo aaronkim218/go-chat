@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"go-chat/internal/constants"
-	"go-chat/internal/plugins"
 	"go-chat/internal/storage"
 	"go-chat/internal/types"
 
@@ -19,7 +18,7 @@ type Hub struct {
 	deleteRoom     chan uuid.UUID
 	writeJobs      chan types.ClientMessage
 	logger         *slog.Logger
-	pluginRegistry *plugins.PluginRegistry
+	pluginRegistry *PluginRegistry
 }
 
 type AddClientRequest struct {
@@ -28,10 +27,9 @@ type AddClientRequest struct {
 }
 
 type Config struct {
-	Storage        storage.Storage
-	Workers        int
-	Logger         *slog.Logger
-	PluginRegistry *plugins.PluginRegistry
+	Storage storage.Storage
+	Workers int
+	Logger  *slog.Logger
 }
 
 func New(cfg *Config) *Hub {
@@ -42,7 +40,7 @@ func New(cfg *Config) *Hub {
 		deleteRoom:     make(chan uuid.UUID),
 		writeJobs:      make(chan types.ClientMessage, cfg.Workers),
 		logger:         cfg.Logger,
-		pluginRegistry: cfg.PluginRegistry,
+		pluginRegistry: createPluginRegistry(),
 	}
 
 	for id := range cfg.Workers {
@@ -52,6 +50,14 @@ func New(cfg *Config) *Hub {
 	go hub.run()
 
 	return hub
+}
+
+func createPluginRegistry() *PluginRegistry {
+	registry := NewPluginRegistry(&PluginRegistryConfig{})
+
+	registry.RegisterClientMessagePlugin(NewUserMessagePlugin(&UserMessagePluginConfig{}))
+
+	return registry
 }
 
 func (h *Hub) AddClient(req AddClientRequest) {
@@ -106,13 +112,15 @@ func (h *Hub) handleActiveRoom(ar *activeRoom) {
 		case <-ar.done:
 			return
 		case cm := <-ar.broadcast:
-			ar.handleBroadcastMessage(cm)
+			ar.handleClientMessage(cm)
 		case client := <-ar.join:
 			ar.clients[client] = struct{}{}
 			go ar.handleClient(client)
+			ar.handleClientJoin(client)
 		case client := <-ar.leave:
 			client.Done <- struct{}{}
 			delete(ar.clients, client)
+			ar.handleClientLeave(client)
 			h.logger.Info(
 				"deleted client from active room",
 				slog.String("ip", client.Conn.IP()),
