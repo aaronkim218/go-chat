@@ -3,7 +3,6 @@ package hub
 import (
 	"log/slog"
 
-	"go-chat/internal/plugins"
 	"go-chat/internal/storage"
 	"go-chat/internal/types"
 
@@ -20,7 +19,7 @@ type activeRoom struct {
 	writeJobs      chan<- types.ClientMessage
 	storage        storage.Storage
 	logger         *slog.Logger
-	pluginRegistry *plugins.PluginRegistry
+	pluginRegistry *PluginRegistry
 }
 
 func (ar *activeRoom) handleClient(client *types.Client) {
@@ -43,32 +42,35 @@ func (ar *activeRoom) handleClient(client *types.Client) {
 			return
 		}
 
-		switch wsm.Type {
-		case types.UserMessageType:
-			ar.broadcast <- types.ClientMessage{
-				Client:    client,
-				WsMessage: wsm,
-			}
-		default:
-			ar.logger.Error("invalid ws message type", slog.String("type", string(wsm.Type)))
+		ar.broadcast <- types.ClientMessage{
+			Client:    client,
+			WsMessage: wsm,
 		}
 	}
 }
 
-func (ar *activeRoom) handleBroadcastMessage(clientMessage types.ClientMessage) {
-	pluginService := &plugins.PluginService{
-		RoomId:    ar.roomId,
-		Storage:   ar.storage,
-		WriteJobs: ar.writeJobs,
-		Logger:    ar.logger,
-		Clients:   ar.clients,
-	}
-
-	if err := ar.pluginRegistry.HandleClientMessage(pluginService, clientMessage); err != nil {
+func (ar *activeRoom) handleClientMessage(clientMessage types.ClientMessage) {
+	if err := ar.pluginRegistry.HandleClientMessage(ar, clientMessage); err != nil {
 		ar.logger.Error("plugin failed to handle message",
 			slog.String("error", err.Error()),
 			slog.String("message_type", string(clientMessage.WsMessage.Type)),
 			slog.Any("message_data", clientMessage.WsMessage.Payload),
+		)
+	}
+}
+
+func (ar *activeRoom) handleClientJoin(client *types.Client) {
+	if err := ar.pluginRegistry.HandleClientJoin(ar, client); err != nil {
+		ar.logger.Error("plugin failed to handle message",
+			slog.String("error", err.Error()),
+		)
+	}
+}
+
+func (ar *activeRoom) handleClientLeave(client *types.Client) {
+	if err := ar.pluginRegistry.HandleClientLeave(ar, client); err != nil {
+		ar.logger.Error("plugin failed to handle message",
+			slog.String("error", err.Error()),
 		)
 	}
 }

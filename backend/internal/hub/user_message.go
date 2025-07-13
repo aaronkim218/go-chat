@@ -1,4 +1,4 @@
-package plugins
+package hub
 
 import (
 	"context"
@@ -27,7 +27,7 @@ type incomingUserMessage struct {
 	Content string `json:"content"`
 }
 
-func (p *UserMessagePlugin) HandleClientMessage(pluginService *PluginService, clientMessage types.ClientMessage) error {
+func (p *UserMessagePlugin) HandleClientMessage(ar *activeRoom, clientMessage types.ClientMessage) error {
 	var ium incomingUserMessage
 	if err := go_json.Unmarshal(clientMessage.WsMessage.Payload, &ium); err != nil {
 		return err
@@ -40,14 +40,14 @@ func (p *UserMessagePlugin) HandleClientMessage(pluginService *PluginService, cl
 
 	message := models.Message{
 		Id:        messageId,
-		RoomId:    pluginService.RoomId,
+		RoomId:    ar.roomId,
 		Author:    clientMessage.Client.Profile.UserId,
 		Content:   ium.Content,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 
-	if err := pluginService.Storage.CreateMessage(context.TODO(), message); err != nil {
+	if err := ar.storage.CreateMessage(context.TODO(), message); err != nil {
 		return err
 	}
 
@@ -63,8 +63,8 @@ func (p *UserMessagePlugin) HandleClientMessage(pluginService *PluginService, cl
 		return err
 	}
 
-	for client := range pluginService.Clients {
-		pluginService.WriteJobs <- types.ClientMessage{
+	for client := range ar.clients {
+		ar.writeJobs <- types.ClientMessage{
 			Client: client,
 			WsMessage: types.WsMessage{
 				Type:    types.UserMessageType,
