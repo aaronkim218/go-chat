@@ -1,31 +1,32 @@
 package hub
 
 import (
-	"context"
 	"log/slog"
 
+	"go-chat/internal/plugins"
+	"go-chat/internal/storage"
 	"go-chat/internal/types"
+
+	"github.com/google/uuid"
 )
 
-type broadcastMessage struct {
-	client  *types.Client
-	message []byte
-}
-
 type activeRoom struct {
-	clients   map[*types.Client]struct{}
-	broadcast chan broadcastMessage
-	join      chan *types.Client
-	leave     chan *types.Client
-	ctx       context.Context
-	cancel    context.CancelFunc
-	logger    *slog.Logger
+	roomId         uuid.UUID
+	clients        map[*types.Client]struct{}
+	broadcast      chan types.ClientMessage
+	join           chan *types.Client
+	leave          chan *types.Client
+	done           chan struct{}
+	writeJobs      chan<- types.ClientMessage
+	storage        storage.Storage
+	logger         *slog.Logger
+	pluginRegistry *plugins.PluginRegistry
 }
 
 func (ar *activeRoom) handleClient(client *types.Client) {
 	for {
-		_, msg, err := client.Conn.ReadMessage()
-		if err != nil {
+		var wsm types.WsMessage
+		if err := client.Conn.ReadJSON(&wsm); err != nil {
 			ar.logger.Info(
 				"error reading message from client. closing connection",
 				slog.String("ip", client.Conn.IP()),
@@ -42,13 +43,32 @@ func (ar *activeRoom) handleClient(client *types.Client) {
 			return
 		}
 
-		select {
-		case <-ar.ctx.Done():
-			return
-		case ar.broadcast <- broadcastMessage{
-			client:  client,
-			message: msg,
-		}:
+		switch wsm.Type {
+		case types.UserMessageType:
+			ar.broadcast <- types.ClientMessage{
+				Client:    client,
+				WsMessage: wsm,
+			}
+		default:
+			ar.logger.Error("invalid ws message type", slog.String("type", string(wsm.Type)))
 		}
+	}
+}
+
+func (ar *activeRoom) handleBroadcastMessage(clientMessage types.ClientMessage) {
+	pluginService := &plugins.PluginService{
+		RoomId:    ar.roomId,
+		Storage:   ar.storage,
+		WriteJobs: ar.writeJobs,
+		Logger:    ar.logger,
+		Clients:   ar.clients,
+	}
+
+	if err := ar.pluginRegistry.HandleClientMessage(pluginService, clientMessage); err != nil {
+		ar.logger.Error("plugin failed to handle message",
+			slog.String("error", err.Error()),
+			slog.String("message_type", string(clientMessage.WsMessage.Type)),
+			slog.Any("message_data", clientMessage.WsMessage.Payload),
+		)
 	}
 }

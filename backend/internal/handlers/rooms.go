@@ -269,18 +269,18 @@ func (hs *HandlerService) JoinRoom(conn *websocket.Conn) {
 		return
 	}
 
-	ctx, cancel := context.WithCancel(context.TODO())
+	client := &types.Client{
+		Profile: profile,
+		Conn:    conn,
+		Done:    make(chan struct{}),
+	}
+
 	hs.hub.AddClient(hub.AddClientRequest{
 		RoomId: roomId,
-		Client: &types.Client{
-			Profile: profile,
-			Conn:    conn,
-			Ctx:     ctx,
-			Cancel:  cancel,
-		},
+		Client: client,
 	})
 
-	<-ctx.Done()
+	<-client.Done
 	hs.logger.Info(
 		"client disconnected",
 		slog.String("ip", conn.IP()),
