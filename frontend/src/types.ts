@@ -2,6 +2,7 @@ import * as z from "zod/v4";
 import {
   BulkResultStringSchema,
   CreateRoomResponseSchema,
+  IncomingPresenceSchema,
   MessageSchema,
   PatchProfileRequestSchema,
   PatchProfileResponseSchema,
@@ -54,9 +55,17 @@ export interface OutgoingUserMessage {
 
 export enum WSMessageType {
   USER_MESSAGE = "USER_MESSAGE",
+  PRESENCE = "PRESENCE",
+}
+
+export enum PresenceAction {
+  JOIN = "JOIN",
+  LEAVE = "LEAVE",
 }
 
 export interface OutgoingWSMessage<T> {
   type: WSMessageType;
   payload: T;
 }
+
+export type IncomingPresence = z.infer<typeof IncomingPresenceSchema>;

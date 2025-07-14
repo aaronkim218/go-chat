@@ -23,6 +23,7 @@ type WsMessageType string
 
 const (
 	UserMessageType WsMessageType = "USER_MESSAGE"
+	PresenceType    WsMessageType = "PRESENCE"
 )
 
 type WsMessage struct {
