@@ -67,9 +67,18 @@ export const CreateRoomResponseSchema = z.object({
   membersResults: BulkResultSchema(z.string()),
 });
 
+export const IncomingPresenceSchema = z.object({
+  profiles: z.array(ProfileSchema),
+  action: z.enum(["JOIN", "LEAVE"]),
+});
+
 export const IncomingWSMessageSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal(WSMessageType.USER_MESSAGE),
     payload: UserMessageSchema,
+  }),
+  z.object({
+    type: z.literal(WSMessageType.PRESENCE),
+    payload: IncomingPresenceSchema,
   }),
 ]);

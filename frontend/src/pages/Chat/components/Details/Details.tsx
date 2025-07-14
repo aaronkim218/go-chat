@@ -24,9 +24,15 @@ interface DetailsProps {
   activeRoom: Room;
   setRooms: React.Dispatch<React.SetStateAction<Room[]>>;
   setActiveRoom: React.Dispatch<React.SetStateAction<Room | null>>;
+  activeProfiles: Set<string>;
 }
 
-const Details = ({ activeRoom, setRooms, setActiveRoom }: DetailsProps) => {
+const Details = ({
+  activeRoom,
+  setRooms,
+  setActiveRoom,
+  activeProfiles,
+}: DetailsProps) => {
   const [newUsers, setNewUsers] = useState<Profile[]>([]);
   const [searchOptions, setSearchOptions] = useState<SearchProfilesOptions>({
     username: "",
@@ -99,6 +105,12 @@ const Details = ({ activeRoom, setRooms, setActiveRoom }: DetailsProps) => {
     }
   };
 
+  const isActive = (profile: Profile) => {
+    return (
+      session.user.id === profile.userId || activeProfiles.has(profile.userId)
+    );
+  };
+
   return (
     <div className="flex flex-col gap-4 p-4">
       Details
@@ -163,6 +175,12 @@ const Details = ({ activeRoom, setRooms, setActiveRoom }: DetailsProps) => {
             />
             {profile.username} ({profile.firstName} {profile.lastName}){" "}
             {profile.userId === activeRoom.host && <Crown />}
+            {isActive(profile) && (
+              <span className="relative flex h-3 w-3">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500" />
+              </span>
+            )}
           </li>
         ))}
       </ul>

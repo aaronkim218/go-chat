@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import Message from "@/components/features/chat/Message";
 import { CornerDownLeft, Send } from "lucide-react";
-import { IncomingWSMessageSchema, UserMessageSchema } from "@/schemas";
+import { IncomingWSMessageSchema } from "@/schemas";
 import {
+  IncomingPresence,
   OutgoingUserMessage,
   OutgoingWSMessage,
+  PresenceAction,
   Room,
   UserMessage,
   WSMessageType,
@@ -21,11 +23,16 @@ import { UNKNOWN_ERROR } from "@/constants";
 interface MessagesProps {
   activeRoom: Room | null;
   setRooms: React.Dispatch<React.SetStateAction<Room[]>>;
+  setActiveProfiles: React.Dispatch<React.SetStateAction<Set<string>>>;
 }
 
 const MAX_RETRIES = 3;
 
-const Messages = ({ activeRoom, setRooms }: MessagesProps) => {
+const Messages = ({
+  activeRoom,
+  setRooms,
+  setActiveProfiles,
+}: MessagesProps) => {
   const navigate = useNavigate();
   const [userMessages, setUserMessages] = useState<UserMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -94,10 +101,11 @@ const Messages = ({ activeRoom, setRooms }: MessagesProps) => {
         const incomingWsMessage = IncomingWSMessageSchema.parse(data);
         switch (incomingWsMessage.type) {
           case WSMessageType.USER_MESSAGE: {
-            const userMessage = UserMessageSchema.parse(
-              incomingWsMessage.payload,
-            );
-            handleIncomingUserMessage(userMessage);
+            handleIncomingUserMessage(incomingWsMessage.payload);
+            break;
+          }
+          case WSMessageType.PRESENCE: {
+            handleIncomingPresence(incomingWsMessage.payload);
             break;
           }
         }
@@ -141,6 +149,27 @@ const Messages = ({ activeRoom, setRooms }: MessagesProps) => {
       const otherRooms = prev.filter((_, index) => index !== currentRoomIndex);
 
       return [currentRoom, ...otherRooms];
+    });
+  };
+
+  const handleIncomingPresence = (presence: IncomingPresence) => {
+    setActiveProfiles((prev) => {
+      const newActiveProfiles = new Set(prev);
+      switch (presence.action) {
+        case PresenceAction.JOIN: {
+          presence.profiles.forEach((profile) => {
+            newActiveProfiles.add(profile.userId);
+          });
+          break;
+        }
+        case PresenceAction.LEAVE: {
+          presence.profiles.forEach((profile) => {
+            newActiveProfiles.delete(profile.userId);
+          });
+          break;
+        }
+      }
+      return newActiveProfiles;
     });
   };
 

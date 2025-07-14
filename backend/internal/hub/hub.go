@@ -55,7 +55,16 @@ func New(cfg *Config) *Hub {
 func createPluginRegistry() *PluginRegistry {
 	registry := NewPluginRegistry(&PluginRegistryConfig{})
 
+	presencePlugin := NewPresencePlugin(&PresencePluginConfig{})
+
+	// client join plugins
+	registry.RegisterClientJoinPlugin(presencePlugin)
+
+	// client message plugins
 	registry.RegisterClientMessagePlugin(NewUserMessagePlugin(&UserMessagePluginConfig{}))
+
+	// client leave plugins
+	registry.RegisterClientLeavePlugin(presencePlugin)
 
 	return registry
 }
