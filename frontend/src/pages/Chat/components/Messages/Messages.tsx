@@ -9,6 +9,8 @@ import { CornerDownLeft, Send } from "lucide-react";
 import { IncomingWSMessageSchema } from "@/schemas";
 import {
   IncomingPresence,
+  IncomingTypingStatus,
+  OutgoingTypingStatus,
   OutgoingUserMessage,
   OutgoingWSMessage,
   PresenceAction,
@@ -19,6 +21,8 @@ import {
 import camelcaseKeys from "camelcase-keys";
 import { toast } from "sonner";
 import { UNKNOWN_ERROR } from "@/constants";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
+import snakecasekeys from "snakecase-keys";
 
 interface MessagesProps {
   activeRoom: Room | null;
@@ -42,9 +46,15 @@ const Messages = ({
   const [autoScroll, setAutoScroll] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const activeRoomRef = useRef<Room | null>(activeRoom);
+  const [typingProfiles, setTypingProfiles] = useState<Set<string>>(new Set());
+  const { profile } = useRequireAuth();
+  const typingTimersRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   useEffect(() => {
+    setTypingProfiles(new Set());
     activeRoomRef.current = activeRoom;
+    typingTimersRef.current.forEach((timer) => clearTimeout(timer));
+    typingTimersRef.current.clear();
 
     if (activeRoomRef.current) {
       initWebsocket(activeRoomRef.current.id);
@@ -54,6 +64,8 @@ const Messages = ({
     return () => {
       activeRoomRef.current = null;
       ws.current?.close();
+      typingTimersRef.current.forEach((timer) => clearTimeout(timer));
+      typingTimersRef.current.clear();
     };
   }, [activeRoom]);
 
@@ -108,6 +120,10 @@ const Messages = ({
             handleIncomingPresence(incomingWsMessage.payload);
             break;
           }
+          case WSMessageType.TYPING_STATUS: {
+            handleIncomingTypingStatus(incomingWsMessage.payload);
+            break;
+          }
         }
       } catch (error) {
         if (error instanceof Error) {
@@ -150,6 +166,17 @@ const Messages = ({
 
       return [currentRoom, ...otherRooms];
     });
+    setTypingProfiles((prev) => {
+      const newTypingProfiles = new Set(prev);
+      newTypingProfiles.delete(userMessage.author);
+      return newTypingProfiles;
+    });
+
+    const existingTimer = typingTimersRef.current.get(userMessage.author);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      typingTimersRef.current.delete(userMessage.author);
+    }
   };
 
   const handleIncomingPresence = (presence: IncomingPresence) => {
@@ -157,13 +184,13 @@ const Messages = ({
       const newActiveProfiles = new Set(prev);
       switch (presence.action) {
         case PresenceAction.JOIN: {
-          presence.profiles.forEach((profile) => {
+          presence.profiles?.forEach((profile) => {
             newActiveProfiles.add(profile.userId);
           });
           break;
         }
         case PresenceAction.LEAVE: {
-          presence.profiles.forEach((profile) => {
+          presence.profiles?.forEach((profile) => {
             newActiveProfiles.delete(profile.userId);
           });
           break;
@@ -171,6 +198,64 @@ const Messages = ({
       }
       return newActiveProfiles;
     });
+  };
+
+  const handleIncomingTypingStatus = (typingStatus: IncomingTypingStatus) => {
+    setTypingProfiles((prev) => {
+      const newTypingProfiles = new Set(prev);
+      typingStatus.profiles?.forEach((profile) =>
+        newTypingProfiles.add(profile.userId),
+      );
+      return newTypingProfiles;
+    });
+
+    typingStatus.profiles?.forEach((profile) => {
+      const existingTimer = typingTimersRef.current.get(profile.userId);
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+      }
+
+      const timer = setTimeout(() => {
+        setTypingProfiles((prev) => {
+          const newTypingProfiles = new Set(prev);
+          newTypingProfiles.delete(profile.userId);
+          return newTypingProfiles;
+        });
+
+        typingTimersRef.current.delete(profile.userId);
+      }, 5000);
+
+      typingTimersRef.current.set(profile.userId, timer);
+    });
+  };
+
+  const handleSendTypingStatus = () => {
+    const outgoingTypingStatus: OutgoingTypingStatus = {
+      profile: profile,
+    };
+
+    const wsMessage: OutgoingWSMessage<OutgoingTypingStatus> = {
+      type: WSMessageType.TYPING_STATUS,
+      payload: outgoingTypingStatus,
+    };
+
+    handleWriteData(wsMessage);
+  };
+
+  const handleWriteData: <T>(outgoingMsg: OutgoingWSMessage<T>) => void = (
+    outgoingMsg,
+  ) => {
+    if (ws.current?.readyState === WebSocket.OPEN) {
+      const data = snakecasekeys(
+        { ...outgoingMsg },
+        {
+          deep: true,
+        },
+      );
+      ws.current.send(JSON.stringify(data));
+    } else {
+      toast.error("WebSocket is not open");
+    }
   };
 
   useEffect(() => {
@@ -200,19 +285,17 @@ const Messages = ({
       return;
     }
 
-    if (ws.current?.readyState === WebSocket.OPEN) {
-      const outgoingUserMessage: OutgoingUserMessage = {
-        content: newMessage,
-      };
+    const outgoingUserMessage: OutgoingUserMessage = {
+      content: newMessage,
+    };
 
-      const wsMessage: OutgoingWSMessage<OutgoingUserMessage> = {
-        type: WSMessageType.USER_MESSAGE,
-        payload: outgoingUserMessage,
-      };
+    const wsMessage: OutgoingWSMessage<OutgoingUserMessage> = {
+      type: WSMessageType.USER_MESSAGE,
+      payload: outgoingUserMessage,
+    };
 
-      ws.current.send(JSON.stringify(wsMessage));
-      setNewMessage("");
-    }
+    handleWriteData(wsMessage);
+    setNewMessage("");
   };
 
   return activeRoom ? (
@@ -230,11 +313,24 @@ const Messages = ({
         ))}
         <div ref={messagesEndRef} />
       </div>
+      {typingProfiles.size > 0 && (
+        <div className="text-sm text-gray-500">
+          {Array.from(typingProfiles).map((profileId) => (
+            <span key={profileId} className="font-semibold">
+              {profileId}
+            </span>
+          ))}{" "}
+          is typing...
+        </div>
+      )}
       <div className=" flex h-[15vh]">
         <Textarea
           placeholder="Type a message..."
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
+          onChange={(e) => {
+            setNewMessage(e.target.value);
+            handleSendTypingStatus();
+          }}
         />
         <Button onClick={() => handleSendMessage(newMessage)}>
           <Send />

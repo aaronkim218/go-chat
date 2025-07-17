@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"go-chat/internal/constants"
 	"go-chat/internal/hub"
 	"go-chat/internal/server"
 	"go-chat/internal/settings"
@@ -48,6 +49,8 @@ func main() {
 		Logger: slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			Level: utils.MustParseSlogLevel(settings.Hub.LogLevel),
 		})),
+		StatsInterval:   constants.HubStatsInterval,
+		CleanupInterval: constants.HubCleanupInterval,
 	})
 
 	app := server.New(&server.Config{

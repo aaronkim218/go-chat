@@ -68,8 +68,12 @@ export const CreateRoomResponseSchema = z.object({
 });
 
 export const IncomingPresenceSchema = z.object({
-  profiles: z.array(ProfileSchema),
+  profiles: z.array(ProfileSchema).nullable(),
   action: z.enum(["JOIN", "LEAVE"]),
+});
+
+export const IncomingTypingStatus = z.object({
+  profiles: z.array(ProfileSchema).nullable(),
 });
 
 export const IncomingWSMessageSchema = z.discriminatedUnion("type", [
@@ -80,5 +84,9 @@ export const IncomingWSMessageSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal(WSMessageType.PRESENCE),
     payload: IncomingPresenceSchema,
+  }),
+  z.object({
+    type: z.literal(WSMessageType.TYPING_STATUS),
+    payload: IncomingTypingStatus,
   }),
 ]);

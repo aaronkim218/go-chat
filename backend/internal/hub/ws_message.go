@@ -1,18 +1,8 @@
-package types
+package hub
 
 import (
-	"go-chat/internal/models"
-
 	go_json "github.com/goccy/go-json"
-
-	"github.com/gofiber/contrib/websocket"
 )
-
-type Client struct {
-	Profile models.Profile
-	Conn    *websocket.Conn
-	Done    chan struct{}
-}
 
 type ClientMessage struct {
 	Client    *Client
@@ -22,8 +12,9 @@ type ClientMessage struct {
 type WsMessageType string
 
 const (
-	UserMessageType WsMessageType = "USER_MESSAGE"
-	PresenceType    WsMessageType = "PRESENCE"
+	UserMessageType  WsMessageType = "USER_MESSAGE"
+	PresenceType     WsMessageType = "PRESENCE"
+	TypingStatusType WsMessageType = "TYPING_STATUS"
 )
 
 type WsMessage struct {

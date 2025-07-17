@@ -1,18 +1,14 @@
 package hub
 
-import (
-	"go-chat/internal/types"
-)
-
 type ClientMessagePlugin interface {
-	MessageType() types.WsMessageType
-	HandleClientMessage(ar *activeRoom, clientMessage types.ClientMessage) error
+	MessageType() WsMessageType
+	HandleClientMessage(ar *activeRoom, clientMessage ClientMessage) error
 }
 
 type ClientJoinPlugin interface {
-	HandleClientJoin(ar *activeRoom, client *types.Client) error
+	HandleClientJoin(ar *activeRoom, client *Client) error
 }
 
 type ClientLeavePlugin interface {
-	HandleClientLeave(ar *activeRoom, client *types.Client) error
+	HandleClientLeave(ar *activeRoom, client *Client) error
 }
