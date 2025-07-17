@@ -2,7 +2,6 @@ package hub
 
 import (
 	"go-chat/internal/models"
-	"go-chat/internal/types"
 
 	go_json "github.com/goccy/go-json"
 )
@@ -15,8 +14,8 @@ func NewPresencePlugin(cfg *PresencePluginConfig) *PresencePlugin {
 	return &PresencePlugin{}
 }
 
-func (pp *PresencePlugin) MessageType() types.WsMessageType {
-	return types.UserMessageType
+func (pp *PresencePlugin) MessageType() WsMessageType {
+	return UserMessageType
 }
 
 type action string
@@ -31,11 +30,15 @@ type outgoingPresence struct {
 	Action   action           `json:"action"`
 }
 
-func (pp *PresencePlugin) HandleClientJoin(ar *activeRoom, client *types.Client) error {
+func (pp *PresencePlugin) HandleClientJoin(ar *activeRoom, client *Client) error {
 	var activeProfiles []models.Profile
+	ar.mu.RLock()
 	for c := range ar.clients {
-		activeProfiles = append(activeProfiles, c.Profile)
+		if c != client {
+			activeProfiles = append(activeProfiles, c.profile)
+		}
 	}
+	ar.mu.RUnlock()
 
 	op := outgoingPresence{
 		Profiles: activeProfiles,
@@ -47,22 +50,38 @@ func (pp *PresencePlugin) HandleClientJoin(ar *activeRoom, client *types.Client)
 		return err
 	}
 
-	for client := range ar.clients {
-		ar.writeJobs <- types.ClientMessage{
-			Client: client,
-			WsMessage: types.WsMessage{
-				Type:    types.PresenceType,
+	client.write <- WsMessage{
+		Type:    PresenceType,
+		Payload: payloadBytes,
+	}
+
+	op = outgoingPresence{
+		Profiles: []models.Profile{client.profile},
+		Action:   join,
+	}
+
+	payloadBytes, err = go_json.Marshal(op)
+	if err != nil {
+		return err
+	}
+
+	ar.mu.RLock()
+	for c := range ar.clients {
+		if c != client {
+			c.write <- WsMessage{
+				Type:    PresenceType,
 				Payload: payloadBytes,
-			},
+			}
 		}
 	}
+	ar.mu.RUnlock()
 
 	return nil
 }
 
-func (pp *PresencePlugin) HandleClientLeave(ar *activeRoom, client *types.Client) error {
+func (pp *PresencePlugin) HandleClientLeave(ar *activeRoom, client *Client) error {
 	op := outgoingPresence{
-		Profiles: []models.Profile{client.Profile},
+		Profiles: []models.Profile{client.profile},
 		Action:   leave,
 	}
 
@@ -71,15 +90,14 @@ func (pp *PresencePlugin) HandleClientLeave(ar *activeRoom, client *types.Client
 		return err
 	}
 
-	for client := range ar.clients {
-		ar.writeJobs <- types.ClientMessage{
-			Client: client,
-			WsMessage: types.WsMessage{
-				Type:    types.PresenceType,
-				Payload: payloadBytes,
-			},
+	ar.mu.RLock()
+	for c := range ar.clients {
+		c.write <- WsMessage{
+			Type:    PresenceType,
+			Payload: payloadBytes,
 		}
 	}
+	ar.mu.RUnlock()
 
 	return nil
 }

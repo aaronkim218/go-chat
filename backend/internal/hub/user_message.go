@@ -19,15 +19,15 @@ func NewUserMessagePlugin(cfg *UserMessagePluginConfig) *UserMessagePlugin {
 	return &UserMessagePlugin{}
 }
 
-func (p *UserMessagePlugin) MessageType() types.WsMessageType {
-	return types.UserMessageType
+func (p *UserMessagePlugin) MessageType() WsMessageType {
+	return UserMessageType
 }
 
 type incomingUserMessage struct {
 	Content string `json:"content"`
 }
 
-func (p *UserMessagePlugin) HandleClientMessage(ar *activeRoom, clientMessage types.ClientMessage) error {
+func (p *UserMessagePlugin) HandleClientMessage(ar *activeRoom, clientMessage ClientMessage) error {
 	var ium incomingUserMessage
 	if err := go_json.Unmarshal(clientMessage.WsMessage.Payload, &ium); err != nil {
 		return err
@@ -41,7 +41,7 @@ func (p *UserMessagePlugin) HandleClientMessage(ar *activeRoom, clientMessage ty
 	message := models.Message{
 		Id:        messageId,
 		RoomId:    ar.roomId,
-		Author:    clientMessage.Client.Profile.UserId,
+		Author:    clientMessage.Client.profile.UserId,
 		Content:   ium.Content,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -53,9 +53,9 @@ func (p *UserMessagePlugin) HandleClientMessage(ar *activeRoom, clientMessage ty
 
 	userMessage := types.UserMessage{
 		Message:   message,
-		Username:  clientMessage.Client.Profile.Username,
-		FirstName: clientMessage.Client.Profile.FirstName,
-		LastName:  clientMessage.Client.Profile.LastName,
+		Username:  clientMessage.Client.profile.Username,
+		FirstName: clientMessage.Client.profile.FirstName,
+		LastName:  clientMessage.Client.profile.LastName,
 	}
 
 	payloadBytes, err := go_json.Marshal(userMessage)
@@ -63,15 +63,14 @@ func (p *UserMessagePlugin) HandleClientMessage(ar *activeRoom, clientMessage ty
 		return err
 	}
 
-	for client := range ar.clients {
-		ar.writeJobs <- types.ClientMessage{
-			Client: client,
-			WsMessage: types.WsMessage{
-				Type:    types.UserMessageType,
-				Payload: payloadBytes,
-			},
+	ar.mu.RLock()
+	for c := range ar.clients {
+		c.write <- WsMessage{
+			Type:    UserMessageType,
+			Payload: payloadBytes,
 		}
 	}
+	ar.mu.RUnlock()
 
 	return nil
 }

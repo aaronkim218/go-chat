@@ -3,6 +3,7 @@ import {
   BulkResultStringSchema,
   CreateRoomResponseSchema,
   IncomingPresenceSchema,
+  IncomingTypingStatus,
   MessageSchema,
   PatchProfileRequestSchema,
   PatchProfileResponseSchema,
@@ -56,6 +57,7 @@ export interface OutgoingUserMessage {
 export enum WSMessageType {
   USER_MESSAGE = "USER_MESSAGE",
   PRESENCE = "PRESENCE",
+  TYPING_STATUS = "TYPING_STATUS",
 }
 
 export enum PresenceAction {
@@ -69,3 +71,9 @@ export interface OutgoingWSMessage<T> {
 }
 
 export type IncomingPresence = z.infer<typeof IncomingPresenceSchema>;
+
+export type IncomingTypingStatus = z.infer<typeof IncomingTypingStatus>;
+
+export type OutgoingTypingStatus = {
+  profile: Profile;
+};

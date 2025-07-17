@@ -16,10 +16,6 @@ const Chat = () => {
   const [activeProfiles, setActiveProfiles] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    console.log("Active profiles updated:", activeProfiles);
-  }, [activeProfiles]);
-
-  useEffect(() => {
     setActiveProfiles(new Set());
   }, [activeRoom]);
 
