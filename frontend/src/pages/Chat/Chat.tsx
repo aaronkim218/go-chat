@@ -7,16 +7,28 @@ import Rooms from "./components/Rooms/Rooms";
 import { useEffect, useState } from "react";
 import Messages from "./components/Messages/Messages";
 import Details from "@/pages/Chat/components/Details/Details";
-import { Room } from "@/types";
+import { Room, UserMessage } from "@/types";
 import { CornerDownLeft } from "lucide-react";
+import { useWebSocket } from "./useWebSocket";
 
 const Chat = () => {
   const [activeRoom, setActiveRoom] = useState<Room | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [activeProfiles, setActiveProfiles] = useState<Set<string>>(new Set());
+  const [userMessages, setUserMessages] = useState<UserMessage[]>([]);
+
+  const { sendMessage, sendTypingStatus, typingProfiles } = useWebSocket({
+    activeRoom,
+    setRooms,
+    setActiveProfiles,
+    onMessageReceived: (message: UserMessage) => {
+      setUserMessages((prev) => [...prev, message]);
+    },
+  });
 
   useEffect(() => {
     setActiveProfiles(new Set());
+    setUserMessages([]);
   }, [activeRoom]);
 
   return (
@@ -34,8 +46,11 @@ const Chat = () => {
         <ResizablePanel defaultSize={55} minSize={45}>
           <Messages
             activeRoom={activeRoom}
-            setRooms={setRooms}
-            setActiveProfiles={setActiveProfiles}
+            userMessages={userMessages}
+            setUserMessages={setUserMessages}
+            sendMessage={sendMessage}
+            sendTypingStatus={sendTypingStatus}
+            typingProfiles={typingProfiles}
           />
         </ResizablePanel>
         <ResizableHandle withHandle />
