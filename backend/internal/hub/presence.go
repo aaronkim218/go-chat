@@ -26,10 +26,6 @@ func newPresencePlugin(cfg *presencePluginConfig) *presencePlugin {
 	return &presencePlugin{}
 }
 
-func (pp *presencePlugin) messageType() wsMessageType {
-	return userMessageType
-}
-
 func (pp *presencePlugin) handleClientJoin(room *activeRoom, client *Client) error {
 	var activeProfiles []models.Profile
 	room.mu.RLock()
