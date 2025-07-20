@@ -7,15 +7,21 @@ import Rooms from "./components/Rooms/Rooms";
 import { useEffect, useState } from "react";
 import Messages from "./components/Messages/Messages";
 import Details from "@/pages/Chat/components/Details/Details";
-import { Room, UserMessage } from "@/types";
+import { Room, UserMessage, Profile } from "@/types";
 import { CornerDownLeft } from "lucide-react";
 import { useWebSocket } from "./useWebSocket";
+import { getProfilesByRoomId } from "@/api";
+import { toast } from "sonner";
+import { UNKNOWN_ERROR } from "@/constants";
 
 const Chat = () => {
   const [activeRoom, setActiveRoom] = useState<Room | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [activeProfiles, setActiveProfiles] = useState<Set<string>>(new Set());
   const [userMessages, setUserMessages] = useState<UserMessage[]>([]);
+  const [profilesHashMap, setProfilesHashMap] = useState<Map<string, Profile>>(
+    new Map(),
+  );
 
   const { sendMessage, sendTypingStatus, typingProfiles } = useWebSocket({
     activeRoom,
@@ -29,7 +35,39 @@ const Chat = () => {
   useEffect(() => {
     setActiveProfiles(new Set());
     setUserMessages([]);
+    if (activeRoom) {
+      fetchProfiles(activeRoom.id);
+    } else {
+      setProfilesHashMap(new Map());
+    }
   }, [activeRoom]);
+
+  const fetchProfiles = async (roomId: string) => {
+    try {
+      const profiles = await getProfilesByRoomId(roomId);
+      const profilesMap = new Map<string, Profile>();
+      profiles.forEach((profile) => {
+        profilesMap.set(profile.userId, profile);
+      });
+      setProfilesHashMap(profilesMap);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error(UNKNOWN_ERROR);
+      }
+    }
+  };
+
+  const updateProfilesHashMap = (newProfiles: Profile[]) => {
+    setProfilesHashMap((prev) => {
+      const updatedMap = new Map(prev);
+      newProfiles.forEach((profile) => {
+        updatedMap.set(profile.userId, profile);
+      });
+      return updatedMap;
+    });
+  };
 
   return (
     <div className=" w-full">
@@ -50,7 +88,8 @@ const Chat = () => {
             setUserMessages={setUserMessages}
             sendMessage={sendMessage}
             sendTypingStatus={sendTypingStatus}
-            typingProfiles={typingProfiles}
+            typingProfilesSet={typingProfiles}
+            profilesHashMap={profilesHashMap}
           />
         </ResizablePanel>
         <ResizableHandle withHandle />
@@ -61,6 +100,8 @@ const Chat = () => {
               setRooms={setRooms}
               setActiveRoom={setActiveRoom}
               activeProfiles={activeProfiles}
+              profilesHashMap={profilesHashMap}
+              updateProfilesHashMap={updateProfilesHashMap}
             />
           ) : (
             <div className=" flex flex-col justify-center items-center h-full text-2xl">

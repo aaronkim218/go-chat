@@ -54,18 +54,18 @@ func (h *Hub) loadActiveRoom(roomId uuid.UUID) *activeRoom {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	ar, ok := h.activeRooms[roomId]
+	room, ok := h.activeRooms[roomId]
 	if !ok {
-		ar = newActiveRoom(&activeRoomConfig{
+		room = newActiveRoom(&activeRoomConfig{
 			RoomId:         roomId,
 			Storage:        h.storage,
 			Logger:         h.logger,
 			PluginRegistry: h.pluginRegistry,
 		})
-		h.activeRooms[roomId] = ar
+		h.activeRooms[roomId] = room
 	}
 
-	return ar
+	return room
 }
 
 func (h *Hub) cleanup(interval time.Duration) {
@@ -73,14 +73,14 @@ func (h *Hub) cleanup(interval time.Duration) {
 
 	for range ticker.C {
 		h.mu.Lock()
-		for roomId, ar := range h.activeRooms {
-			ar.mu.RLock()
-			if len(ar.clients) == 0 {
+		for roomId, room := range h.activeRooms {
+			room.mu.RLock()
+			if len(room.clients) == 0 {
 				delete(h.activeRooms, roomId)
-				close(ar.broadcast)
+				close(room.broadcast)
 				h.logger.Info("Deleted room", slog.String("id", roomId.String()))
 			}
-			ar.mu.RUnlock()
+			room.mu.RUnlock()
 		}
 		h.mu.Unlock()
 	}

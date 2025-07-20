@@ -39,11 +39,13 @@ export const useWebSocket = ({
   const ws = useRef<WebSocket | null>(null);
   const retries = useRef(0);
   const activeRoomRef = useRef<Room | null>(activeRoom);
-  const [typingProfiles, setTypingProfiles] = useState<Set<string>>(new Set());
+  const [typingProfilesSet, setTypingProfilesSet] = useState<Set<string>>(
+    new Set(),
+  );
   const typingTimersRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   useEffect(() => {
-    setTypingProfiles(new Set());
+    setTypingProfilesSet(new Set());
     activeRoomRef.current = activeRoom;
     typingTimersRef.current.forEach((timer) => clearTimeout(timer));
     typingTimersRef.current.clear();
@@ -144,7 +146,7 @@ export const useWebSocket = ({
 
       return [currentRoom, ...otherRooms];
     });
-    setTypingProfiles((prev) => {
+    setTypingProfilesSet((prev) => {
       const newTypingProfiles = new Set(prev);
       newTypingProfiles.delete(userMessage.author);
       return newTypingProfiles;
@@ -179,7 +181,7 @@ export const useWebSocket = ({
   };
 
   const handleIncomingTypingStatus = (typingStatus: IncomingTypingStatus) => {
-    setTypingProfiles((prev) => {
+    setTypingProfilesSet((prev) => {
       const newTypingProfiles = new Set(prev);
       typingStatus.profiles?.forEach((profile) =>
         newTypingProfiles.add(profile.userId),
@@ -194,7 +196,7 @@ export const useWebSocket = ({
       }
 
       const timer = setTimeout(() => {
-        setTypingProfiles((prev) => {
+        setTypingProfilesSet((prev) => {
           const newTypingProfiles = new Set(prev);
           newTypingProfiles.delete(profile.userId);
           return newTypingProfiles;
@@ -255,6 +257,6 @@ export const useWebSocket = ({
   return {
     sendMessage,
     sendTypingStatus,
-    typingProfiles,
+    typingProfiles: typingProfilesSet,
   };
 };
