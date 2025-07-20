@@ -1,4 +1,4 @@
-import { addUsersToRoom, deleteRoom, getProfilesByRoomId } from "@/api";
+import { addUsersToRoom, deleteRoom } from "@/api";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,6 +25,8 @@ interface DetailsProps {
   setRooms: React.Dispatch<React.SetStateAction<Room[]>>;
   setActiveRoom: React.Dispatch<React.SetStateAction<Room | null>>;
   activeProfiles: Set<string>;
+  profilesHashMap: Map<string, Profile>;
+  updateProfilesHashMap: (newProfiles: Profile[]) => void;
 }
 
 const Details = ({
@@ -32,6 +34,8 @@ const Details = ({
   setRooms,
   setActiveRoom,
   activeProfiles,
+  profilesHashMap,
+  updateProfilesHashMap,
 }: DetailsProps) => {
   const [newUsers, setNewUsers] = useState<Profile[]>([]);
   const [searchOptions, setSearchOptions] = useState<SearchProfilesOptions>({
@@ -39,12 +43,13 @@ const Details = ({
     excludeRoom: activeRoom.id,
   });
   const [suggestions, setSuggestions] = useState<Profile[]>([]);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
   const { session } = useRequireAuth();
   const [open, setOpen] = useState(false);
+  const profiles = Array.from(profilesHashMap.values()).sort((a, b) =>
+    a.username.toLowerCase().localeCompare(b.username.toLowerCase()),
+  );
 
   useEffect(() => {
-    fetchProfiles(activeRoom.id);
     setSearchOptions({
       username: "",
       excludeRoom: activeRoom.id,
@@ -52,19 +57,6 @@ const Details = ({
     setSuggestions([]);
     setNewUsers([]);
   }, [activeRoom.id]);
-
-  const fetchProfiles = async (roomId: string) => {
-    try {
-      const profiles = await getProfilesByRoomId(roomId);
-      setProfiles(profiles);
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error(UNKNOWN_ERROR);
-      }
-    }
-  };
 
   const handleAddUsersToRoom = async (newUsers: Profile[]) => {
     try {
@@ -76,11 +68,7 @@ const Details = ({
       const successfulNewUsers = newUsers.filter((user) =>
         successfulIds.has(user.userId),
       );
-      setProfiles((prev) =>
-        [...prev, ...successfulNewUsers].sort((a, b) =>
-          a.username.toLowerCase().localeCompare(b.username.toLowerCase()),
-        ),
-      );
+      updateProfilesHashMap(successfulNewUsers);
       console.log("TODO: do something with addUsersToRoom response: ", resp);
     } catch (error) {
       if (error instanceof Error) {
