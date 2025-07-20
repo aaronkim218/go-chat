@@ -7,23 +7,23 @@ import (
 	"github.com/gofiber/contrib/websocket"
 )
 
-type Client struct {
-	profile models.Profile
-	conn    *websocket.Conn
-	write   chan WsMessage
-	done    chan struct{}
-}
-
 type ClientConfig struct {
 	Profile models.Profile
 	Conn    *websocket.Conn
+}
+
+type Client struct {
+	profile models.Profile
+	conn    *websocket.Conn
+	write   chan wsMessage
+	done    chan struct{}
 }
 
 func NewClient(cfg *ClientConfig) *Client {
 	c := &Client{
 		profile: cfg.Profile,
 		conn:    cfg.Conn,
-		write:   make(chan WsMessage),
+		write:   make(chan wsMessage),
 		done:    make(chan struct{}),
 	}
 
@@ -39,11 +39,7 @@ func (c *Client) Done() <-chan struct{} {
 func (c *Client) handleWriteClient() {
 	for wsm := range c.write {
 		if err := c.conn.WriteJSON(wsm); err != nil {
-			slog.Error(
-				"error writing message to client. closing connection",
-				slog.String("ip", c.conn.IP()),
-				slog.String("error", err.Error()),
-			)
+			slog.Error("Error writing message to client. closing connection", slog.String("err", err.Error()))
 			c.closeConn()
 			return
 		}
@@ -52,6 +48,6 @@ func (c *Client) handleWriteClient() {
 
 func (c *Client) closeConn() {
 	if err := c.conn.Close(); err != nil {
-		slog.Error("error closing conn", slog.String("error", err.Error()))
+		slog.Error("Error closing conn", slog.String("err", err.Error()))
 	}
 }

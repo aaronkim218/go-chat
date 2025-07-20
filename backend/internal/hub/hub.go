@@ -11,14 +11,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type Hub struct {
-	activeRooms    map[uuid.UUID]*activeRoom
-	mu             sync.Mutex
-	storage        storage.Storage
-	logger         *slog.Logger
-	pluginRegistry *PluginRegistry
-}
-
 type AddClientRequest struct {
 	RoomId uuid.UUID
 	Client *Client
@@ -30,6 +22,14 @@ type Config struct {
 	Logger          *slog.Logger
 	StatsInterval   time.Duration
 	CleanupInterval time.Duration
+}
+
+type Hub struct {
+	activeRooms    map[uuid.UUID]*activeRoom
+	mu             sync.Mutex
+	storage        storage.Storage
+	logger         *slog.Logger
+	pluginRegistry *pluginRegistry
 }
 
 func New(cfg *Config) *Hub {
@@ -78,7 +78,7 @@ func (h *Hub) cleanup(interval time.Duration) {
 			if len(ar.clients) == 0 {
 				delete(h.activeRooms, roomId)
 				close(ar.broadcast)
-				h.logger.Info("deleted room", slog.String("room_id", roomId.String()))
+				h.logger.Info("Deleted room", slog.String("id", roomId.String()))
 			}
 			ar.mu.RUnlock()
 		}
@@ -91,32 +91,32 @@ func (h *Hub) stats(interval time.Duration) {
 
 	for range ticker.C {
 		h.mu.Lock()
-		h.logger.Info("hub stats", slog.Int("number of active rooms", len(h.activeRooms)))
+		h.logger.Info("Hub stats", slog.Int("num active rooms", len(h.activeRooms)))
 		h.mu.Unlock()
 	}
 }
 
-func createPluginRegistry() *PluginRegistry {
-	registry := NewPluginRegistry(&PluginRegistryConfig{})
+func createPluginRegistry() *pluginRegistry {
+	registry := newPluginRegistry(&pluginRegistryConfig{})
 
-	userMessagePlugin := NewUserMessagePlugin(&UserMessagePluginConfig{})
-	presencePlugin := NewPresencePlugin(&PresencePluginConfig{})
-	typingStatusPlugin := NewTypingStatusPlugin(&TypingStatusPluginConfig{
+	userMessage := newUserMessagePlugin(&userMessagePluginConfig{})
+	presence := newPresencePlugin(&presencePluginConfig{})
+	typingStatus := newTypingStatusPlugin(&typingStatusPluginConfig{
 		Timeout:         constants.TypingStatusTimeout,
 		CleanupInterval: constants.TypingStatusCleanupInterval,
 	})
 
 	// client join plugins
-	registry.RegisterClientJoinPlugin(presencePlugin)
-	registry.RegisterClientJoinPlugin(typingStatusPlugin)
+	registry.registerClientJoinPlugin(presence)
+	registry.registerClientJoinPlugin(typingStatus)
 
 	// client message plugins
-	registry.RegisterClientMessagePlugin(userMessagePlugin)
-	registry.RegisterClientMessagePlugin(typingStatusPlugin)
+	registry.registerBroadcastMessagePlugin(userMessage)
+	registry.registerBroadcastMessagePlugin(typingStatus)
 
 	// client leave plugins
-	registry.RegisterClientLeavePlugin(presencePlugin)
-	registry.RegisterClientLeavePlugin(typingStatusPlugin)
+	registry.registerClientLeavePlugin(presence)
+	registry.registerClientLeavePlugin(typingStatus)
 
 	return registry
 }

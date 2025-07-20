@@ -15,12 +15,12 @@ import (
 )
 
 func (hs *HandlerService) GetProfileByUserId(c *fiber.Ctx) error {
-	userId, err := xcontext.GetUserId(c)
+	uid, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
 	}
 
-	profile, err := hs.storage.GetProfileByUserId(c.Context(), userId)
+	profile, err := hs.storage.GetProfileByUserId(c.Context(), uid)
 	if err != nil {
 		return err
 	}
@@ -29,18 +29,18 @@ func (hs *HandlerService) GetProfileByUserId(c *fiber.Ctx) error {
 }
 
 func (hs *HandlerService) GetForeignProfileByUserId(c *fiber.Ctx) error {
-	profileId := c.Params("profileId")
+	pidStr := c.Params("profileId")
 
-	if profileId == "" {
+	if pidStr == "" {
 		return xerrors.BadRequestError("profile id is required")
 	}
 
-	uuidProfileId, err := uuid.Parse(profileId)
+	pid, err := uuid.Parse(pidStr)
 	if err != nil {
-		return xerrors.BadRequestError(fmt.Sprintf("invalid room id: %s", profileId))
+		return xerrors.BadRequestError(fmt.Sprintf("invalid room id: %s", pidStr))
 	}
 
-	profile, err := hs.storage.GetProfileByUserId(c.Context(), uuidProfileId)
+	profile, err := hs.storage.GetProfileByUserId(c.Context(), pid)
 	if err != nil {
 		return err
 	}
@@ -49,35 +49,31 @@ func (hs *HandlerService) GetForeignProfileByUserId(c *fiber.Ctx) error {
 }
 
 func (hs *HandlerService) PatchProfileByUserId(c *fiber.Ctx) error {
-	userId, err := xcontext.GetUserId(c)
+	uid, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
 	}
 
-	var partialProfile types.PartialProfile
-	if err := c.BodyParser(&partialProfile); err != nil {
+	var partial types.PartialProfile
+	if err := c.BodyParser(&partial); err != nil {
 		return xerrors.InvalidJSON()
 	}
 
-	if errMap := partialProfile.Validate(); len(errMap) > 0 {
+	if errMap := partial.Validate(); len(errMap) > 0 {
 		return xerrors.UnprocessableEntityError(errMap)
 	}
 
-	partialProfile.UpdatedAt = time.Now()
+	partial.UpdatedAt = time.Now()
 
-	if err := hs.storage.PatchProfileByUserId(
-		c.Context(),
-		partialProfile,
-		userId,
-	); err != nil {
+	if err := hs.storage.PatchProfileByUserId(c.Context(), partial, uid); err != nil {
 		return err
 	}
 
-	return c.Status(http.StatusOK).JSON(partialProfile)
+	return c.Status(http.StatusOK).JSON(partial)
 }
 
 func (hs *HandlerService) CreateProfile(c *fiber.Ctx) error {
-	userId, err := xcontext.GetUserId(c)
+	uid, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
 	}
@@ -91,14 +87,11 @@ func (hs *HandlerService) CreateProfile(c *fiber.Ctx) error {
 		return xerrors.UnprocessableEntityError(errMap)
 	}
 
-	profile.UserId = userId
+	profile.UserId = uid
 	profile.CreatedAt = time.Now()
 	profile.UpdatedAt = time.Now()
 
-	if err := hs.storage.CreateProfile(
-		c.Context(),
-		profile,
-	); err != nil {
+	if err := hs.storage.CreateProfile(c.Context(), profile); err != nil {
 		return err
 	}
 
@@ -106,21 +99,21 @@ func (hs *HandlerService) CreateProfile(c *fiber.Ctx) error {
 }
 
 func (hs *HandlerService) SearchProfiles(c *fiber.Ctx) error {
-	userId, err := xcontext.GetUserId(c)
+	uid, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
 	}
 
-	var options types.SearchProfilesOptions
-	if err := c.QueryParser(&options); err != nil {
+	var opts types.SearchProfilesOptions
+	if err := c.QueryParser(&opts); err != nil {
 		return xerrors.BadRequestError("failed to parse query parameters")
 	}
 
-	if errMap := options.Validate(); len(errMap) > 0 {
+	if errMap := opts.Validate(); len(errMap) > 0 {
 		return xerrors.UnprocessableEntityError(errMap)
 	}
 
-	profiles, err := hs.storage.SearchProfiles(c.Context(), options, userId)
+	profiles, err := hs.storage.SearchProfiles(c.Context(), opts, uid)
 	if err != nil {
 		return err
 	}
