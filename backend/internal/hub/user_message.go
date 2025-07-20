@@ -11,25 +11,25 @@ import (
 	"github.com/google/uuid"
 )
 
-type UserMessagePlugin struct{}
-
-type UserMessagePluginConfig struct{}
-
-func NewUserMessagePlugin(cfg *UserMessagePluginConfig) *UserMessagePlugin {
-	return &UserMessagePlugin{}
-}
-
-func (p *UserMessagePlugin) MessageType() WsMessageType {
-	return UserMessageType
-}
-
 type incomingUserMessage struct {
 	Content string `json:"content"`
 }
 
-func (p *UserMessagePlugin) HandleClientMessage(ar *activeRoom, clientMessage ClientMessage) error {
-	var ium incomingUserMessage
-	if err := go_json.Unmarshal(clientMessage.WsMessage.Payload, &ium); err != nil {
+type userMessagePluginConfig struct{}
+
+type userMessagePlugin struct{}
+
+func newUserMessagePlugin(cfg *userMessagePluginConfig) *userMessagePlugin {
+	return &userMessagePlugin{}
+}
+
+func (p *userMessagePlugin) messageType() wsMessageType {
+	return userMessageType
+}
+
+func (p *userMessagePlugin) handleBroadcastMessage(room *activeRoom, msg broadcastMessage) error {
+	var incoming incomingUserMessage
+	if err := go_json.Unmarshal(msg.wsMessage.Payload, &incoming); err != nil {
 		return err
 	}
 
@@ -40,37 +40,37 @@ func (p *UserMessagePlugin) HandleClientMessage(ar *activeRoom, clientMessage Cl
 
 	message := models.Message{
 		Id:        messageId,
-		RoomId:    ar.roomId,
-		Author:    clientMessage.Client.profile.UserId,
-		Content:   ium.Content,
+		RoomId:    room.roomId,
+		Author:    msg.client.profile.UserId,
+		Content:   incoming.Content,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 
-	if err := ar.storage.CreateMessage(context.TODO(), message); err != nil {
+	if err := room.storage.CreateMessage(context.TODO(), message); err != nil {
 		return err
 	}
 
 	userMessage := types.UserMessage{
 		Message:   message,
-		Username:  clientMessage.Client.profile.Username,
-		FirstName: clientMessage.Client.profile.FirstName,
-		LastName:  clientMessage.Client.profile.LastName,
+		Username:  msg.client.profile.Username,
+		FirstName: msg.client.profile.FirstName,
+		LastName:  msg.client.profile.LastName,
 	}
 
-	payloadBytes, err := go_json.Marshal(userMessage)
+	payload, err := go_json.Marshal(userMessage)
 	if err != nil {
 		return err
 	}
 
-	ar.mu.RLock()
-	for c := range ar.clients {
-		c.write <- WsMessage{
-			Type:    UserMessageType,
-			Payload: payloadBytes,
+	room.mu.RLock()
+	for c := range room.clients {
+		c.write <- wsMessage{
+			Type:    userMessageType,
+			Payload: payload,
 		}
 	}
-	ar.mu.RUnlock()
+	room.mu.RUnlock()
 
 	return nil
 }

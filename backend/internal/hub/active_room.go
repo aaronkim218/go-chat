@@ -9,28 +9,28 @@ import (
 	"github.com/google/uuid"
 )
 
-type activeRoom struct {
-	roomId         uuid.UUID
-	clients        map[*Client]struct{}
-	mu             sync.RWMutex
-	broadcast      chan ClientMessage
-	storage        storage.Storage
-	logger         *slog.Logger
-	pluginRegistry *PluginRegistry
-}
-
 type activeRoomConfig struct {
 	RoomId         uuid.UUID
 	Storage        storage.Storage
 	Logger         *slog.Logger
-	PluginRegistry *PluginRegistry
+	PluginRegistry *pluginRegistry
+}
+
+type activeRoom struct {
+	roomId         uuid.UUID
+	clients        map[*Client]struct{}
+	mu             sync.RWMutex
+	broadcast      chan broadcastMessage
+	storage        storage.Storage
+	logger         *slog.Logger
+	pluginRegistry *pluginRegistry
 }
 
 func newActiveRoom(cfg *activeRoomConfig) *activeRoom {
 	ar := &activeRoom{
 		roomId:         cfg.RoomId,
 		clients:        make(map[*Client]struct{}),
-		broadcast:      make(chan ClientMessage),
+		broadcast:      make(chan broadcastMessage),
 		storage:        cfg.Storage,
 		logger:         cfg.Logger,
 		pluginRegistry: cfg.PluginRegistry,
@@ -42,39 +42,34 @@ func newActiveRoom(cfg *activeRoomConfig) *activeRoom {
 }
 
 func (ar *activeRoom) handleBroadcast() {
-	for cm := range ar.broadcast {
-		ar.handleClientMessage(cm)
+	for bm := range ar.broadcast {
+		ar.handleBroadcastMessage(bm)
 	}
 }
 
 func (ar *activeRoom) handleReadClient(client *Client) {
 	for {
-		var wsm WsMessage
+		var wsm wsMessage
 		if err := client.conn.ReadJSON(&wsm); err != nil {
-			ar.logger.Error(
-				"error reading message from client. closing connection",
-				slog.String("ip", client.conn.IP()),
-				slog.String("error", err.Error()),
-			)
-
+			ar.logger.Error("Error reading message from client. closing connection", slog.String("error", err.Error()))
 			client.closeConn()
 			ar.handleClientLeave(client)
 			return
 		}
 
-		ar.broadcast <- ClientMessage{
-			Client:    client,
-			WsMessage: wsm,
+		ar.broadcast <- broadcastMessage{
+			client:    client,
+			wsMessage: wsm,
 		}
 	}
 }
 
-func (ar *activeRoom) handleClientMessage(clientMessage ClientMessage) {
-	if err := ar.pluginRegistry.HandleClientMessage(ar, clientMessage); err != nil {
-		ar.logger.Error("plugin failed to handle message",
-			slog.String("error", err.Error()),
-			slog.String("message_type", string(clientMessage.WsMessage.Type)),
-			slog.Any("message_data", clientMessage.WsMessage.Payload),
+func (ar *activeRoom) handleBroadcastMessage(msg broadcastMessage) {
+	if err := ar.pluginRegistry.handleBroadcastMessage(ar, msg); err != nil {
+		ar.logger.Error("Plugin failed to handle message",
+			slog.String("err", err.Error()),
+			slog.String("type", string(msg.wsMessage.Type)),
+			slog.Any("payload", msg.wsMessage.Payload),
 		)
 	}
 }
@@ -85,10 +80,8 @@ func (ar *activeRoom) handleClientJoin(client *Client) {
 	ar.mu.Unlock()
 	go ar.handleReadClient(client)
 
-	if err := ar.pluginRegistry.HandleClientJoin(ar, client); err != nil {
-		ar.logger.Error("plugin failed to handle message",
-			slog.String("error", err.Error()),
-		)
+	if err := ar.pluginRegistry.handleClientJoin(ar, client); err != nil {
+		ar.logger.Error("Plugin failed to handle message", slog.String("err", err.Error()))
 	}
 }
 
@@ -97,10 +90,8 @@ func (ar *activeRoom) handleClientLeave(client *Client) {
 	delete(ar.clients, client)
 	ar.mu.Unlock()
 
-	if err := ar.pluginRegistry.HandleClientLeave(ar, client); err != nil {
-		ar.logger.Error("plugin failed to handle message",
-			slog.String("error", err.Error()),
-		)
+	if err := ar.pluginRegistry.handleClientLeave(ar, client); err != nil {
+		ar.logger.Error("Plugin failed to handle message", slog.String("err", err.Error()))
 	}
 
 	close(client.write)

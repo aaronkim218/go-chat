@@ -8,19 +8,27 @@ import (
 	go_json "github.com/goccy/go-json"
 )
 
-type TypingStatusPlugin struct {
+type incomingTypingStatus struct {
+	Profile models.Profile `json:"profile"`
+}
+
+type outgoingTypingStatus struct {
+	Profiles []models.Profile `json:"profiles"`
+}
+
+type typingStatusPluginConfig struct {
+	Timeout         time.Duration
+	CleanupInterval time.Duration
+}
+
+type typingStatusPlugin struct {
 	typing  map[*activeRoom]map[*Client]time.Time
 	mu      sync.RWMutex
 	timeout time.Duration
 }
 
-type TypingStatusPluginConfig struct {
-	Timeout         time.Duration
-	CleanupInterval time.Duration
-}
-
-func NewTypingStatusPlugin(cfg *TypingStatusPluginConfig) *TypingStatusPlugin {
-	tsp := &TypingStatusPlugin{
+func newTypingStatusPlugin(cfg *typingStatusPluginConfig) *typingStatusPlugin {
+	tsp := &typingStatusPlugin{
 		typing:  make(map[*activeRoom]map[*Client]time.Time),
 		timeout: cfg.Timeout,
 	}
@@ -30,79 +38,69 @@ func NewTypingStatusPlugin(cfg *TypingStatusPluginConfig) *TypingStatusPlugin {
 	return tsp
 }
 
-func (tsp *TypingStatusPlugin) MessageType() WsMessageType {
-	return TypingStatusType
+func (tsp *typingStatusPlugin) messageType() wsMessageType {
+	return typingStatusType
 }
 
-type outgoingTypingStatus struct {
-	Profiles []models.Profile `json:"profiles"`
-}
-
-func (tsp *TypingStatusPlugin) HandleClientJoin(ar *activeRoom, client *Client) error {
-	typingProfiles := tsp.getTypingProfiles(ar, client)
-	if typingProfiles == nil {
+func (tsp *typingStatusPlugin) handleClientJoin(room *activeRoom, client *Client) error {
+	profiles := tsp.getTypingProfiles(room, client)
+	if profiles == nil {
 		return nil
 	}
 
-	ots := outgoingTypingStatus{
-		Profiles: typingProfiles,
-	}
-
-	payloadBytes, err := go_json.Marshal(ots)
-	if err != nil {
-		return err
-	}
-
-	client.write <- WsMessage{
-		Type:    TypingStatusType,
-		Payload: payloadBytes,
-	}
-
-	return nil
-}
-
-type incomingTypingStatus struct {
-	Profile models.Profile `json:"profile"`
-}
-
-func (tsp *TypingStatusPlugin) HandleClientMessage(ar *activeRoom, clientMessage ClientMessage) error {
-	var its incomingTypingStatus
-	if err := go_json.Unmarshal(clientMessage.WsMessage.Payload, &its); err != nil {
-		return err
-	}
-
-	tsp.setClientTyping(ar, clientMessage)
-
-	payloadBytes, err := go_json.Marshal(outgoingTypingStatus{
-		Profiles: []models.Profile{its.Profile},
+	payload, err := go_json.Marshal(outgoingTypingStatus{
+		Profiles: profiles,
 	})
 	if err != nil {
 		return err
 	}
 
-	ar.mu.RLock()
-	for c := range ar.clients {
-		if c != clientMessage.Client {
-			c.write <- WsMessage{
-				Type:    TypingStatusType,
-				Payload: payloadBytes,
-			}
-		}
+	client.write <- wsMessage{
+		Type:    typingStatusType,
+		Payload: payload,
 	}
-	ar.mu.RUnlock()
 
 	return nil
 }
 
-func (tsp *TypingStatusPlugin) HandleClientLeave(ar *activeRoom, client *Client) error {
+func (tsp *typingStatusPlugin) handleBroadcastMessage(room *activeRoom, msg broadcastMessage) error {
+	var incoming incomingTypingStatus
+	if err := go_json.Unmarshal(msg.wsMessage.Payload, &incoming); err != nil {
+		return err
+	}
+
+	tsp.setClientTyping(room, msg.client)
+
+	payload, err := go_json.Marshal(outgoingTypingStatus{
+		Profiles: []models.Profile{incoming.Profile},
+	})
+	if err != nil {
+		return err
+	}
+
+	room.mu.RLock()
+	for c := range room.clients {
+		if c != msg.client {
+			c.write <- wsMessage{
+				Type:    typingStatusType,
+				Payload: payload,
+			}
+		}
+	}
+	room.mu.RUnlock()
+
+	return nil
+}
+
+func (tsp *typingStatusPlugin) handleClientLeave(room *activeRoom, client *Client) error {
 	tsp.mu.Lock()
-	delete(tsp.typing[ar], client)
+	delete(tsp.typing[room], client)
 	tsp.mu.Unlock()
 
 	return nil
 }
 
-func (tsp *TypingStatusPlugin) cleanup(interval time.Duration) {
+func (tsp *typingStatusPlugin) cleanup(interval time.Duration) {
 	ticker := time.NewTicker(interval)
 
 	for range ticker.C {
@@ -122,34 +120,34 @@ func (tsp *TypingStatusPlugin) cleanup(interval time.Duration) {
 	}
 }
 
-func (tsp *TypingStatusPlugin) getTypingProfiles(ar *activeRoom, client *Client) []models.Profile {
+func (tsp *typingStatusPlugin) getTypingProfiles(room *activeRoom, client *Client) []models.Profile {
 	tsp.mu.RLock()
 	defer tsp.mu.RUnlock()
 
-	clients, ok := tsp.typing[ar]
+	clients, ok := tsp.typing[room]
 	if !ok {
 		return nil
 	}
 
-	var typingProfiles []models.Profile
+	var profiles []models.Profile
 	for c := range clients {
 		if c != client {
-			typingProfiles = append(typingProfiles, c.profile)
+			profiles = append(profiles, c.profile)
 		}
 	}
 
-	return typingProfiles
+	return profiles
 }
 
-func (tsp *TypingStatusPlugin) setClientTyping(ar *activeRoom, clientMessage ClientMessage) {
+func (tsp *typingStatusPlugin) setClientTyping(room *activeRoom, client *Client) {
 	tsp.mu.Lock()
 	defer tsp.mu.Unlock()
 
-	clients, ok := tsp.typing[ar]
+	clients, ok := tsp.typing[room]
 	if !ok {
 		clients = make(map[*Client]time.Time)
-		tsp.typing[ar] = clients
+		tsp.typing[room] = clients
 	}
 
-	clients[clientMessage.Client] = time.Now()
+	clients[client] = time.Now()
 }

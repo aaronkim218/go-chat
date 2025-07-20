@@ -12,19 +12,19 @@ import (
 )
 
 func (hs *HandlerService) DeleteMessageById(c *fiber.Ctx) error {
-	userId, err := xcontext.GetUserId(c)
+	uid, err := xcontext.GetUserId(c)
 	if err != nil {
 		return err
 	}
 
-	messageId := c.Params("messageId")
+	midStr := c.Params("messageId")
 
-	uuidMessageId, err := uuid.Parse(messageId)
+	mid, err := uuid.Parse(midStr)
 	if err != nil {
-		return xerrors.BadRequestError(fmt.Sprintf("invalid user id: %s", messageId))
+		return xerrors.BadRequestError(fmt.Sprintf("invalid user id: %s", midStr))
 	}
 
-	if err := hs.storage.DeleteMessageById(c.Context(), uuidMessageId, userId); err != nil {
+	if err := hs.storage.DeleteMessageById(c.Context(), mid, uid); err != nil {
 		return err
 	}
 

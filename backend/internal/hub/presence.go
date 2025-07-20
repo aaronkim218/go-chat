@@ -6,98 +6,96 @@ import (
 	go_json "github.com/goccy/go-json"
 )
 
-type PresencePlugin struct{}
-
-type PresencePluginConfig struct{}
-
-func NewPresencePlugin(cfg *PresencePluginConfig) *PresencePlugin {
-	return &PresencePlugin{}
-}
-
-func (pp *PresencePlugin) MessageType() WsMessageType {
-	return UserMessageType
-}
-
-type action string
-
 const (
 	join  action = "JOIN"
 	leave action = "LEAVE"
 )
+
+type action string
 
 type outgoingPresence struct {
 	Profiles []models.Profile `json:"profiles"`
 	Action   action           `json:"action"`
 }
 
-func (pp *PresencePlugin) HandleClientJoin(ar *activeRoom, client *Client) error {
+type presencePluginConfig struct{}
+
+type presencePlugin struct{}
+
+func newPresencePlugin(cfg *presencePluginConfig) *presencePlugin {
+	return &presencePlugin{}
+}
+
+func (pp *presencePlugin) messageType() wsMessageType {
+	return userMessageType
+}
+
+func (pp *presencePlugin) handleClientJoin(room *activeRoom, client *Client) error {
 	var activeProfiles []models.Profile
-	ar.mu.RLock()
-	for c := range ar.clients {
+	room.mu.RLock()
+	for c := range room.clients {
 		if c != client {
 			activeProfiles = append(activeProfiles, c.profile)
 		}
 	}
-	ar.mu.RUnlock()
+	room.mu.RUnlock()
 
-	op := outgoingPresence{
+	outgoing := outgoingPresence{
 		Profiles: activeProfiles,
 		Action:   join,
 	}
 
-	payloadBytes, err := go_json.Marshal(op)
+	payload, err := go_json.Marshal(outgoing)
 	if err != nil {
 		return err
 	}
 
-	client.write <- WsMessage{
-		Type:    PresenceType,
-		Payload: payloadBytes,
+	client.write <- wsMessage{
+		Type:    presenceType,
+		Payload: payload,
 	}
 
-	op = outgoingPresence{
+	outgoing = outgoingPresence{
 		Profiles: []models.Profile{client.profile},
 		Action:   join,
 	}
 
-	payloadBytes, err = go_json.Marshal(op)
+	payload, err = go_json.Marshal(outgoing)
 	if err != nil {
 		return err
 	}
 
-	ar.mu.RLock()
-	for c := range ar.clients {
+	room.mu.RLock()
+	for c := range room.clients {
 		if c != client {
-			c.write <- WsMessage{
-				Type:    PresenceType,
-				Payload: payloadBytes,
+			c.write <- wsMessage{
+				Type:    presenceType,
+				Payload: payload,
 			}
 		}
 	}
-	ar.mu.RUnlock()
+	room.mu.RUnlock()
 
 	return nil
 }
 
-func (pp *PresencePlugin) HandleClientLeave(ar *activeRoom, client *Client) error {
-	op := outgoingPresence{
-		Profiles: []models.Profile{client.profile},
+func (pp *presencePlugin) handleClientLeave(room *activeRoom, cl *Client) error {
+	payload, err := go_json.Marshal(outgoingPresence{
+		Profiles: []models.Profile{cl.profile},
 		Action:   leave,
-	}
-
-	payloadBytes, err := go_json.Marshal(op)
+	})
 	if err != nil {
 		return err
 	}
 
-	ar.mu.RLock()
-	for c := range ar.clients {
-		c.write <- WsMessage{
-			Type:    PresenceType,
-			Payload: payloadBytes,
+	room.mu.RLock()
+	for c := range room.clients {
+		c.write <- wsMessage{
+			Type:    presenceType,
+			Payload: payload,
 		}
 	}
-	ar.mu.RUnlock()
+	room.mu.RUnlock()
 
 	return nil
 }

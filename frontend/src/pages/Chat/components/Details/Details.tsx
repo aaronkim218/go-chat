@@ -146,11 +146,13 @@ const Details = ({
                 <li className=" flex justify-between items-center" key={index}>
                   {user.username}
                   <Button
+                    className=" cursor-pointer"
+                    variant={"ghost"}
                     onClick={() =>
                       setNewUsers((prev) => prev.filter((u) => u !== user))
                     }
                   >
-                    <X />
+                    <X className=" text-destructive" />
                   </Button>
                 </li>
               ))}
