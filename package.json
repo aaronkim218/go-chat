@@ -1,0 +1,24 @@
+{
+  "name": "go-chat",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aaronkim218/go-chat.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aaronkim218/go-chat/issues"
+  },
+  "homepage": "https://github.com/aaronkim218/go-chat#readme",
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}

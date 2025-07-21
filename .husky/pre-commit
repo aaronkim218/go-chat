@@ -1,0 +1,7 @@
+cd frontend
+npx prettier --check .
+npx eslint .
+
+cd ../backend
+gofumpt -l .
+golangci-lint run
