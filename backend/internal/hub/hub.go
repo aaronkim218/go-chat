@@ -37,7 +37,7 @@ func New(cfg *Config) *Hub {
 		activeRooms:    make(map[uuid.UUID]*activeRoom),
 		storage:        cfg.Storage,
 		logger:         cfg.Logger,
-		pluginRegistry: createPluginRegistry(),
+		pluginRegistry: createPluginRegistry(cfg.Storage),
 	}
 
 	go hub.cleanup(cfg.CleanupInterval)
@@ -57,10 +57,9 @@ func (h *Hub) loadActiveRoom(roomId uuid.UUID) *activeRoom {
 	room, ok := h.activeRooms[roomId]
 	if !ok {
 		room = newActiveRoom(&activeRoomConfig{
-			RoomId:         roomId,
-			Storage:        h.storage,
-			Logger:         h.logger,
-			PluginRegistry: h.pluginRegistry,
+			roomId:         roomId,
+			logger:         h.logger,
+			pluginRegistry: h.pluginRegistry,
 		})
 		h.activeRooms[roomId] = room
 	}
@@ -96,14 +95,16 @@ func (h *Hub) stats(interval time.Duration) {
 	}
 }
 
-func createPluginRegistry() *pluginRegistry {
+func createPluginRegistry(storage storage.Storage) *pluginRegistry {
 	registry := newPluginRegistry(&pluginRegistryConfig{})
 
-	userMessage := newUserMessagePlugin(&userMessagePluginConfig{})
+	userMessage := newUserMessagePlugin(&userMessagePluginConfig{
+		storage: storage,
+	})
 	presence := newPresencePlugin(&presencePluginConfig{})
 	typingStatus := newTypingStatusPlugin(&typingStatusPluginConfig{
-		Timeout:         constants.TypingStatusTimeout,
-		CleanupInterval: constants.TypingStatusCleanupInterval,
+		timeout:         constants.TypingStatusTimeout,
+		cleanupInterval: constants.TypingStatusCleanupInterval,
 	})
 
 	// client join plugins

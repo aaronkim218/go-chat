@@ -75,9 +75,9 @@ func (pp *presencePlugin) handleClientJoin(room *activeRoom, client *Client) err
 	return nil
 }
 
-func (pp *presencePlugin) handleClientLeave(room *activeRoom, cl *Client) error {
+func (pp *presencePlugin) handleClientLeave(room *activeRoom, client *Client) error {
 	payload, err := go_json.Marshal(outgoingPresence{
-		Profiles: []models.Profile{cl.profile},
+		Profiles: []models.Profile{client.profile},
 		Action:   leave,
 	})
 	if err != nil {
