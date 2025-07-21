@@ -4,16 +4,13 @@ import (
 	"log/slog"
 	"sync"
 
-	"go-chat/internal/storage"
-
 	"github.com/google/uuid"
 )
 
 type activeRoomConfig struct {
-	RoomId         uuid.UUID
-	Storage        storage.Storage
-	Logger         *slog.Logger
-	PluginRegistry *pluginRegistry
+	roomId         uuid.UUID
+	logger         *slog.Logger
+	pluginRegistry *pluginRegistry
 }
 
 type activeRoom struct {
@@ -21,19 +18,17 @@ type activeRoom struct {
 	clients        map[*Client]struct{}
 	mu             sync.RWMutex
 	broadcast      chan broadcastMessage
-	storage        storage.Storage
 	logger         *slog.Logger
 	pluginRegistry *pluginRegistry
 }
 
 func newActiveRoom(cfg *activeRoomConfig) *activeRoom {
 	ar := &activeRoom{
-		roomId:         cfg.RoomId,
+		roomId:         cfg.roomId,
 		clients:        make(map[*Client]struct{}),
 		broadcast:      make(chan broadcastMessage),
-		storage:        cfg.Storage,
-		logger:         cfg.Logger,
-		pluginRegistry: cfg.PluginRegistry,
+		logger:         cfg.logger,
+		pluginRegistry: cfg.pluginRegistry,
 	}
 
 	go ar.handleBroadcast()

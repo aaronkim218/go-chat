@@ -18,8 +18,8 @@ type outgoingTypingStatus struct {
 }
 
 type typingStatusPluginConfig struct {
-	Timeout         time.Duration
-	CleanupInterval time.Duration
+	timeout         time.Duration
+	cleanupInterval time.Duration
 }
 
 type typingStatusPlugin struct {
@@ -31,10 +31,10 @@ type typingStatusPlugin struct {
 func newTypingStatusPlugin(cfg *typingStatusPluginConfig) *typingStatusPlugin {
 	tsp := &typingStatusPlugin{
 		typing:  make(map[*activeRoom]map[*Client]time.Time),
-		timeout: cfg.Timeout,
+		timeout: cfg.timeout,
 	}
 
-	go tsp.cleanup(cfg.CleanupInterval)
+	go tsp.cleanup(cfg.cleanupInterval)
 
 	return tsp
 }

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"go-chat/internal/models"
+	"go-chat/internal/storage"
 	"go-chat/internal/types"
 
 	go_json "github.com/goccy/go-json"
@@ -16,19 +17,25 @@ type incomingUserMessage struct {
 	Content string `json:"content"`
 }
 
-type userMessagePluginConfig struct{}
-
-type userMessagePlugin struct{}
-
-func newUserMessagePlugin(cfg *userMessagePluginConfig) *userMessagePlugin {
-	return &userMessagePlugin{}
+type userMessagePluginConfig struct {
+	storage storage.Storage
 }
 
-func (p *userMessagePlugin) messageType() wsMessageType {
+type userMessagePlugin struct {
+	storage storage.Storage
+}
+
+func newUserMessagePlugin(cfg *userMessagePluginConfig) *userMessagePlugin {
+	return &userMessagePlugin{
+		storage: cfg.storage,
+	}
+}
+
+func (ump *userMessagePlugin) messageType() wsMessageType {
 	return userMessageType
 }
 
-func (p *userMessagePlugin) handleBroadcastMessage(room *activeRoom, msg broadcastMessage) error {
+func (ump *userMessagePlugin) handleBroadcastMessage(room *activeRoom, msg broadcastMessage) error {
 	var incoming incomingUserMessage
 	if err := go_json.Unmarshal(msg.wsMessage.Payload, &incoming); err != nil {
 		return err
@@ -48,7 +55,7 @@ func (p *userMessagePlugin) handleBroadcastMessage(room *activeRoom, msg broadca
 		UpdatedAt: time.Now(),
 	}
 
-	if err := room.storage.CreateMessage(context.TODO(), message); err != nil {
+	if err := ump.storage.CreateMessage(context.TODO(), message); err != nil {
 		return err
 	}
 
