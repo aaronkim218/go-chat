@@ -51,4 +51,10 @@ jobs:
       - name: install gofumpt
         run: go install mvdan.cc/gofumpt@latest
       - name: gofumpt
-        run: gofumpt -l .
+        run: |
+          output=$(gofumpt -l .)
+          if [ -n "$output" ]; then
+            echo "The following files are not gofumpt-formatted:"
+            echo "$output"
+            exit 1
+          fi

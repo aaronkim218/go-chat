@@ -1,8 +1,9 @@
 package hub
 
 import (
-	"go-chat/internal/models"
 	"log/slog"
+
+	"go-chat/internal/models"
 
 	"github.com/gofiber/contrib/websocket"
 )

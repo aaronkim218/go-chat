@@ -1,0 +1,12 @@
+cd frontend
+npx prettier --check .
+npx eslint .
+
+cd ../backend
+output=$(gofumpt -l .)
+if [ -n "$output" ]; then
+  echo "The following files are not gofumpt-formatted:"
+  echo "$output"
+  exit 1
+fi
+golangci-lint run
