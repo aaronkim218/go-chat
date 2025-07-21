@@ -1,9 +1,10 @@
 package hub
 
 import (
-	"go-chat/internal/models"
 	"sync"
 	"time"
+
+	"go-chat/internal/models"
 
 	go_json "github.com/goccy/go-json"
 )

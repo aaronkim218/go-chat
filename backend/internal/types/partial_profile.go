@@ -2,8 +2,9 @@ package types
 
 import (
 	"fmt"
-	"go-chat/internal/constants"
 	"time"
+
+	"go-chat/internal/constants"
 )
 
 type PartialProfile struct {

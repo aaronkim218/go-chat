@@ -1,9 +1,10 @@
 package handlers
 
 import (
+	"log/slog"
+
 	"go-chat/internal/hub"
 	"go-chat/internal/storage"
-	"log/slog"
 
 	"github.com/gofiber/fiber/v2"
 )

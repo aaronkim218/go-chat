@@ -2,8 +2,9 @@ package models
 
 import (
 	"fmt"
-	"go-chat/internal/constants"
 	"time"
+
+	"go-chat/internal/constants"
 
 	"github.com/google/uuid"
 )
