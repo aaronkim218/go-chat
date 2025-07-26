@@ -56,8 +56,8 @@ github.com/gofiber/contrib/swagger v1.3.0 h1:J1InCTPUW/DzDlG+QwWcD5QZ4W9HlyCRHLZ
 github.com/gofiber/contrib/swagger v1.3.0/go.mod h1:zlZljpjIz1VhKR25+Inxl7WaOkgyM10nITUFXn6sV5A=
 github.com/gofiber/contrib/websocket v1.3.4 h1:tWeBdbJ8q0WFQXariLN4dBIbGH9KBU75s0s7YXplOSg=
 github.com/gofiber/contrib/websocket v1.3.4/go.mod h1:kTFBPC6YENCnKfKx0BoOFjgXxdz7E85/STdkmZPEmPs=
-github.com/gofiber/fiber/v2 v2.52.8 h1:xl4jJQ0BV5EJTA2aWiKw/VddRpHrKeZLF0QPUxqn0x4=
-github.com/gofiber/fiber/v2 v2.52.8/go.mod h1:YEcBbO/FB+5M1IZNBP9FO3J9281zgPAreiI1oqg8nDw=
+github.com/gofiber/fiber/v2 v2.52.9 h1:YjKl5DOiyP3j0mO61u3NTmK7or8GzzWzCFzkboyP5cw=
+github.com/gofiber/fiber/v2 v2.52.9/go.mod h1:YEcBbO/FB+5M1IZNBP9FO3J9281zgPAreiI1oqg8nDw=
 github.com/gofiber/storage/memory/v2 v2.0.1 h1:tAETnom9uvEB9B3I2LkgewiuqYDAH0ItrIsmT8MUEwk=
 github.com/gofiber/storage/memory/v2 v2.0.1/go.mod h1:RRo3RfX6nTD/UhERyE/u5LcSfqtMo9dA4ltmieSe+QM=
 github.com/golang-jwt/jwt/v5 v5.2.3 h1:kkGXqQOBSDDWRhWNXTFpqGSCMyh/PLnqUvMGJPDJDs0=
