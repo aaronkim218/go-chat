@@ -5,9 +5,11 @@ import (
 	"net/http"
 
 	"go-chat/internal/handlers"
-	"go-chat/internal/hub"
+	"go-chat/internal/models"
 	"go-chat/internal/storage"
 	"go-chat/internal/xerrors"
+
+	hub "github.com/aaronkim218/hubsocket"
 
 	go_json "github.com/goccy/go-json"
 
@@ -19,7 +21,7 @@ import (
 
 type Config struct {
 	Storage      storage.Storage
-	Hub          *hub.Hub
+	Hub          *hub.Hub[models.Profile]
 	JwtSecret    string
 	Logger       *slog.Logger
 	FiberStorage fiber.Storage

@@ -8,13 +8,13 @@ import (
 	"sync"
 	"time"
 
-	"go-chat/internal/hub"
 	"go-chat/internal/models"
 	"go-chat/internal/types"
 	"go-chat/internal/utils"
 	"go-chat/internal/xcontext"
 	"go-chat/internal/xerrors"
 
+	"github.com/aaronkim218/hubsocket"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -263,9 +263,9 @@ func (hs *HandlerService) JoinRoom(conn *websocket.Conn) {
 		return
 	}
 
-	client := hub.NewClient(&hub.ClientConfig{
-		Profile: profile,
-		Conn:    conn,
+	client := hubsocket.NewClient(&hubsocket.ClientConfig[models.Profile]{
+		Metadata: profile,
+		Conn:     conn,
 	})
 
 	hs.hub.AddClient(client, rid)

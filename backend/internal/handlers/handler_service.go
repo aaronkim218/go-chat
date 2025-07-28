@@ -3,15 +3,16 @@ package handlers
 import (
 	"log/slog"
 
-	"go-chat/internal/hub"
+	"go-chat/internal/models"
 	"go-chat/internal/storage"
 
+	"github.com/aaronkim218/hubsocket"
 	"github.com/gofiber/fiber/v2"
 )
 
 type HandlerService struct {
 	storage      storage.Storage
-	hub          *hub.Hub
+	hub          *hubsocket.Hub[models.Profile]
 	jwtSecret    string
 	logger       *slog.Logger
 	fiberStorage fiber.Storage
@@ -19,7 +20,7 @@ type HandlerService struct {
 
 type HandlerServiceConfig struct {
 	Storage      storage.Storage
-	Hub          *hub.Hub
+	Hub          *hubsocket.Hub[models.Profile]
 	JwtSecret    string
 	Logger       *slog.Logger
 	FiberStorage fiber.Storage
