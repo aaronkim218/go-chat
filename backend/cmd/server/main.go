@@ -10,12 +10,15 @@ import (
 	"syscall"
 
 	"go-chat/internal/constants"
-	"go-chat/internal/hub"
+	"go-chat/internal/models"
+	"go-chat/internal/plugins"
 	"go-chat/internal/server"
 	"go-chat/internal/settings"
+	"go-chat/internal/storage"
 	"go-chat/internal/storage/postgres"
 	"go-chat/internal/utils"
 
+	"github.com/aaronkim218/hubsocket"
 	"github.com/gofiber/storage/memory/v2"
 
 	"github.com/joho/godotenv"
@@ -43,14 +46,14 @@ func main() {
 
 	mem := memory.New()
 
-	hub := hub.New(&hub.Config{
-		Storage: postgres,
+	hub := hubsocket.New(&hubsocket.Config[models.Profile]{
 		Workers: settings.Hub.Workers,
 		Logger: slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			Level: utils.MustParseSlogLevel(settings.Hub.LogLevel),
 		})),
 		StatsInterval:   constants.HubStatsInterval,
 		CleanupInterval: constants.HubCleanupInterval,
+		PluginRegistry:  createPluginRegistry(postgres),
 	})
 
 	app := server.New(&server.Config{
@@ -86,4 +89,28 @@ func main() {
 	}
 
 	slog.Info("server shutdown")
+}
+
+func createPluginRegistry(storage storage.Storage) *hubsocket.PluginRegistry[models.Profile] {
+	pluginRegistry := hubsocket.NewPluginRegistry[models.Profile](&hubsocket.PluginRegistryConfig{})
+
+	presence := plugins.NewPresencePlugin(&plugins.PresencePluginConfig{})
+	typingStatus := plugins.NewTypingStatusPlugin(&plugins.TypingStatusPluginConfig{
+		Timeout:         constants.TypingStatusTimeout,
+		CleanupInterval: constants.TypingStatusCleanupInterval,
+	})
+	userMessage := plugins.NewUserMessagePlugin(&plugins.UserMessagePluginConfig{
+		Storage: storage,
+	})
+
+	pluginRegistry.RegisterClientJoinPlugin(presence)
+	pluginRegistry.RegisterClientJoinPlugin(typingStatus)
+
+	pluginRegistry.RegisterBroadcastMessagePlugin(userMessage)
+	pluginRegistry.RegisterBroadcastMessagePlugin(typingStatus)
+
+	pluginRegistry.RegisterClientLeavePlugin(presence)
+	pluginRegistry.RegisterClientLeavePlugin(typingStatus)
+
+	return pluginRegistry
 }
