@@ -11,7 +11,7 @@ require (
 	github.com/gofiber/contrib/swagger v1.3.0
 	github.com/gofiber/contrib/websocket v1.3.4
 	github.com/gofiber/fiber/v2 v2.52.9
-	github.com/gofiber/storage/memory/v2 v2.0.1
+	github.com/gofiber/storage/memory/v2 v2.1.0
 	github.com/golang-jwt/jwt/v5 v5.2.3
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
