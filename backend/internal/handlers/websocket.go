@@ -4,8 +4,9 @@ import (
 	"context"
 	"log/slog"
 
-	"go-chat/internal/eventsocket"
 	"go-chat/internal/utils"
+
+	"github.com/aaronkim218/eventsocket"
 
 	"github.com/gofiber/contrib/websocket"
 	"github.com/golang-jwt/jwt/v5"

@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"log/slog"
 
-	"go-chat/internal/eventsocket"
 	"go-chat/internal/models"
 	"go-chat/internal/storage"
+
+	"github.com/aaronkim218/eventsocket"
 
 	"github.com/google/uuid"
 )

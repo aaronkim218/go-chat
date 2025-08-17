@@ -7,10 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"go-chat/internal/eventsocket"
 	"go-chat/internal/models"
 	"go-chat/internal/storage"
 	"go-chat/internal/types"
+
+	"github.com/aaronkim218/eventsocket"
 
 	"github.com/google/uuid"
 )

@@ -3,9 +3,10 @@ package handlers
 import (
 	"log/slog"
 
-	"go-chat/internal/eventsocket"
 	"go-chat/internal/plugins"
 	"go-chat/internal/storage"
+
+	"github.com/aaronkim218/eventsocket"
 
 	"github.com/gofiber/fiber/v2"
 )

@@ -6,8 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"go-chat/internal/eventsocket"
 	"go-chat/internal/models"
+
+	"github.com/aaronkim218/eventsocket"
 )
 
 type typingStatusPayload struct {

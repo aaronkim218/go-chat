@@ -4,11 +4,12 @@ import (
 	"log/slog"
 	"net/http"
 
-	"go-chat/internal/eventsocket"
 	"go-chat/internal/handlers"
 	"go-chat/internal/plugins"
 	"go-chat/internal/storage"
 	"go-chat/internal/xerrors"
+
+	"github.com/aaronkim218/eventsocket"
 
 	go_json "github.com/goccy/go-json"
 
