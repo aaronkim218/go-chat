@@ -1,157 +1,269 @@
 package plugins
 
 import (
+	"encoding/json"
+	"log/slog"
 	"sync"
 	"time"
 
+	"go-chat/internal/eventsocket"
 	"go-chat/internal/models"
-
-	"github.com/aaronkim218/hubsocket"
-	go_json "github.com/goccy/go-json"
 )
 
-const typingStatusType hubsocket.WsMessageType = "TYPING_STATUS"
-
-type incomingTypingStatus struct {
+type typingStatusPayload struct {
+	RoomID  string         `json:"room_id"`
 	Profile models.Profile `json:"profile"`
 }
 
 type outgoingTypingStatus struct {
+	RoomID   string           `json:"room_id"`
 	Profiles []models.Profile `json:"profiles"`
 }
 
+type TypingStatusPlugin struct {
+	eventsocket     *eventsocket.Eventsocket
+	logger          *slog.Logger
+	typing          map[string]map[string]time.Time
+	clientProfiles  map[string]models.Profile
+	mu              sync.RWMutex
+	timeout         time.Duration
+	cleanupInterval time.Duration
+}
+
 type TypingStatusPluginConfig struct {
+	Eventsocket     *eventsocket.Eventsocket
+	Logger          *slog.Logger
 	Timeout         time.Duration
 	CleanupInterval time.Duration
 }
 
-type TypingStatusPlugin struct {
-	typing  map[*hubsocket.ActiveRoom[models.Profile]]map[*hubsocket.Client[models.Profile]]time.Time
-	mu      sync.RWMutex
-	timeout time.Duration
-}
-
-func NewTypingStatusPlugin(cfg *TypingStatusPluginConfig) *TypingStatusPlugin {
-	tsp := &TypingStatusPlugin{
-		typing:  make(map[*hubsocket.ActiveRoom[models.Profile]]map[*hubsocket.Client[models.Profile]]time.Time),
-		timeout: cfg.Timeout,
+func NewEventsocketTypingStatusPlugin(cfg *TypingStatusPluginConfig) *TypingStatusPlugin {
+	plugin := &TypingStatusPlugin{
+		eventsocket:     cfg.Eventsocket,
+		logger:          cfg.Logger,
+		typing:          make(map[string]map[string]time.Time),
+		clientProfiles:  make(map[string]models.Profile),
+		timeout:         cfg.Timeout,
+		cleanupInterval: cfg.CleanupInterval,
 	}
 
-	go tsp.cleanup(cfg.CleanupInterval)
+	plugin.eventsocket.OnRemoveClient("typing_status", plugin.unregisterClient)
 
-	return tsp
+	plugin.eventsocket.OnJoinRoom("typing_status", func(roomID, clientID string) {
+		if err := plugin.handleJoinRoom(roomID, clientID); err != nil {
+			plugin.logger.Error("Failed to handle typing status on join",
+				slog.String("err", err.Error()),
+				slog.String("clientId", clientID),
+				slog.String("roomId", roomID),
+			)
+		}
+	})
+
+	plugin.eventsocket.OnLeaveRoom("typing_status", func(roomID, clientID string) {
+		if err := plugin.handleLeaveRoom(roomID, clientID); err != nil {
+			plugin.logger.Error("Failed to handle typing status on leave",
+				slog.String("err", err.Error()),
+				slog.String("clientId", clientID),
+				slog.String("roomId", roomID),
+			)
+		}
+	})
+
+	go plugin.cleanup()
+
+	return plugin
 }
 
-func (tsp *TypingStatusPlugin) MessageType() hubsocket.WsMessageType {
-	return typingStatusType
+func (ts *TypingStatusPlugin) RegisterClient(client *eventsocket.Client, profile models.Profile) {
+	clientID := client.ID()
+
+	ts.mu.Lock()
+	ts.clientProfiles[clientID] = profile
+	ts.mu.Unlock()
+
+	client.OnMessage("TYPING_STATUS", func(data json.RawMessage) {
+		ts.HandleTypingStatus(clientID, data)
+	})
+
+	ts.logger.Debug("Registered client for typing status",
+		slog.String("clientId", clientID),
+		slog.String("username", profile.Username),
+	)
 }
 
-func (tsp *TypingStatusPlugin) HandleClientJoin(room *hubsocket.ActiveRoom[models.Profile], client *hubsocket.Client[models.Profile]) error {
-	profiles := tsp.getTypingProfiles(room, client)
-	if profiles == nil {
+func (ts *TypingStatusPlugin) unregisterClient(clientID string) {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
+
+	delete(ts.clientProfiles, clientID)
+
+	for roomID, clients := range ts.typing {
+		delete(clients, clientID)
+		if len(clients) == 0 {
+			delete(ts.typing, roomID)
+		}
+	}
+
+	ts.logger.Debug("Unregistered client from typing status",
+		slog.String("clientId", clientID),
+	)
+}
+
+func (ts *TypingStatusPlugin) handleJoinRoom(roomID, clientID string) error {
+	typingProfiles := ts.getTypingProfiles(roomID, clientID)
+	if len(typingProfiles) == 0 {
 		return nil
 	}
 
-	payload, err := go_json.Marshal(outgoingTypingStatus{
-		Profiles: profiles,
-	})
-	if err != nil {
-		return err
-	}
-
-	client.Write <- hubsocket.WsMessage{
-		Type:    typingStatusType,
-		Payload: payload,
-	}
-
-	return nil
+	return ts.sendTypingStatusToClient(clientID, roomID, typingProfiles)
 }
 
-func (tsp *TypingStatusPlugin) HandleBroadcastMessage(room *hubsocket.ActiveRoom[models.Profile], msg hubsocket.BroadcastMessage[models.Profile]) error {
-	var incoming incomingTypingStatus
-	if err := go_json.Unmarshal(msg.WsMessage.Payload, &incoming); err != nil {
-		return err
-	}
+func (ts *TypingStatusPlugin) handleLeaveRoom(roomID, clientID string) error {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
 
-	tsp.setClientTyping(room, msg.Client)
-
-	payload, err := go_json.Marshal(outgoingTypingStatus{
-		Profiles: []models.Profile{incoming.Profile},
-	})
-	if err != nil {
-		return err
-	}
-
-	room.Mu.RLock()
-	for c := range room.Clients {
-		if c != msg.Client {
-			c.Write <- hubsocket.WsMessage{
-				Type:    typingStatusType,
-				Payload: payload,
-			}
+	if clients, exists := ts.typing[roomID]; exists {
+		delete(clients, clientID)
+		if len(clients) == 0 {
+			delete(ts.typing, roomID)
 		}
 	}
-	room.Mu.RUnlock()
 
 	return nil
 }
 
-func (tsp *TypingStatusPlugin) HandleClientLeave(room *hubsocket.ActiveRoom[models.Profile], client *hubsocket.Client[models.Profile]) error {
-	tsp.mu.Lock()
-	delete(tsp.typing[room], client)
-	tsp.mu.Unlock()
-
-	return nil
-}
-
-func (tsp *TypingStatusPlugin) cleanup(interval time.Duration) {
-	ticker := time.NewTicker(interval)
-
-	for range ticker.C {
-		tsp.mu.Lock()
-		for ar, clients := range tsp.typing {
-			for c, t := range clients {
-				if time.Since(t) > tsp.timeout {
-					delete(clients, c)
-				}
-			}
-
-			if len(clients) == 0 {
-				delete(tsp.typing, ar)
-			}
-		}
-		tsp.mu.Unlock()
+func (ts *TypingStatusPlugin) HandleTypingStatus(clientID string, data json.RawMessage) {
+	var payload typingStatusPayload
+	if err := json.Unmarshal(data, &payload); err != nil {
+		ts.logger.Error("Failed to parse TYPING_STATUS payload",
+			slog.String("err", err.Error()),
+			slog.String("clientId", clientID),
+		)
+		return
 	}
+
+	roomID := payload.RoomID
+
+	ts.setClientTyping(roomID, clientID)
+
+	ts.mu.RLock()
+	profile, exists := ts.clientProfiles[clientID]
+	ts.mu.RUnlock()
+
+	if !exists {
+		ts.logger.Error("Client profile not found for typing status broadcast",
+			slog.String("clientId", clientID),
+		)
+		return
+	}
+
+	if err := ts.broadcastTypingStatusToRoom(roomID, clientID, []models.Profile{profile}); err != nil {
+		ts.logger.Error("Failed to broadcast typing status",
+			slog.String("err", err.Error()),
+			slog.String("clientId", clientID),
+			slog.String("roomId", roomID),
+		)
+		return
+	}
+
+	ts.logger.Debug("Typing status processed successfully",
+		slog.String("clientId", clientID),
+		slog.String("roomId", roomID),
+		slog.String("username", profile.Username),
+	)
 }
 
-func (tsp *TypingStatusPlugin) getTypingProfiles(room *hubsocket.ActiveRoom[models.Profile], client *hubsocket.Client[models.Profile]) []models.Profile {
-	tsp.mu.RLock()
-	defer tsp.mu.RUnlock()
+func (ts *TypingStatusPlugin) getTypingProfiles(roomID, excludeClientID string) []models.Profile {
+	ts.mu.RLock()
+	defer ts.mu.RUnlock()
 
-	clients, ok := tsp.typing[room]
-	if !ok {
+	clients, exists := ts.typing[roomID]
+	if !exists {
 		return nil
 	}
 
 	var profiles []models.Profile
-	for c := range clients {
-		if c != client {
-			profiles = append(profiles, c.Metadata)
+	for clientID := range clients {
+		if clientID != excludeClientID {
+			if profile, exists := ts.clientProfiles[clientID]; exists {
+				profiles = append(profiles, profile)
+			}
 		}
 	}
 
 	return profiles
 }
 
-func (tsp *TypingStatusPlugin) setClientTyping(room *hubsocket.ActiveRoom[models.Profile], client *hubsocket.Client[models.Profile]) {
-	tsp.mu.Lock()
-	defer tsp.mu.Unlock()
+func (ts *TypingStatusPlugin) setClientTyping(roomID, clientID string) {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
 
-	clients, ok := tsp.typing[room]
-	if !ok {
-		clients = make(map[*hubsocket.Client[models.Profile]]time.Time)
-		tsp.typing[room] = clients
+	if ts.typing[roomID] == nil {
+		ts.typing[roomID] = make(map[string]time.Time)
 	}
 
-	clients[client] = time.Now()
+	ts.typing[roomID][clientID] = time.Now()
+}
+
+func (ts *TypingStatusPlugin) sendTypingStatusToClient(clientID, roomID string, profiles []models.Profile) error {
+	payloadData := outgoingTypingStatus{
+		RoomID:   roomID,
+		Profiles: profiles,
+	}
+
+	responseData, err := json.Marshal(payloadData)
+	if err != nil {
+		return err
+	}
+
+	message := eventsocket.Message{
+		Type: "TYPING_STATUS",
+		Data: responseData,
+	}
+
+	return ts.eventsocket.BroadcastToClient(clientID, message)
+}
+
+func (ts *TypingStatusPlugin) broadcastTypingStatusToRoom(roomID, excludeClientID string, profiles []models.Profile) error {
+	payloadData := outgoingTypingStatus{
+		RoomID:   roomID,
+		Profiles: profiles,
+	}
+
+	responseData, err := json.Marshal(payloadData)
+	if err != nil {
+		return err
+	}
+
+	message := eventsocket.Message{
+		Type: "TYPING_STATUS",
+		Data: responseData,
+	}
+
+	if excludeClientID != "" {
+		return ts.eventsocket.BroadcastToRoomExcept(roomID, excludeClientID, message)
+	} else {
+		return ts.eventsocket.BroadcastToRoom(roomID, message)
+	}
+}
+
+func (ts *TypingStatusPlugin) cleanup() {
+	ticker := time.NewTicker(ts.cleanupInterval)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		ts.mu.Lock()
+		for roomID, clients := range ts.typing {
+			for clientID, timestamp := range clients {
+				if time.Since(timestamp) > ts.timeout {
+					delete(clients, clientID)
+				}
+			}
+
+			if len(clients) == 0 {
+				delete(ts.typing, roomID)
+			}
+		}
+		ts.mu.Unlock()
+	}
 }

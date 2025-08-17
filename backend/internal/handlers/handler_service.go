@@ -3,35 +3,38 @@ package handlers
 import (
 	"log/slog"
 
-	"go-chat/internal/models"
+	"go-chat/internal/eventsocket"
+	"go-chat/internal/plugins"
 	"go-chat/internal/storage"
 
-	"github.com/aaronkim218/hubsocket"
 	"github.com/gofiber/fiber/v2"
 )
 
 type HandlerService struct {
-	storage      storage.Storage
-	hub          *hubsocket.Hub[models.Profile]
-	jwtSecret    string
-	logger       *slog.Logger
-	fiberStorage fiber.Storage
+	storage          storage.Storage
+	jwtSecret        string
+	logger           *slog.Logger
+	fiberStorage     fiber.Storage
+	eventsocket      *eventsocket.Eventsocket
+	pluginsContainer *plugins.Container
 }
 
 type HandlerServiceConfig struct {
-	Storage      storage.Storage
-	Hub          *hubsocket.Hub[models.Profile]
-	JwtSecret    string
-	Logger       *slog.Logger
-	FiberStorage fiber.Storage
+	Storage          storage.Storage
+	JwtSecret        string
+	Logger           *slog.Logger
+	FiberStorage     fiber.Storage
+	Eventsocket      *eventsocket.Eventsocket
+	PluginsContainer *plugins.Container
 }
 
 func NewService(cfg *HandlerServiceConfig) *HandlerService {
 	return &HandlerService{
-		storage:      cfg.Storage,
-		hub:          cfg.Hub,
-		jwtSecret:    cfg.JwtSecret,
-		logger:       cfg.Logger,
-		fiberStorage: cfg.FiberStorage,
+		storage:          cfg.Storage,
+		jwtSecret:        cfg.JwtSecret,
+		logger:           cfg.Logger,
+		fiberStorage:     cfg.FiberStorage,
+		eventsocket:      cfg.Eventsocket,
+		pluginsContainer: cfg.PluginsContainer,
 	}
 }

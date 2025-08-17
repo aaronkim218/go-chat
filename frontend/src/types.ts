@@ -3,7 +3,9 @@ import {
   BulkResultStringSchema,
   CreateRoomResponseSchema,
   IncomingPresenceSchema,
-  IncomingTypingStatus,
+  IncomingTypingStatusSchema,
+  IncomingJoinRoomSuccessSchema,
+  IncomingJoinRoomErrorSchema,
   MessageSchema,
   PatchProfileRequestSchema,
   PatchProfileResponseSchema,
@@ -50,14 +52,30 @@ export type BulkResultString = z.infer<typeof BulkResultStringSchema>;
 
 export type CreateRoomResponse = z.infer<typeof CreateRoomResponseSchema>;
 
-export interface OutgoingUserMessage {
-  content: string;
+export enum IncomingWSMessageType {
+  USER_MESSAGE = "USER_MESSAGE",
+  PRESENCE = "PRESENCE",
+  TYPING_STATUS = "TYPING_STATUS",
+  JOIN_ROOM_SUCCESS = "JOIN_ROOM_SUCCESS",
+  JOIN_ROOM_ERROR = "JOIN_ROOM_ERROR",
 }
 
+export enum OutgoingWSMessageType {
+  USER_MESSAGE = "USER_MESSAGE",
+  TYPING_STATUS = "TYPING_STATUS",
+  JOIN_ROOM = "JOIN_ROOM",
+  LEAVE_ROOM = "LEAVE_ROOM",
+}
+
+// Legacy enum for backwards compatibility during transition
 export enum WSMessageType {
   USER_MESSAGE = "USER_MESSAGE",
   PRESENCE = "PRESENCE",
   TYPING_STATUS = "TYPING_STATUS",
+  JOIN_ROOM = "JOIN_ROOM",
+  JOIN_ROOM_SUCCESS = "JOIN_ROOM_SUCCESS",
+  JOIN_ROOM_ERROR = "JOIN_ROOM_ERROR",
+  LEAVE_ROOM = "LEAVE_ROOM",
 }
 
 export enum PresenceAction {
@@ -66,14 +84,32 @@ export enum PresenceAction {
 }
 
 export interface OutgoingWSMessage<T> {
-  type: WSMessageType;
-  payload: T;
+  type: OutgoingWSMessageType;
+  data: T;
 }
 
+export type IncomingUserMessage = UserMessage;
 export type IncomingPresence = z.infer<typeof IncomingPresenceSchema>;
+export type IncomingTypingStatus = z.infer<typeof IncomingTypingStatusSchema>;
+export type IncomingJoinRoomSuccess = z.infer<
+  typeof IncomingJoinRoomSuccessSchema
+>;
+export type IncomingJoinRoomError = z.infer<typeof IncomingJoinRoomErrorSchema>;
 
-export type IncomingTypingStatus = z.infer<typeof IncomingTypingStatus>;
+export interface OutgoingUserMessage {
+  content: string;
+  roomId: string;
+}
 
-export type OutgoingTypingStatus = {
+export interface OutgoingTypingStatus {
   profile: Profile;
-};
+  roomId: string;
+}
+
+export interface OutgoingJoinRoom {
+  roomId: string;
+}
+
+export interface OutgoingLeaveRoom {
+  roomId: string;
+}

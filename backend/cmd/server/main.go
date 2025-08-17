@@ -9,16 +9,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"go-chat/internal/constants"
-	"go-chat/internal/models"
+	"go-chat/internal/eventsocket"
 	"go-chat/internal/plugins"
 	"go-chat/internal/server"
 	"go-chat/internal/settings"
-	"go-chat/internal/storage"
 	"go-chat/internal/storage/postgres"
 	"go-chat/internal/utils"
 
-	"github.com/aaronkim218/hubsocket"
 	"github.com/gofiber/storage/memory/v2"
 
 	"github.com/joho/godotenv"
@@ -46,32 +43,30 @@ func main() {
 
 	mem := memory.New()
 
-	hub := hubsocket.New(&hubsocket.Config[models.Profile]{
-		Workers: settings.Hub.Workers,
+	eventsocket := eventsocket.New()
+
+	pluginsContainer := plugins.NewContainer(&plugins.ContainerConfig{
+		Eventsocket: eventsocket,
+		Storage:     postgres,
 		Logger: slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			Level: utils.MustParseSlogLevel(settings.Hub.LogLevel),
 		})),
-		StatsInterval:   constants.HubStatsInterval,
-		CleanupInterval: constants.HubCleanupInterval,
-		PluginRegistry:  createPluginRegistry(postgres),
 	})
 
 	app := server.New(&server.Config{
 		Storage:   postgres,
-		Hub:       hub,
 		JwtSecret: settings.Jwt.Secret,
 		Logger: slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			Level: utils.MustParseSlogLevel(settings.Server.LogLevel),
 		})),
-		FiberStorage: mem,
+		FiberStorage:     mem,
+		Eventsocket:      eventsocket,
+		PluginsContainer: pluginsContainer,
 	})
 
 	go func() {
 		if err := app.Listen(":" + settings.Server.Port); err != nil {
-			slog.Error(
-				"failed to start server",
-				slog.String("error", err.Error()),
-			)
+			slog.Error("failed to start server", slog.String("error", err.Error()))
 			os.Exit(1)
 		}
 	}()
@@ -89,28 +84,4 @@ func main() {
 	}
 
 	slog.Info("server shutdown")
-}
-
-func createPluginRegistry(storage storage.Storage) *hubsocket.PluginRegistry[models.Profile] {
-	pluginRegistry := hubsocket.NewPluginRegistry[models.Profile](&hubsocket.PluginRegistryConfig{})
-
-	presence := plugins.NewPresencePlugin(&plugins.PresencePluginConfig{})
-	typingStatus := plugins.NewTypingStatusPlugin(&plugins.TypingStatusPluginConfig{
-		Timeout:         constants.TypingStatusTimeout,
-		CleanupInterval: constants.TypingStatusCleanupInterval,
-	})
-	userMessage := plugins.NewUserMessagePlugin(&plugins.UserMessagePluginConfig{
-		Storage: storage,
-	})
-
-	pluginRegistry.RegisterClientJoinPlugin(presence)
-	pluginRegistry.RegisterClientJoinPlugin(typingStatus)
-
-	pluginRegistry.RegisterBroadcastMessagePlugin(userMessage)
-	pluginRegistry.RegisterBroadcastMessagePlugin(typingStatus)
-
-	pluginRegistry.RegisterClientLeavePlugin(presence)
-	pluginRegistry.RegisterClientLeavePlugin(typingStatus)
-
-	return pluginRegistry
 }

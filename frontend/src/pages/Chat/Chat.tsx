@@ -13,27 +13,32 @@ import { useWebSocket } from "./useWebSocket";
 import { getProfilesByRoomId } from "@/api";
 import { toast } from "sonner";
 import { UNKNOWN_ERROR } from "@/constants";
+import { useWebSocketContext } from "@/contexts/WebSocket";
 
 const Chat = () => {
-  const [activeRoom, setActiveRoom] = useState<Room | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [activeProfiles, setActiveProfiles] = useState<Set<string>>(new Set());
   const [userMessages, setUserMessages] = useState<UserMessage[]>([]);
   const [profilesHashMap, setProfilesHashMap] = useState<Map<string, Profile>>(
     new Map(),
   );
 
-  const { sendMessage, sendTypingStatus, typingProfiles } = useWebSocket({
+  const { pendingRoomJoin } = useWebSocketContext();
+  const {
     activeRoom,
+    sendMessage,
+    sendTypingStatus,
+    joinRoom,
+    typingProfiles,
+    activeProfiles,
+  } = useWebSocket({
+    rooms,
     setRooms,
-    setActiveProfiles,
     onMessageReceived: (message: UserMessage) => {
       setUserMessages((prev) => [...prev, message]);
     },
   });
 
   useEffect(() => {
-    setActiveProfiles(new Set());
     setUserMessages([]);
     if (activeRoom) {
       fetchProfiles(activeRoom.id);
@@ -69,15 +74,23 @@ const Chat = () => {
     });
   };
 
+  const handleRoomSelect = (room: Room) => {
+    if (activeRoom?.id === room.id) {
+      return;
+    }
+    joinRoom(room.id);
+  };
+
   return (
     <div className=" w-full">
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={15} minSize={15}>
           <Rooms
             activeRoom={activeRoom}
-            setActiveRoom={setActiveRoom}
+            onRoomSelect={handleRoomSelect}
             rooms={rooms}
             setRooms={setRooms}
+            pendingRoomJoin={pendingRoomJoin}
           />
         </ResizablePanel>
         <ResizableHandle withHandle />
@@ -98,7 +111,7 @@ const Chat = () => {
             <Details
               activeRoom={activeRoom}
               setRooms={setRooms}
-              setActiveRoom={setActiveRoom}
+              setActiveRoom={() => {}} // No longer used - managed by useWebSocket
               activeProfiles={activeProfiles}
               profilesHashMap={profilesHashMap}
               updateProfilesHashMap={updateProfilesHashMap}

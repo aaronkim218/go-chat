@@ -1,5 +1,5 @@
 import * as z from "zod/v4";
-import { WSMessageType } from "./types";
+import { IncomingWSMessageType } from "./types";
 
 export const MessageSchema = z.object({
   id: z.string(),
@@ -68,25 +68,44 @@ export const CreateRoomResponseSchema = z.object({
 });
 
 export const IncomingPresenceSchema = z.object({
+  roomId: z.string(),
   profiles: z.array(ProfileSchema).nullable(),
   action: z.enum(["JOIN", "LEAVE"]),
 });
 
-export const IncomingTypingStatus = z.object({
+export const IncomingTypingStatusSchema = z.object({
+  roomId: z.string(),
   profiles: z.array(ProfileSchema).nullable(),
+});
+
+export const IncomingJoinRoomSuccessSchema = z.object({
+  roomId: z.string(),
+});
+
+export const IncomingJoinRoomErrorSchema = z.object({
+  roomId: z.string(),
+  message: z.string(),
 });
 
 export const IncomingWSMessageSchema = z.discriminatedUnion("type", [
   z.object({
-    type: z.literal(WSMessageType.USER_MESSAGE),
-    payload: UserMessageSchema,
+    type: z.literal(IncomingWSMessageType.USER_MESSAGE),
+    data: UserMessageSchema,
   }),
   z.object({
-    type: z.literal(WSMessageType.PRESENCE),
-    payload: IncomingPresenceSchema,
+    type: z.literal(IncomingWSMessageType.PRESENCE),
+    data: IncomingPresenceSchema,
   }),
   z.object({
-    type: z.literal(WSMessageType.TYPING_STATUS),
-    payload: IncomingTypingStatus,
+    type: z.literal(IncomingWSMessageType.TYPING_STATUS),
+    data: IncomingTypingStatusSchema,
+  }),
+  z.object({
+    type: z.literal(IncomingWSMessageType.JOIN_ROOM_SUCCESS),
+    data: IncomingJoinRoomSuccessSchema,
+  }),
+  z.object({
+    type: z.literal(IncomingWSMessageType.JOIN_ROOM_ERROR),
+    data: IncomingJoinRoomErrorSchema,
   }),
 ]);

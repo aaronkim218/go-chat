@@ -61,8 +61,6 @@ func (hs *HandlerService) RegisterRoutes(app *fiber.App) {
 	})
 
 	app.Route("/ws", func(ws fiber.Router) {
-		ws.Route("/rooms", func(rooms fiber.Router) {
-			rooms.Get("/:roomId", websocket.New(hs.JoinRoom))
-		})
+		ws.Get("/", websocket.New(hs.HandleUserConnection))
 	})
 }
