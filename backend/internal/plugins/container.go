@@ -4,9 +4,10 @@ import (
 	"log/slog"
 
 	"go-chat/internal/constants"
-	"go-chat/internal/eventsocket"
 	"go-chat/internal/models"
 	"go-chat/internal/storage"
+
+	"github.com/aaronkim218/eventsocket"
 )
 
 type Container struct {

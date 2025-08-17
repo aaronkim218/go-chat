@@ -9,12 +9,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"go-chat/internal/eventsocket"
 	"go-chat/internal/plugins"
 	"go-chat/internal/server"
 	"go-chat/internal/settings"
 	"go-chat/internal/storage/postgres"
 	"go-chat/internal/utils"
+
+	"github.com/aaronkim218/eventsocket"
 
 	"github.com/gofiber/storage/memory/v2"
 
