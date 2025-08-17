@@ -28,12 +28,19 @@ import { UNKNOWN_ERROR } from "@/constants";
 
 interface RoomsProps {
   activeRoom: Room | null;
-  setActiveRoom: (room: Room) => void;
+  onRoomSelect: (room: Room) => void;
   rooms: Room[];
   setRooms: React.Dispatch<React.SetStateAction<Room[]>>;
+  pendingRoomJoin: string | null;
 }
 
-const Rooms = ({ activeRoom, setActiveRoom, rooms, setRooms }: RoomsProps) => {
+const Rooms = ({
+  activeRoom,
+  onRoomSelect,
+  rooms,
+  setRooms,
+  pendingRoomJoin,
+}: RoomsProps) => {
   const { profile } = useRequireAuth();
   const [createRoomRequest, setCreateRoomRequest] = useState<CreateRoomRequest>(
     { name: `${profile.username}'s Room`, members: [] },
@@ -71,7 +78,7 @@ const Rooms = ({ activeRoom, setActiveRoom, rooms, setRooms }: RoomsProps) => {
       });
       setRooms((prev) => [resp.room, ...prev]);
       setOpen(false);
-      setActiveRoom(resp.room);
+      onRoomSelect(resp.room);
       setCreateRoomRequest({ name: "", members: [] });
     } catch (error) {
       if (error instanceof Error) {
@@ -161,9 +168,10 @@ const Rooms = ({ activeRoom, setActiveRoom, rooms, setRooms }: RoomsProps) => {
             <Button
               className=" w-full justify-start"
               variant={room.id === activeRoom?.id ? "secondary" : "ghost"}
-              onClick={() => setActiveRoom(room)}
+              disabled={pendingRoomJoin === room.id}
+              onClick={() => onRoomSelect(room)}
             >
-              {room.name}
+              {pendingRoomJoin === room.id ? "Joining..." : room.name}
             </Button>
           </li>
         ))}

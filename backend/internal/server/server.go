@@ -4,12 +4,11 @@ import (
 	"log/slog"
 	"net/http"
 
+	"go-chat/internal/eventsocket"
 	"go-chat/internal/handlers"
-	"go-chat/internal/models"
+	"go-chat/internal/plugins"
 	"go-chat/internal/storage"
 	"go-chat/internal/xerrors"
-
-	hub "github.com/aaronkim218/hubsocket"
 
 	go_json "github.com/goccy/go-json"
 
@@ -20,11 +19,12 @@ import (
 )
 
 type Config struct {
-	Storage      storage.Storage
-	Hub          *hub.Hub[models.Profile]
-	JwtSecret    string
-	Logger       *slog.Logger
-	FiberStorage fiber.Storage
+	Storage          storage.Storage
+	JwtSecret        string
+	Logger           *slog.Logger
+	FiberStorage     fiber.Storage
+	Eventsocket      *eventsocket.Eventsocket
+	PluginsContainer *plugins.Container
 }
 
 func New(cfg *Config) *fiber.App {
@@ -32,11 +32,12 @@ func New(cfg *Config) *fiber.App {
 	setupStatic(app)
 
 	service := handlers.NewService(&handlers.HandlerServiceConfig{
-		Storage:      cfg.Storage,
-		Hub:          cfg.Hub,
-		JwtSecret:    cfg.JwtSecret,
-		Logger:       cfg.Logger,
-		FiberStorage: cfg.FiberStorage,
+		Storage:          cfg.Storage,
+		JwtSecret:        cfg.JwtSecret,
+		Logger:           cfg.Logger,
+		FiberStorage:     cfg.FiberStorage,
+		Eventsocket:      cfg.Eventsocket,
+		PluginsContainer: cfg.PluginsContainer,
 	})
 	setupMiddleware(app)
 	setupHealthcheck(app)

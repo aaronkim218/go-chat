@@ -2,86 +2,174 @@ package plugins
 
 import (
 	"context"
+	"encoding/json"
+	"log/slog"
+	"sync"
 	"time"
 
+	"go-chat/internal/eventsocket"
 	"go-chat/internal/models"
 	"go-chat/internal/storage"
 	"go-chat/internal/types"
 
-	"github.com/aaronkim218/hubsocket"
-	go_json "github.com/goccy/go-json"
-
 	"github.com/google/uuid"
 )
 
-const userMessageType hubsocket.WsMessageType = "USER_MESSAGE"
-
-type incomingUserMessage struct {
+type userMessagePayload struct {
+	RoomID  string `json:"room_id"`
 	Content string `json:"content"`
 }
 
-type UserMessagePluginConfig struct {
-	Storage storage.Storage
-}
-
 type UserMessagePlugin struct {
-	storage storage.Storage
+	eventsocket    *eventsocket.Eventsocket
+	storage        storage.Storage
+	logger         *slog.Logger
+	clientProfiles map[string]models.Profile
+	mu             sync.RWMutex
 }
 
-func NewUserMessagePlugin(cfg *UserMessagePluginConfig) *UserMessagePlugin {
-	return &UserMessagePlugin{
-		storage: cfg.Storage,
+type UserMessagePluginConfig struct {
+	Eventsocket *eventsocket.Eventsocket
+	Storage     storage.Storage
+	Logger      *slog.Logger
+}
+
+func NewEventsocketUserMessagePlugin(cfg *UserMessagePluginConfig) *UserMessagePlugin {
+	plugin := &UserMessagePlugin{
+		eventsocket:    cfg.Eventsocket,
+		storage:        cfg.Storage,
+		logger:         cfg.Logger,
+		clientProfiles: make(map[string]models.Profile),
 	}
+
+	plugin.eventsocket.OnRemoveClient("user_message", plugin.unregisterClient)
+
+	return plugin
 }
 
-func (ump *UserMessagePlugin) MessageType() hubsocket.WsMessageType {
-	return userMessageType
+func (um *UserMessagePlugin) RegisterClient(client *eventsocket.Client, profile models.Profile) {
+	userID := profile.UserId
+	clientID := client.ID()
+
+	um.mu.Lock()
+	um.clientProfiles[clientID] = profile
+	um.mu.Unlock()
+
+	client.OnMessage("USER_MESSAGE", func(data json.RawMessage) {
+		um.handleUserMessage(clientID, userID, data)
+	})
+
+	um.logger.Debug("Registered client for user messages",
+		slog.String("clientId", clientID),
+		slog.String("username", profile.Username),
+	)
 }
 
-func (ump *UserMessagePlugin) HandleBroadcastMessage(room *hubsocket.ActiveRoom[models.Profile], msg hubsocket.BroadcastMessage[models.Profile]) error {
-	var incoming incomingUserMessage
-	if err := go_json.Unmarshal(msg.WsMessage.Payload, &incoming); err != nil {
-		return err
+func (um *UserMessagePlugin) unregisterClient(clientID string) {
+	um.mu.Lock()
+	defer um.mu.Unlock()
+
+	delete(um.clientProfiles, clientID)
+
+	um.logger.Debug("Unregistered client from user messages",
+		slog.String("clientId", clientID),
+	)
+}
+
+func (um *UserMessagePlugin) handleUserMessage(clientID string, userID uuid.UUID, data json.RawMessage) {
+	var payload userMessagePayload
+	if err := json.Unmarshal(data, &payload); err != nil {
+		um.logger.Error("Failed to parse USER_MESSAGE payload",
+			slog.String("err", err.Error()),
+			slog.String("userId", userID.String()),
+		)
+		return
 	}
 
-	messageId, err := uuid.NewRandom()
+	roomID, err := uuid.Parse(payload.RoomID)
 	if err != nil {
-		return err
+		um.logger.Error("Invalid roomId format",
+			slog.String("err", err.Error()),
+			slog.String("roomId", payload.RoomID),
+			slog.String("userId", userID.String()),
+		)
+		return
+	}
+
+	messageID, err := uuid.NewRandom()
+	if err != nil {
+		um.logger.Error("Failed to generate message ID",
+			slog.String("err", err.Error()),
+			slog.String("userId", userID.String()),
+		)
+		return
 	}
 
 	message := models.Message{
-		Id:        messageId,
-		RoomId:    room.RoomId,
-		Author:    msg.Client.Metadata.UserId,
-		Content:   incoming.Content,
+		Id:        messageID,
+		RoomId:    roomID,
+		Author:    userID,
+		Content:   payload.Content,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 
-	if err := ump.storage.CreateMessage(context.TODO(), message); err != nil {
-		return err
+	if err := um.storage.CreateMessage(context.Background(), message); err != nil {
+		um.logger.Error("Failed to create message",
+			slog.String("err", err.Error()),
+			slog.String("messageId", messageID.String()),
+			slog.String("userId", userID.String()),
+			slog.String("roomId", payload.RoomID),
+		)
+		return
+	}
+
+	um.mu.RLock()
+	profile, exists := um.clientProfiles[clientID]
+	um.mu.RUnlock()
+
+	if !exists {
+		um.logger.Error("Client profile not found for message broadcast",
+			slog.String("clientId", clientID),
+			slog.String("userId", userID.String()),
+		)
+		return
 	}
 
 	userMessage := types.UserMessage{
 		Message:   message,
-		Username:  msg.Client.Metadata.Username,
-		FirstName: msg.Client.Metadata.FirstName,
-		LastName:  msg.Client.Metadata.LastName,
+		Username:  profile.Username,
+		FirstName: profile.FirstName,
+		LastName:  profile.LastName,
 	}
 
-	payload, err := go_json.Marshal(userMessage)
+	if err := um.broadcastUserMessage(payload.RoomID, userMessage); err != nil {
+		um.logger.Error("Failed to broadcast user message",
+			slog.String("err", err.Error()),
+			slog.String("messageId", messageID.String()),
+			slog.String("roomId", payload.RoomID),
+		)
+		return
+	}
+
+	um.logger.Info("User message processed successfully",
+		slog.String("messageId", messageID.String()),
+		slog.String("userId", userID.String()),
+		slog.String("roomId", payload.RoomID),
+		slog.String("username", profile.Username),
+	)
+}
+
+func (um *UserMessagePlugin) broadcastUserMessage(roomID string, userMessage types.UserMessage) error {
+	payload, err := json.Marshal(userMessage)
 	if err != nil {
 		return err
 	}
 
-	room.Mu.RLock()
-	for c := range room.Clients {
-		c.Write <- hubsocket.WsMessage{
-			Type:    userMessageType,
-			Payload: payload,
-		}
+	message := eventsocket.Message{
+		Type: "USER_MESSAGE",
+		Data: payload,
 	}
-	room.Mu.RUnlock()
 
-	return nil
+	return um.eventsocket.BroadcastToRoom(roomID, message)
 }

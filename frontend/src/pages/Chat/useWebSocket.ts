@@ -1,143 +1,124 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { getJwt } from "@/utils/jwt";
-import { IncomingWSMessageSchema } from "@/schemas";
 import {
   IncomingPresence,
   IncomingTypingStatus,
-  OutgoingTypingStatus,
-  OutgoingUserMessage,
-  OutgoingWSMessage,
+  IncomingUserMessage,
   PresenceAction,
+  Profile,
   Room,
   UserMessage,
-  WSMessageType,
 } from "@/types";
-import camelcaseKeys from "camelcase-keys";
-import snakecasekeys from "snakecase-keys";
-import { toast } from "sonner";
-import { UNKNOWN_ERROR } from "@/constants";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useWebSocketContext } from "@/contexts/WebSocket";
 
 interface UseWebSocketProps {
-  activeRoom: Room | null;
+  rooms: Room[];
   setRooms: React.Dispatch<React.SetStateAction<Room[]>>;
-  setActiveProfiles: React.Dispatch<React.SetStateAction<Set<string>>>;
   onMessageReceived: (message: UserMessage) => void;
 }
 
-const MAX_RETRIES = 3;
+interface UseWebSocketReturn {
+  activeRoom: Room | null;
+  sendMessage: (content: string) => void;
+  sendTypingStatus: () => void;
+  joinRoom: (roomId: string) => void;
+  typingProfiles: Set<string>;
+  activeProfiles: Set<string>;
+}
 
 export const useWebSocket = ({
-  activeRoom,
+  rooms,
   setRooms,
-  setActiveProfiles,
   onMessageReceived,
-}: UseWebSocketProps) => {
-  const navigate = useNavigate();
+}: UseWebSocketProps): UseWebSocketReturn => {
   const { profile } = useRequireAuth();
-  const ws = useRef<WebSocket | null>(null);
-  const retries = useRef(0);
-  const activeRoomRef = useRef<Room | null>(activeRoom);
+  const {
+    sendMessage: wsSendMessage,
+    sendTypingStatus: wsSendTypingStatus,
+    joinRoom: wsJoinRoom,
+    leaveRoom,
+    onMessageReceived: onUserMessageReceived,
+    onPresenceUpdate,
+    onTypingStatus,
+    onJoinRoomSuccess,
+  } = useWebSocketContext();
+
+  const [activeRoom, setActiveRoom] = useState<Room | null>(null);
   const [typingProfilesSet, setTypingProfilesSet] = useState<Set<string>>(
     new Set(),
   );
+  const [activeProfiles, setActiveProfiles] = useState<Set<string>>(new Set());
   const typingTimersRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
-  useEffect(() => {
-    setTypingProfilesSet(new Set());
-    activeRoomRef.current = activeRoom;
-    typingTimersRef.current.forEach((timer) => clearTimeout(timer));
-    typingTimersRef.current.clear();
+  const unsubscribeRefs = useRef<{
+    unsubscribeUserMessage?: () => void;
+    unsubscribePresence?: () => void;
+    unsubscribeTyping?: () => void;
+  }>({});
 
-    if (activeRoomRef.current) {
-      initWebsocket(activeRoomRef.current.id);
+  const cleanupListeners = () => {
+    if (unsubscribeRefs.current.unsubscribeUserMessage) {
+      unsubscribeRefs.current.unsubscribeUserMessage();
     }
-
-    return () => {
-      activeRoomRef.current = null;
-      ws.current?.close();
-      typingTimersRef.current.forEach((timer) => clearTimeout(timer));
-      typingTimersRef.current.clear();
-    };
-  }, [activeRoom]);
-
-  const initWebsocket = (roomId: string) => {
-    if (ws.current) {
-      ws.current.onopen = null;
-      ws.current.onmessage = null;
-      ws.current.onclose = null;
-      ws.current = null;
+    if (unsubscribeRefs.current.unsubscribePresence) {
+      unsubscribeRefs.current.unsubscribePresence();
     }
-
-    ws.current = new WebSocket(
-      `${import.meta.env.VITE_WEBSOCKET_URL}/rooms/${roomId}`,
-    );
-
-    ws.current.onopen = () => {
-      const jwt = getJwt();
-      if (!jwt) {
-        navigate("/");
-        return;
-      }
-      if (ws.current?.readyState === WebSocket.OPEN) {
-        ws.current.send(jwt);
-      }
-    };
-
-    ws.current.onmessage = (event) => {
-      const data = camelcaseKeys(JSON.parse(event.data), {
-        deep: true,
-      });
-      try {
-        const incomingWsMessage = IncomingWSMessageSchema.parse(data);
-        switch (incomingWsMessage.type) {
-          case WSMessageType.USER_MESSAGE: {
-            handleIncomingUserMessage(incomingWsMessage.payload);
-            break;
-          }
-          case WSMessageType.PRESENCE: {
-            handleIncomingPresence(incomingWsMessage.payload);
-            break;
-          }
-          case WSMessageType.TYPING_STATUS: {
-            handleIncomingTypingStatus(incomingWsMessage.payload);
-            break;
-          }
-        }
-      } catch (error) {
-        if (error instanceof Error) {
-          toast.error(`Failed to parse incoming message: ${error.message}`);
-        } else {
-          toast.error(UNKNOWN_ERROR);
-        }
-      }
-    };
-
-    ws.current.onclose = () => {
-      if (activeRoomRef.current && retries.current < MAX_RETRIES) {
-        retries.current += 1;
-        setTimeout(() => {
-          if (activeRoomRef.current) {
-            initWebsocket(activeRoomRef.current.id);
-          }
-        }, 1000 * retries.current);
-      }
-    };
+    if (unsubscribeRefs.current.unsubscribeTyping) {
+      unsubscribeRefs.current.unsubscribeTyping();
+    }
+    unsubscribeRefs.current = {};
   };
 
-  const handleIncomingUserMessage = (userMessage: UserMessage) => {
+  const setupListenersForRoom = (roomId: string) => {
+    unsubscribeRefs.current.unsubscribeUserMessage = onUserMessageReceived(
+      roomId,
+      handleIncomingUserMessage,
+    );
+    unsubscribeRefs.current.unsubscribePresence = onPresenceUpdate(
+      roomId,
+      handleIncomingPresence,
+    );
+    unsubscribeRefs.current.unsubscribeTyping = onTypingStatus(
+      roomId,
+      handleIncomingTypingStatus,
+    );
+  };
+
+  useEffect(() => {
+    const unsubscribe = onJoinRoomSuccess((roomId: string) => {
+      const room = rooms.find((r) => r.id === roomId);
+      if (room) {
+        setActiveRoom(room);
+      }
+    });
+
+    return unsubscribe;
+  }, [rooms, onJoinRoomSuccess]);
+
+  useEffect(() => {
+    return () => {
+      cleanupListeners();
+      cleanupTypingTimersRef();
+    };
+  }, []);
+
+  const cleanupTypingTimersRef = () => {
+    typingTimersRef.current.forEach((timer) => clearTimeout(timer));
+    typingTimersRef.current.clear();
+  };
+
+  const handleIncomingUserMessage = (incomingMessage: IncomingUserMessage) => {
+    const userMessage: UserMessage = incomingMessage;
     onMessageReceived(userMessage);
     setRooms((prev) => {
-      const currentRoomId = activeRoomRef.current?.id;
-      if (!currentRoomId) return prev;
+      if (!activeRoom?.id) return prev;
 
-      if (prev.length > 0 && prev[0].id === currentRoomId) {
+      if (prev.length > 0 && prev[0].id === activeRoom.id) {
         return prev;
       }
 
       const currentRoomIndex = prev.findIndex(
-        (room) => room.id === currentRoomId,
+        (room) => room.id === activeRoom.id,
       );
       if (currentRoomIndex === -1) return prev;
 
@@ -164,13 +145,13 @@ export const useWebSocket = ({
       const newActiveProfiles = new Set(prev);
       switch (presence.action) {
         case PresenceAction.JOIN: {
-          presence.profiles?.forEach((profile) => {
+          presence.profiles?.forEach((profile: Profile) => {
             newActiveProfiles.add(profile.userId);
           });
           break;
         }
         case PresenceAction.LEAVE: {
-          presence.profiles?.forEach((profile) => {
+          presence.profiles?.forEach((profile: Profile) => {
             newActiveProfiles.delete(profile.userId);
           });
           break;
@@ -183,13 +164,13 @@ export const useWebSocket = ({
   const handleIncomingTypingStatus = (typingStatus: IncomingTypingStatus) => {
     setTypingProfilesSet((prev) => {
       const newTypingProfiles = new Set(prev);
-      typingStatus.profiles?.forEach((profile) =>
+      typingStatus.profiles?.forEach((profile: Profile) =>
         newTypingProfiles.add(profile.userId),
       );
       return newTypingProfiles;
     });
 
-    typingStatus.profiles?.forEach((profile) => {
+    typingStatus.profiles?.forEach((profile: Profile) => {
       const existingTimer = typingTimersRef.current.get(profile.userId);
       if (existingTimer) {
         clearTimeout(existingTimer);
@@ -209,54 +190,34 @@ export const useWebSocket = ({
     });
   };
 
-  const handleWriteData = <T>(outgoingMsg: OutgoingWSMessage<T>) => {
-    if (ws.current?.readyState === WebSocket.OPEN) {
-      const data = snakecasekeys(
-        { ...outgoingMsg },
-        {
-          deep: true,
-        },
-      );
-      ws.current.send(JSON.stringify(data));
-    } else {
-      toast.error("WebSocket is not open");
-    }
-  };
-
   const sendMessage = (content: string) => {
-    if (!content) {
-      toast.warning("cannot send an empty message");
-      return;
-    }
-
-    const outgoingUserMessage: OutgoingUserMessage = {
-      content,
-    };
-
-    const wsMessage: OutgoingWSMessage<OutgoingUserMessage> = {
-      type: WSMessageType.USER_MESSAGE,
-      payload: outgoingUserMessage,
-    };
-
-    handleWriteData(wsMessage);
+    if (!activeRoom) return;
+    wsSendMessage(content, activeRoom.id);
   };
 
   const sendTypingStatus = () => {
-    const outgoingTypingStatus: OutgoingTypingStatus = {
-      profile: profile,
-    };
+    if (!activeRoom) return;
+    wsSendTypingStatus(profile, activeRoom.id);
+  };
 
-    const wsMessage: OutgoingWSMessage<OutgoingTypingStatus> = {
-      type: WSMessageType.TYPING_STATUS,
-      payload: outgoingTypingStatus,
-    };
-
-    handleWriteData(wsMessage);
+  const joinRoom = (roomId: string) => {
+    if (activeRoom?.id) {
+      leaveRoom(activeRoom.id);
+    }
+    setTypingProfilesSet(new Set());
+    setActiveProfiles(new Set());
+    cleanupTypingTimersRef();
+    cleanupListeners();
+    setupListenersForRoom(roomId);
+    wsJoinRoom(roomId);
   };
 
   return {
+    activeRoom,
     sendMessage,
     sendTypingStatus,
+    joinRoom,
     typingProfiles: typingProfilesSet,
+    activeProfiles,
   };
 };

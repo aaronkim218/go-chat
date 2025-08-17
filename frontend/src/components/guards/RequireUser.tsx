@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useUserContext } from "@/contexts/User";
+import { WebSocketProvider } from "@/contexts/WebSocket";
 
 const RequireUser = () => {
   const { session, profile, firstLoad } = useUserContext();
@@ -8,7 +9,15 @@ const RequireUser = () => {
     return <div>Loading...</div>;
   }
 
-  return session && profile ? <Outlet /> : <Navigate to="/login" replace />;
+  if (session && profile) {
+    return (
+      <WebSocketProvider profile={profile}>
+        <Outlet />
+      </WebSocketProvider>
+    );
+  }
+
+  return <Navigate to="/login" replace />;
 };
 
 export default RequireUser;
