@@ -88,7 +88,6 @@ export interface OutgoingWSMessage<T> {
   data: T;
 }
 
-// WebSocket Incoming Types (Server → Client)
 export type IncomingUserMessage = UserMessage;
 export type IncomingPresence = z.infer<typeof IncomingPresenceSchema>;
 export type IncomingTypingStatus = z.infer<typeof IncomingTypingStatusSchema>;
@@ -97,7 +96,6 @@ export type IncomingJoinRoomSuccess = z.infer<
 >;
 export type IncomingJoinRoomError = z.infer<typeof IncomingJoinRoomErrorSchema>;
 
-// WebSocket Outgoing Types (Client → Server)
 export interface OutgoingUserMessage {
   content: string;
   roomId: string;

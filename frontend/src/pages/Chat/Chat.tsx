@@ -75,7 +75,6 @@ const Chat = () => {
   };
 
   const handleRoomSelect = (room: Room) => {
-    // Don't rejoin if already in this room
     if (activeRoom?.id === room.id) {
       return;
     }

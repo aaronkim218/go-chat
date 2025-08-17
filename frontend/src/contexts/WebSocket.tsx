@@ -72,7 +72,6 @@ export const WebSocketProvider = ({
   const [isConnected, setIsConnected] = useState(false);
   const [pendingRoomJoin, setPendingRoomJoin] = useState<string | null>(null);
 
-  // Global event listeners
   const joinRoomSuccessListeners = useRef<((roomId: string) => void)[]>([]);
   const joinRoomErrorListeners = useRef<
     ((roomId: string, message: string) => void)[]
@@ -265,7 +264,6 @@ export const WebSocketProvider = ({
 
     sendData(wsMessage);
 
-    // Set timeout for join attempt
     setTimeout(() => {
       if (pendingRoomJoin === roomId) {
         setPendingRoomJoin(null);
