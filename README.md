@@ -30,6 +30,8 @@ I also decided on group messaging so that I could work more with Go's concurrenc
 - Storage operations with pgx
 - WebSocket handling with custom library "eventsocket"
 
+WebSocket connections are managed by a combination of an event-driven system (eventsocket) + "plugins". Eventsocket exposes a public API that allows consumers of the library to register message handlers on client connections, and register event handlers for lifecycle events such as clients joining/disconnecting and rooms being created/destroyed. A "plugin" encapsulates logic for a feature that leverages the WebSocket connection. This keeps the design modular as each plugin manages its own logic, and promotes extensibility as adding functionality can be done by simply adding more plugins.
+
 ## Frontend
 
 - API service functions with axios
