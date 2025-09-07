@@ -47,3 +47,7 @@ func New(cfg *Config) *Postgres {
 		Pool: pool,
 	}
 }
+
+func (p *Postgres) Ping(ctx context.Context) error {
+	return p.Pool.Ping(ctx)
+}

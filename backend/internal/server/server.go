@@ -41,7 +41,6 @@ func New(cfg *Config) *fiber.App {
 		PluginsContainer: cfg.PluginsContainer,
 	})
 	setupMiddleware(app)
-	setupHealthcheck(app)
 	service.RegisterRoutes(app)
 
 	return app
@@ -60,12 +59,6 @@ func setupMiddleware(app *fiber.App) {
 	app.Use(recover.New())
 	app.Use(redirectMiddleware())
 	app.Use(cors.New())
-}
-
-func setupHealthcheck(app *fiber.App) {
-	app.Get("/api/healthcheck", func(c *fiber.Ctx) error {
-		return c.SendStatus(http.StatusOK)
-	})
 }
 
 func setupStatic(app *fiber.App) {

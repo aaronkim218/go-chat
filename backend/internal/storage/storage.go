@@ -10,6 +10,8 @@ import (
 )
 
 type Storage interface {
+	Ping(ctx context.Context) error
+
 	// rooms
 	CreateRoom(ctx context.Context, room models.Room, members []uuid.UUID) (types.BulkResult[uuid.UUID], error)
 	GetRoomsByUserId(ctx context.Context, userId uuid.UUID) ([]models.Room, error)
