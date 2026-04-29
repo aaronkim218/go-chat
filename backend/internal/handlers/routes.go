@@ -30,10 +30,7 @@ func (hs *HandlerService) RegisterRoutes(app *fiber.App) {
 			Path:     "docs",
 		}))
 		api.Use(jwtware.New(jwtware.Config{
-			SigningKey: jwtware.SigningKey{
-				JWTAlg: jwtware.HS256,
-				Key:    []byte(hs.jwtSecret),
-			},
+			KeyFunc: hs.keyFunc,
 		}))
 		api.Use(idempotency.New(idempotency.Config{
 			Storage: hs.fiberStorage,
