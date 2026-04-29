@@ -1,5 +1,5 @@
 package settings
 
 type Jwt struct {
-	Secret string `env:"SECRET"`
+	JwksURL string `env:"JWKS_URL,required"`
 }

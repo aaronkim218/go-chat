@@ -21,7 +21,7 @@ import (
 
 type Config struct {
 	Storage          storage.Storage
-	JwtSecret        string
+	JwksURL          string
 	Logger           *slog.Logger
 	FiberStorage     fiber.Storage
 	Eventsocket      *eventsocket.Eventsocket
@@ -34,7 +34,7 @@ func New(cfg *Config) *fiber.App {
 
 	service := handlers.NewService(&handlers.HandlerServiceConfig{
 		Storage:          cfg.Storage,
-		JwtSecret:        cfg.JwtSecret,
+		JwksURL:          cfg.JwksURL,
 		Logger:           cfg.Logger,
 		FiberStorage:     cfg.FiberStorage,
 		Eventsocket:      cfg.Eventsocket,
