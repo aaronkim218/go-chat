@@ -31,10 +31,7 @@ func (hs *HandlerService) HandleUserConnection(conn *websocket.Conn) {
 
 	token, err := jwt.Parse(
 		string(tokenBytes),
-		func(t *jwt.Token) (any, error) {
-			return []byte(hs.jwtSecret), nil
-		},
-		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}),
+		hs.keyFunc,
 	)
 	if err != nil {
 		hs.logger.Error("Failed to parse token",

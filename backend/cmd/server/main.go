@@ -54,8 +54,8 @@ func main() {
 	})
 
 	app := server.New(&server.Config{
-		Storage:   postgres,
-		JwtSecret: settings.Jwt.Secret,
+		Storage: postgres,
+		JwksURL: settings.Jwt.JwksURL,
 		Logger: slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			Level: utils.MustParseSlogLevel(settings.Server.LogLevel),
 		})),
