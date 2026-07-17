@@ -52,7 +52,8 @@ func NewEventsocketTypingStatusPlugin(cfg *TypingStatusPluginConfig) *TypingStat
 
 	plugin.eventsocket.OnJoinRoom("typing_status", func(roomID, clientID string) {
 		if err := plugin.handleJoinRoom(roomID, clientID); err != nil {
-			plugin.logger.Error("Failed to handle typing status on join",
+			plugin.logger.Error(
+				"Failed to handle typing status on join",
 				slog.String("err", err.Error()),
 				slog.String("clientId", clientID),
 				slog.String("roomId", roomID),
@@ -62,7 +63,8 @@ func NewEventsocketTypingStatusPlugin(cfg *TypingStatusPluginConfig) *TypingStat
 
 	plugin.eventsocket.OnLeaveRoom("typing_status", func(roomID, clientID string) {
 		if err := plugin.handleLeaveRoom(roomID, clientID); err != nil {
-			plugin.logger.Error("Failed to handle typing status on leave",
+			plugin.logger.Error(
+				"Failed to handle typing status on leave",
 				slog.String("err", err.Error()),
 				slog.String("clientId", clientID),
 				slog.String("roomId", roomID),
@@ -86,7 +88,8 @@ func (ts *TypingStatusPlugin) RegisterClient(client *eventsocket.Client, profile
 		ts.HandleTypingStatus(clientID, data)
 	})
 
-	ts.logger.Debug("Registered client for typing status",
+	ts.logger.Debug(
+		"Registered client for typing status",
 		slog.String("clientId", clientID),
 		slog.String("username", profile.Username),
 	)
@@ -105,7 +108,8 @@ func (ts *TypingStatusPlugin) unregisterClient(clientID string) {
 		}
 	}
 
-	ts.logger.Debug("Unregistered client from typing status",
+	ts.logger.Debug(
+		"Unregistered client from typing status",
 		slog.String("clientId", clientID),
 	)
 }
@@ -136,7 +140,8 @@ func (ts *TypingStatusPlugin) handleLeaveRoom(roomID, clientID string) error {
 func (ts *TypingStatusPlugin) HandleTypingStatus(clientID string, data json.RawMessage) {
 	var payload typingStatusPayload
 	if err := json.Unmarshal(data, &payload); err != nil {
-		ts.logger.Error("Failed to parse TYPING_STATUS payload",
+		ts.logger.Error(
+			"Failed to parse TYPING_STATUS payload",
 			slog.String("err", err.Error()),
 			slog.String("clientId", clientID),
 		)
@@ -152,14 +157,16 @@ func (ts *TypingStatusPlugin) HandleTypingStatus(clientID string, data json.RawM
 	ts.mu.RUnlock()
 
 	if !exists {
-		ts.logger.Error("Client profile not found for typing status broadcast",
+		ts.logger.Error(
+			"Client profile not found for typing status broadcast",
 			slog.String("clientId", clientID),
 		)
 		return
 	}
 
 	if err := ts.broadcastTypingStatusToRoom(roomID, clientID, []models.Profile{profile}); err != nil {
-		ts.logger.Error("Failed to broadcast typing status",
+		ts.logger.Error(
+			"Failed to broadcast typing status",
 			slog.String("err", err.Error()),
 			slog.String("clientId", clientID),
 			slog.String("roomId", roomID),
@@ -167,7 +174,8 @@ func (ts *TypingStatusPlugin) HandleTypingStatus(clientID string, data json.RawM
 		return
 	}
 
-	ts.logger.Debug("Typing status processed successfully",
+	ts.logger.Debug(
+		"Typing status processed successfully",
 		slog.String("clientId", clientID),
 		slog.String("roomId", roomID),
 		slog.String("username", profile.Username),

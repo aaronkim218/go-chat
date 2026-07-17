@@ -34,7 +34,8 @@ func (hs *HandlerService) HandleUserConnection(conn *websocket.Conn) {
 		hs.keyFunc,
 	)
 	if err != nil {
-		hs.logger.Error("Failed to parse token",
+		hs.logger.Error(
+			"Failed to parse token",
 			slog.String("err", err.Error()),
 			slog.String("msg", string(tokenBytes)),
 		)
@@ -49,7 +50,8 @@ func (hs *HandlerService) HandleUserConnection(conn *websocket.Conn) {
 
 	profile, err := hs.storage.GetProfileByUserId(context.Background(), uid)
 	if err != nil {
-		hs.logger.Error("Failed to get profile",
+		hs.logger.Error(
+			"Failed to get profile",
 			slog.String("err", err.Error()),
 			slog.String("userId", uid.String()),
 		)
@@ -61,7 +63,8 @@ func (hs *HandlerService) HandleUserConnection(conn *websocket.Conn) {
 		Conn: conn,
 	})
 	if err != nil {
-		hs.logger.Error("Failed to create client",
+		hs.logger.Error(
+			"Failed to create client",
 			slog.String("err", err.Error()),
 			slog.String("userId", uid.String()),
 		)

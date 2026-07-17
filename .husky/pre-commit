@@ -1,6 +1,6 @@
 cd frontend
-npx prettier --check .
-npx eslint .
+pnpm exec prettier --check .
+pnpm exec eslint .
 
 cd ../backend
 output=$(gofumpt -l .)

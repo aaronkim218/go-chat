@@ -1,7 +1,7 @@
 prod:
     #!/usr/bin/env bash
     cd frontend
-    npm run build
+    pnpm run build
     cd ..
     cp -r frontend/dist/* backend/internal/static/
     cd backend
@@ -11,7 +11,7 @@ prod:
 frontend-dev:
     #!/usr/bin/env bash
     cd frontend
-    npm run dev
+    pnpm run dev
 
 backend-dev:
     #!/usr/bin/env bash

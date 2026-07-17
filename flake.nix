@@ -17,6 +17,7 @@
 
           # frontend
           nodejs_24
+          pnpm
 
           # tooling
           just

@@ -70,7 +70,8 @@ func redirectMiddleware() fiber.Handler {
 		path := c.Path()
 
 		if path != "/" && !isApiOrWsPath(path) {
-			slog.Info("redirecting to /",
+			slog.Info(
+				"redirecting to /",
 				slog.String("original path", path),
 			)
 			return c.Redirect("/", http.StatusFound)

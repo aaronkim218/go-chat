@@ -58,7 +58,8 @@ func (rm *RoomManagement) RegisterClient(client *eventsocket.Client, profile mod
 func (rm *RoomManagement) handleJoinRoom(clientID string, userID uuid.UUID, data json.RawMessage) {
 	var payload joinRoom
 	if err := json.Unmarshal(data, &payload); err != nil {
-		rm.logger.Error("Failed to parse JOIN_ROOM payload",
+		rm.logger.Error(
+			"Failed to parse JOIN_ROOM payload",
 			slog.String("err", err.Error()),
 			slog.String("userId", userID.String()),
 		)
@@ -68,7 +69,8 @@ func (rm *RoomManagement) handleJoinRoom(clientID string, userID uuid.UUID, data
 
 	roomID, err := uuid.Parse(payload.RoomID)
 	if err != nil {
-		rm.logger.Error("Invalid room ID in JOIN_ROOM",
+		rm.logger.Error(
+			"Invalid room ID in JOIN_ROOM",
 			slog.String("err", err.Error()),
 			slog.String("userId", userID.String()),
 			slog.String("roomId", payload.RoomID),
@@ -79,7 +81,8 @@ func (rm *RoomManagement) handleJoinRoom(clientID string, userID uuid.UUID, data
 
 	authorized, err := rm.storage.CheckUserInRoom(context.Background(), roomID, userID)
 	if err != nil {
-		rm.logger.Error("Failed to check room authorization",
+		rm.logger.Error(
+			"Failed to check room authorization",
 			slog.String("err", err.Error()),
 			slog.String("userId", userID.String()),
 			slog.String("roomId", payload.RoomID),
@@ -89,7 +92,8 @@ func (rm *RoomManagement) handleJoinRoom(clientID string, userID uuid.UUID, data
 	}
 
 	if !authorized {
-		rm.logger.Warn("User not authorized for room",
+		rm.logger.Warn(
+			"User not authorized for room",
 			slog.String("userId", userID.String()),
 			slog.String("roomId", payload.RoomID),
 		)
@@ -98,7 +102,8 @@ func (rm *RoomManagement) handleJoinRoom(clientID string, userID uuid.UUID, data
 	}
 
 	if err := rm.eventsocket.AddClientToRoom(payload.RoomID, clientID); err != nil {
-		rm.logger.Error("Failed to add client to room",
+		rm.logger.Error(
+			"Failed to add client to room",
 			slog.String("err", err.Error()),
 			slog.String("userId", userID.String()),
 			slog.String("roomId", payload.RoomID),
@@ -109,7 +114,8 @@ func (rm *RoomManagement) handleJoinRoom(clientID string, userID uuid.UUID, data
 
 	rm.sendJoinRoomSuccess(clientID, payload.RoomID)
 
-	rm.logger.Info("User joined room",
+	rm.logger.Info(
+		"User joined room",
 		slog.String("userId", userID.String()),
 		slog.String("roomId", payload.RoomID),
 	)
@@ -118,7 +124,8 @@ func (rm *RoomManagement) handleJoinRoom(clientID string, userID uuid.UUID, data
 func (rm *RoomManagement) handleLeaveRoom(clientID string, userID uuid.UUID, data json.RawMessage) {
 	var payload leaveRoom
 	if err := json.Unmarshal(data, &payload); err != nil {
-		rm.logger.Error("Failed to parse LEAVE_ROOM payload",
+		rm.logger.Error(
+			"Failed to parse LEAVE_ROOM payload",
 			slog.String("err", err.Error()),
 			slog.String("userId", userID.String()),
 		)
@@ -127,7 +134,8 @@ func (rm *RoomManagement) handleLeaveRoom(clientID string, userID uuid.UUID, dat
 
 	rm.eventsocket.RemoveClientFromRoom(payload.RoomID, clientID)
 
-	rm.logger.Info("User left room",
+	rm.logger.Info(
+		"User left room",
 		slog.String("userId", userID.String()),
 		slog.String("roomId", payload.RoomID),
 	)
@@ -146,7 +154,8 @@ func (rm *RoomManagement) sendJoinRoomSuccess(clientID, roomID string) {
 	}
 
 	if err := rm.eventsocket.BroadcastToClient(clientID, message); err != nil {
-		rm.logger.Error("Failed to send JOIN_ROOM_SUCCESS",
+		rm.logger.Error(
+			"Failed to send JOIN_ROOM_SUCCESS",
 			slog.String("err", err.Error()),
 			slog.String("roomId", roomID),
 			slog.String("clientId", clientID),
@@ -174,7 +183,8 @@ func (rm *RoomManagement) sendJoinRoomError(clientID, roomID, errorMessage strin
 	}
 
 	if err := rm.eventsocket.BroadcastToClient(clientID, message); err != nil {
-		rm.logger.Error("Failed to send JOIN_ROOM_ERROR",
+		rm.logger.Error(
+			"Failed to send JOIN_ROOM_ERROR",
 			slog.String("err", err.Error()),
 			slog.String("roomId", roomID),
 			slog.String("message", errorMessage),

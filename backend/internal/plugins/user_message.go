@@ -60,7 +60,8 @@ func (um *UserMessagePlugin) RegisterClient(client *eventsocket.Client, profile 
 		um.handleUserMessage(clientID, userID, data)
 	})
 
-	um.logger.Debug("Registered client for user messages",
+	um.logger.Debug(
+		"Registered client for user messages",
 		slog.String("clientId", clientID),
 		slog.String("username", profile.Username),
 	)
@@ -72,7 +73,8 @@ func (um *UserMessagePlugin) unregisterClient(clientID string) {
 
 	delete(um.clientProfiles, clientID)
 
-	um.logger.Debug("Unregistered client from user messages",
+	um.logger.Debug(
+		"Unregistered client from user messages",
 		slog.String("clientId", clientID),
 	)
 }
@@ -80,7 +82,8 @@ func (um *UserMessagePlugin) unregisterClient(clientID string) {
 func (um *UserMessagePlugin) handleUserMessage(clientID string, userID uuid.UUID, data json.RawMessage) {
 	var payload userMessagePayload
 	if err := json.Unmarshal(data, &payload); err != nil {
-		um.logger.Error("Failed to parse USER_MESSAGE payload",
+		um.logger.Error(
+			"Failed to parse USER_MESSAGE payload",
 			slog.String("err", err.Error()),
 			slog.String("userId", userID.String()),
 		)
@@ -89,7 +92,8 @@ func (um *UserMessagePlugin) handleUserMessage(clientID string, userID uuid.UUID
 
 	roomID, err := uuid.Parse(payload.RoomID)
 	if err != nil {
-		um.logger.Error("Invalid roomId format",
+		um.logger.Error(
+			"Invalid roomId format",
 			slog.String("err", err.Error()),
 			slog.String("roomId", payload.RoomID),
 			slog.String("userId", userID.String()),
@@ -99,7 +103,8 @@ func (um *UserMessagePlugin) handleUserMessage(clientID string, userID uuid.UUID
 
 	messageID, err := uuid.NewRandom()
 	if err != nil {
-		um.logger.Error("Failed to generate message ID",
+		um.logger.Error(
+			"Failed to generate message ID",
 			slog.String("err", err.Error()),
 			slog.String("userId", userID.String()),
 		)
@@ -116,7 +121,8 @@ func (um *UserMessagePlugin) handleUserMessage(clientID string, userID uuid.UUID
 	}
 
 	if err := um.storage.CreateMessage(context.Background(), message); err != nil {
-		um.logger.Error("Failed to create message",
+		um.logger.Error(
+			"Failed to create message",
 			slog.String("err", err.Error()),
 			slog.String("messageId", messageID.String()),
 			slog.String("userId", userID.String()),
@@ -130,7 +136,8 @@ func (um *UserMessagePlugin) handleUserMessage(clientID string, userID uuid.UUID
 	um.mu.RUnlock()
 
 	if !exists {
-		um.logger.Error("Client profile not found for message broadcast",
+		um.logger.Error(
+			"Client profile not found for message broadcast",
 			slog.String("clientId", clientID),
 			slog.String("userId", userID.String()),
 		)
@@ -145,7 +152,8 @@ func (um *UserMessagePlugin) handleUserMessage(clientID string, userID uuid.UUID
 	}
 
 	if err := um.broadcastUserMessage(payload.RoomID, userMessage); err != nil {
-		um.logger.Error("Failed to broadcast user message",
+		um.logger.Error(
+			"Failed to broadcast user message",
 			slog.String("err", err.Error()),
 			slog.String("messageId", messageID.String()),
 			slog.String("roomId", payload.RoomID),
@@ -153,7 +161,8 @@ func (um *UserMessagePlugin) handleUserMessage(clientID string, userID uuid.UUID
 		return
 	}
 
-	um.logger.Info("User message processed successfully",
+	um.logger.Info(
+		"User message processed successfully",
 		slog.String("messageId", messageID.String()),
 		slog.String("userId", userID.String()),
 		slog.String("roomId", payload.RoomID),
