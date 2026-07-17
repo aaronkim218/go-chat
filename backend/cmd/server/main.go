@@ -80,7 +80,8 @@ func main() {
 	if err := app.Shutdown(); err != nil {
 		slog.Error(
 			"failed to shutdown server",
-			slog.String("error", err.Error()))
+			slog.String("error", err.Error()),
+		)
 	}
 
 	slog.Info("server shutdown")

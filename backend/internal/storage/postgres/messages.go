@@ -16,7 +16,8 @@ func (p *Postgres) CreateMessage(ctx context.Context, message models.Message) er
 	const query string = `INSERT INTO messages (id, room_id, author, content, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)`
 
 	_, err := utils.Retry(ctx, func(ctx context.Context) (struct{}, error) {
-		_, err := p.Pool.Exec(ctx, query,
+		_, err := p.Pool.Exec(
+			ctx, query,
 			message.Id,
 			message.RoomId,
 			message.Author,

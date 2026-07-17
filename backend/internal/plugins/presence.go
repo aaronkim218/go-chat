@@ -52,7 +52,8 @@ func NewEventsocketPresencePlugin(cfg *PresenceConfig) *Presence {
 
 	plugin.eventsocket.OnJoinRoom("presence", func(roomID, clientID string) {
 		if err := plugin.handleJoinRoom(roomID, clientID); err != nil {
-			plugin.logger.Error("Failed to handle user join presence",
+			plugin.logger.Error(
+				"Failed to handle user join presence",
 				slog.String("err", err.Error()),
 				slog.String("clientId", clientID),
 				slog.String("roomId", roomID),
@@ -62,7 +63,8 @@ func NewEventsocketPresencePlugin(cfg *PresenceConfig) *Presence {
 
 	plugin.eventsocket.OnLeaveRoom("presence", func(roomID, clientID string) {
 		if err := plugin.handleLeaveRoom(roomID, clientID); err != nil {
-			plugin.logger.Error("Failed to handle user leave presence",
+			plugin.logger.Error(
+				"Failed to handle user leave presence",
 				slog.String("err", err.Error()),
 				slog.String("clientId", clientID),
 				slog.String("roomId", roomID),
@@ -79,7 +81,8 @@ func (pp *Presence) RegisterClient(clientID string, profile models.Profile) {
 
 	pp.clientProfiles[clientID] = profile
 
-	pp.logger.Debug("Registered client profile",
+	pp.logger.Debug(
+		"Registered client profile",
 		slog.String("clientId", clientID),
 		slog.String("username", profile.Username),
 	)
@@ -100,7 +103,8 @@ func (pp *Presence) handleJoinRoom(roomID, clientID string) error {
 
 	joiningProfile, exists := pp.clientProfiles[clientID]
 	if !exists {
-		pp.logger.Error("Client profile not found for join",
+		pp.logger.Error(
+			"Client profile not found for join",
 			slog.String("clientId", clientID),
 			slog.String("roomId", roomID),
 		)
@@ -118,7 +122,8 @@ func (pp *Presence) handleJoinRoom(roomID, clientID string) error {
 
 	if len(activeProfiles) > 0 {
 		if err := pp.sendPresenceToClient(clientID, roomID, activeProfiles, join); err != nil {
-			pp.logger.Error("Failed to send existing users to joining client",
+			pp.logger.Error(
+				"Failed to send existing users to joining client",
 				slog.String("err", err.Error()),
 				slog.String("clientId", clientID),
 				slog.String("roomId", roomID),
@@ -129,7 +134,8 @@ func (pp *Presence) handleJoinRoom(roomID, clientID string) error {
 	pp.activeUsers[roomID][clientID] = joiningProfile
 
 	if err := pp.broadcastPresenceToRoom(roomID, clientID, []models.Profile{joiningProfile}, join); err != nil {
-		pp.logger.Error("Failed to broadcast user join",
+		pp.logger.Error(
+			"Failed to broadcast user join",
 			slog.String("err", err.Error()),
 			slog.String("clientId", clientID),
 			slog.String("roomId", roomID),
@@ -137,7 +143,8 @@ func (pp *Presence) handleJoinRoom(roomID, clientID string) error {
 		return err
 	}
 
-	pp.logger.Info("User joined room presence",
+	pp.logger.Info(
+		"User joined room presence",
 		slog.String("clientId", clientID),
 		slog.String("roomId", roomID),
 		slog.String("username", joiningProfile.Username),
@@ -152,7 +159,8 @@ func (pp *Presence) handleLeaveRoom(roomID, clientID string) error {
 
 	leavingProfile, exists := pp.activeUsers[roomID][clientID]
 	if !exists {
-		pp.logger.Debug("User not in room active users",
+		pp.logger.Debug(
+			"User not in room active users",
 			slog.String("clientId", clientID),
 			slog.String("roomId", roomID),
 		)
@@ -166,7 +174,8 @@ func (pp *Presence) handleLeaveRoom(roomID, clientID string) error {
 	}
 
 	if err := pp.broadcastPresenceToRoom(roomID, "", []models.Profile{leavingProfile}, leave); err != nil {
-		pp.logger.Error("Failed to broadcast user leave",
+		pp.logger.Error(
+			"Failed to broadcast user leave",
 			slog.String("err", err.Error()),
 			slog.String("clientId", clientID),
 			slog.String("roomId", roomID),
@@ -174,7 +183,8 @@ func (pp *Presence) handleLeaveRoom(roomID, clientID string) error {
 		return err
 	}
 
-	pp.logger.Info("User left room presence",
+	pp.logger.Info(
+		"User left room presence",
 		slog.String("clientId", clientID),
 		slog.String("roomId", roomID),
 		slog.String("username", leavingProfile.Username),
@@ -199,7 +209,8 @@ func (pp *Presence) sendPresenceToClient(clientID, roomID string, profiles []mod
 	}
 
 	if err := pp.eventsocket.BroadcastToClient(clientID, message); err != nil {
-		pp.logger.Error("Failed to send delayed presence to client",
+		pp.logger.Error(
+			"Failed to send delayed presence to client",
 			slog.String("err", err.Error()),
 			slog.String("clientId", clientID),
 			slog.String("roomId", roomID),
